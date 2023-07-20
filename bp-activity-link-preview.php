@@ -212,8 +212,8 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 	if ( isset( $_POST['link_url'] ) && isset( $_POST['link_title'] ) && isset( $_POST['link_description'] ) && isset( $_POST['link_image'] ) ) {
 
 		$link_url         = ! empty( $_POST['link_url'] ) ? sanitize_text_field( wp_unslash( $_POST['link_url'] ) ) : '';
-		$link_title       = ! empty( $_POST['link_title'] ) ? filter_var( wp_unslash( $_POST['link_title'] ), FILTER_SANITIZE_STRING ) : '';
-		$link_description = ! empty( $_POST['link_description'] ) ? filter_var( wp_unslash( $_POST['link_description'] ), FILTER_SANITIZE_STRING ) : '';
+		$link_title       = ! empty( $_POST['link_title'] ) ? filter_var( wp_unslash( $_POST['link_title'] ), FILTER_SANITIZE_SPECIAL_CHARS ) : '';
+		$link_description = ! empty( $_POST['link_description'] ) ? filter_var( wp_unslash( $_POST['link_description'] ), FILTER_SANITIZE_SPECIAL_CHARS ) : '';
 		$link_image       = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
 
 		$link_preview_data['url'] = $link_url;
