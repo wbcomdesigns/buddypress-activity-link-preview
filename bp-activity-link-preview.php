@@ -21,6 +21,9 @@
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
+require_once __DIR__ . '/vendor/autoload.php';
+HardG\BuddyPress120URLPolyfills\Loader::init();
+
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), '1.0.0', 'all' );
