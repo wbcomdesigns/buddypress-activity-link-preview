@@ -5,11 +5,17 @@
 	var loadedURLs	= [];
 	var scrap_URL = function(inputurlText){
 		var urlString = '';
-
+		
 		if ( inputurlText === null ) {
 			return;
 		}
 
+		var urlTwitter 	= inputurlText.indexOf("twitter.com");
+		var urlFacebook = inputurlText.indexOf("facebook.com");
+		var urlInsta 	= inputurlText.indexOf("instagram.com");
+		if( urlTwitter >= 0 || urlFacebook >= 0 || urlInsta >= 0 ){
+			return;
+		}
 		if ( inputurlText.indexOf( '<img' ) >= 0 ) {
 			inputurlText = inputurlText.replace( /<img .*?>/g, '' );
 		}
