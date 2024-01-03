@@ -3,15 +3,15 @@ Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, Activity, Link Preview
 Requires at least: 3.0.1
-Tested up to: 5.9.3
-Stable tag: 1.4.0
+Tested up to: 6.4.2
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 
-Simply paste the link on your BuddyPress activity what's new area and check the link preview with og:image.
-The link will be converted into a beautiful link preview having an image, title, and description within.
+Paste the link on your BuddyPress activity in the new area and check the link preview with og:image.
+The link will be converted into a beautiful preview with an image, title, and description.
 
 == Installation ==
 
@@ -35,6 +35,9 @@ The screenshots are present in the root of the plugin folder.
 1. screenshot-1
 
 == Changelog ==
+= 1.4.2 =
+* Fixed: (#26)Fixed twitter/ig/facebook preview issue
+
 = 1.4.0 =
 * Fixed: Added some spacing between link preview container and post button
 * Fixed: #18 - unable to comment and reply
