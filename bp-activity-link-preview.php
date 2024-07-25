@@ -220,7 +220,9 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$link_image       = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
 
 		$link_preview_data['url'] = $link_url;
-
+		if ( false !== strpos( $link_preview_data['url'] , 'www.reddit.com') )  {
+			return ;
+		}
 		if ( ! empty( $link_image ) ) {
 			$link_preview_data['image_url'] = $link_image;
 		}
