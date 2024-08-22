@@ -3,8 +3,8 @@ Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, Activity, Link Preview
 Requires at least: 3.0.1
-Tested up to: 6.4.2
-Stable tag: 1.4.2
+Tested up to: 6.6.1
+Stable tag: 1.4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,10 @@ The screenshots are present in the root of the plugin folder.
 1. screenshot-1
 
 == Changelog ==
+= 1.4.3 =
+* Fix: Issue with Reddit
+* Fix: (#27) Issue with YouTube link preview
+
 = 1.4.2 =
 * Fixed: (#26)Fixed twitter/ig/facebook preview issue
 
