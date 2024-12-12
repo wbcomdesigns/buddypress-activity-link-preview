@@ -64,15 +64,12 @@ add_action( 'wp_ajax_nopriv_bp_activity_parse_url_preview', 'bp_activity_parse_u
  */
 function bp_activity_link_parse_url( $url ) {
 	$cache_key = 'bp_activity_oembed_' . md5( serialize( $url ) );
-
 	// get transient data for url.
 	$parsed_url_data = get_transient( $cache_key );
 	if ( ! empty( $parsed_url_data ) ) {
 		return $parsed_url_data;
 	}
-
 	$parsed_url_data = array();
-
 	// Fetch the oembed code for URL.
 	$embed_code = wp_oembed_get( $url, array( 'discover' => false ) );
 	if ( ! empty( $embed_code ) ) {
@@ -146,7 +143,6 @@ function bp_activity_link_parse_url( $url ) {
 					}
 				}
 			}
-
 			// Parse DOM to get Images.
 			$image_elements = $dom->getElementsByTagName( 'img' );
 			for ( $i = 0; $i < $image_elements->length; $i ++ ) {
@@ -183,7 +179,6 @@ function bp_activity_link_parse_url( $url ) {
 			}
 		}
 	}
-
 	if ( ! empty( $parsed_url_data ) ) {
 		// set the transient.
 		set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
@@ -281,7 +276,7 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 	}
 	$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
 	$content .= '</div>';
-	return $content;
+	return htmlspecialchars_decode($content);
 }
 
 add_filter( 'bp_get_activity_content_body', 'bp_activity_link_preview_content_body', 8, 2 );

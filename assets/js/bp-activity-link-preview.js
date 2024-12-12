@@ -10,14 +10,14 @@
 			return;
 		}
 
-		var urlTwitter = inputurlText.indexOf("twitter.com");
+		var urlTwitter = inputurlText.indexOf("x.com");
 		var urlFacebook = inputurlText.indexOf("facebook.com");
 		var urlInsta = inputurlText.indexOf("instagram.com");
 		var urlYoutube = inputurlText.indexOf("youtube.com");
 
-		if (urlTwitter >= 0 || urlFacebook >= 0 || urlInsta >= 0 || urlYoutube >= 0) {
-			return;
-		}
+		// if (urlTwitter >= 0 || urlFacebook >= 0 || urlInsta >= 0 || urlYoutube >= 0) {
+		// 	return;
+		// }
 		if (inputurlText.indexOf('<img') >= 0) {
 			inputurlText = inputurlText.replace(/<img .*?>/g, '');
 		}
@@ -44,7 +44,6 @@
 	}
 
 	var loadLinkPreview = function (url) {
-
 		var regexp = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?$/;
 		url = $.trim(url);
 		if (regexp.test(url)) {
@@ -131,7 +130,6 @@
 			link_image_index: 0,
 		});
 
-
 		var image_nav = '';
 		if (image_count === 0) {
 			image_nav = 'display:none;';
@@ -192,7 +190,6 @@
 
 
 		var bp_activity_link_preview = getLinkPreviewStorage('bp-activity-link-preview', 'link-preview');
-
 		var link_image_index = bp_activity_link_preview.link_image_index;
 		var url = bp_activity_link_preview.link_url;
 		var title = bp_activity_link_preview.link_title;
