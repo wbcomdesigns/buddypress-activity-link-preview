@@ -3,6 +3,39 @@
 
 	var loadURLAjax = null;
 	var loadedURLs = [];
+	// $(document).ready(function(){
+
+		jQuery(document).ajaxComplete(function(event, xhr, settings) {
+			const params = new URLSearchParams(settings.data);
+       		const parsedData = Object.fromEntries(params.entries());
+			if (parsedData.action.includes('activity_filter')) {
+				setTimeout(() => {
+					$(document).find( ".activity-link-preview-container" ).each(function( index, element ) {
+						var url = $(element).data("url");
+						if( undefined != url){
+						const tweetIdMatch = url.match(/status\/(\d+)/);
+							var tweetId = '';
+							if (tweetIdMatch && tweetIdMatch[1]) {
+								tweetId = tweetIdMatch[1]; // Return the matched tweet ID
+							}
+							twttr.widgets.createTweet(
+								tweetId,
+								$(document).find(".activity-link-preview-container")[0],
+								{
+								  theme: 'light'
+								}
+							  );
+						}
+					});
+				}, 100);
+			}
+		});
+		
+
+	// })
+
+
+
 	var scrap_URL = function (inputurlText) {
 		var urlString = '';
 
@@ -76,8 +109,6 @@
 					function (response) {
 						setURLResponse(response, url);
 					});
-
-
 			}
 		}
 	}
@@ -138,7 +169,24 @@
 
 		$('#whats-new-attachments .activity-url-scrapper-container').remove();
 		$('#whats-new-attachments').append(link_preview);
+		if(url.includes('x.com')){
+			const tweetIdMatch = url.match(/status\/(\d+)/);
+			var tweetId = '';
+			if (tweetIdMatch && tweetIdMatch[1]) {
+				tweetId = tweetIdMatch[1]; // Return the matched tweet ID
+			}
+			$($(document).find(".activity-link-preview-container")[0]).html('<a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a>');
+			twttr.widgets.createTweet(
+				tweetId,
+				$(document).find(".activity-link-preview-container")[0],
+				{
+				  theme: 'light'
+				}
+			  );
+		}
 	}
+
+
 	var escapeHtml = function (text) {
 		return text
 			.replace(/&/g, "&amp;")

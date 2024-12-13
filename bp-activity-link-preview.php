@@ -27,7 +27,9 @@ HardG\BuddyPress120URLPolyfills\Loader::init();
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), '1.0.0', 'all' );
+	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), '1.0.0' );
 	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), '1.0.0' );
+
 }
 add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
@@ -41,10 +43,8 @@ function bp_activity_parse_url_preview() {
 	if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 		wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
 	}
-
-	// Get URL parsed data.
-	$parse_url_data = bp_activity_link_parse_url( $url );
-
+		$parse_url_data = bp_activity_link_parse_url( $url );
+	
 	// If empty data then send error.
 	if ( empty( $parse_url_data ) ) {
 		wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
@@ -72,7 +72,7 @@ function bp_activity_link_parse_url( $url ) {
 	$parsed_url_data = array();
 	// Fetch the oembed code for URL.
 	$embed_code = wp_oembed_get( $url, array( 'discover' => false ) );
-	if ( ! empty( $embed_code ) ) {
+	if ( ! empty( $embed_code ) && false === strpos($url, 'facebook') ) {
 		$parsed_url_data['title']       = ' ';
 		$parsed_url_data['description'] = $embed_code;
 		$parsed_url_data['images']      = '';
@@ -261,21 +261,26 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		return $content;
 	}
 
-	$description = $preview_data['description'];
-	$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';
-	$description = wp_trim_words( $description, 40, $read_more );
-
-	$content = make_clickable( $content );
-
-	$content .= '<div class="activity-link-preview-container">';
-	$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
-	if ( ! empty( $preview_data['image_url'] ) ) {
-		$content .= '<div class="activity-link-preview-image">';
-		$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" /></a>';
+	if( false === strpos($preview_data['url'], 'x.com') ){
+		$description = $preview_data['description'];
+		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';
+		$description = wp_trim_words( $description, 40, $read_more );
+	
+		$content = make_clickable( $content );
+	
+		$content .= '<div class="activity-link-preview-container">';
+		$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
+		if ( ! empty( $preview_data['image_url'] ) ) {
+			$content .= '<div class="activity-link-preview-image">';
+			$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" /></a>';
+			$content .= '</div>';
+		}
+		$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
 		$content .= '</div>';
+	}else{
+		$content .= '<div class="activity-link-preview-container" data-url="'.$preview_data['url'].'"></div>';
 	}
-	$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
-	$content .= '</div>';
+	
 	return htmlspecialchars_decode($content);
 }
 
