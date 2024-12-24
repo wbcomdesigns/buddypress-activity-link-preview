@@ -20,21 +20,48 @@
 							}
 							twttr.widgets.createTweet(
 								tweetId,
-								$(document).find(".activity-link-preview-container")[0],
+								element,
 								{
 								  theme: 'light'
 								}
 							  );
 						}
 					});
-				}, 100);
+				}, 200);
 			}
 		});
 		
+		$(document).ready(function(){
 
+			var parentElement = $(document).find("whats-new-submit").find("input[type='submit']");
+			$(document).on('click',parentElement,function(){
+				setTimeout(() => {
+					$(document).find( ".activity-link-preview-container" ).each(function( index, element ) {
+						var url = $(element).data("url");
+						if( undefined != url){
+						const tweetIdMatch = url.match(/status\/(\d+)/);
+							var tweetId = '';
+							if (tweetIdMatch && tweetIdMatch[1]) {
+								tweetId = tweetIdMatch[1]; // Return the matched tweet ID
+							}
+							twttr.widgets.createTweet(
+								tweetId,
+								element,
+								{
+								theme: 'light'
+								}
+							);
+						}
+					});
+				}, 200);
+			})
+
+		})
+		
 	// })
 
 
+	// aw-whats-new-submit
 
 	var scrap_URL = function (inputurlText) {
 		var urlString = '';
@@ -68,10 +95,6 @@
 			var url_a = document.createElement('a');
 			url_a.href = urlString;
 			var hostname = url_a.hostname;
-
-		}
-
-		if ('' !== urlString) {
 			loadLinkPreview(urlString);
 		}
 	}
@@ -100,7 +123,7 @@
 			}
 
 
-
+			
 			if (!urlResponse) {
 				loadURLAjax = jQuery.post(ajaxurl, {
 					action: 'bp_activity_parse_url_preview',
@@ -188,7 +211,7 @@
 
 
 	var escapeHtml = function (text) {
-		return text
+			return text
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")
 			.replace(/>/g, "&gt;")
