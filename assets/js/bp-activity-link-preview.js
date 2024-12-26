@@ -207,10 +207,21 @@
 				}
 			  );
 		}
+		if(url.includes('facebook.com')){
+			$($(document).find(".activity-link-preview-container")[0]).html('<a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="'+url+'" data-width="500" data-height="500"></div>');
+			  if (typeof FB !== 'undefined') {
+				FB.XFBML.parse();
+				} else {
+					console.error('Facebook SDK not loaded.');
+				}
+		}
 	}
 
 
 	var escapeHtml = function (text) {
+		if( ! text ){
+			return text;
+		}
 			return text
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")

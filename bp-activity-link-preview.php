@@ -28,8 +28,8 @@ HardG\BuddyPress120URLPolyfills\Loader::init();
 function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), '1.0.0', 'all' );
 	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), '1.0.0' );
+	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v14.0', array( 'jquery' ), '1.0.0' );
 	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), '1.0.0' );
-
 }
 add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
@@ -72,7 +72,8 @@ function bp_activity_link_parse_url( $url ) {
 	$parsed_url_data = array();
 	// Fetch the oembed code for URL.
 	$embed_code = wp_oembed_get( $url, array( 'discover' => false ) );
-	if ( ! empty( $embed_code ) && false === strpos($url, 'facebook') ) {
+
+	if ( ! empty( $embed_code ) || true === str_contains( $url , 'facebook') ) {
 		$parsed_url_data['title']       = ' ';
 		$parsed_url_data['description'] = $embed_code;
 		$parsed_url_data['images']      = '';
@@ -94,7 +95,7 @@ function bp_activity_link_parse_url( $url ) {
 
 			// Load HTML to DOM Object.
 			$dom = new DOMDocument();
-			@$dom->loadHTML( mb_convert_encoding( $body, 'HTML-ENTITIES', 'UTF-8' ) );
+			$dom->loadHTML( mb_convert_encoding( $body, 'HTML-ENTITIES', 'UTF-8' ) );
 
 			$meta_tags   = array();
 			$images      = array();
@@ -260,8 +261,11 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 	if ( empty( $preview_data['url'] ) || ( empty( trim( $preview_data['title'] ) ) && empty( trim( $preview_data['description'] ) ) ) ) {
 		return $content;
 	}
-
-	if( false === strpos($preview_data['url'], 'x.com') ){
+	if( true === str_contains($preview_data['url'], 'x.com') ){
+		$content .= '<div class="activity-link-preview-container" data-url="'.$preview_data['url'].'"></div>';
+	}elseif( true === str_contains($preview_data['url'], 'facebook.com') ){
+		$content .= '<div class="fb-post" data-href="'.$preview_data['url'].'" data-width="500" data-height="500"></div>';
+	}else{
 		$description = $preview_data['description'];
 		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';
 		$description = wp_trim_words( $description, 40, $read_more );
@@ -277,8 +281,6 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		}
 		$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
 		$content .= '</div>';
-	}else{
-		$content .= '<div class="activity-link-preview-container" data-url="'.$preview_data['url'].'"></div>';
 	}
 	
 	return htmlspecialchars_decode($content);
@@ -334,4 +336,11 @@ function bp_activity_link_preview_data_embed_rest_api( $response, $request, $act
 	$bp_activity_link_data              = bp_activity_get_meta( $activity->id, '_bp_activity_link_preview_data', true );
 	$response->data['bp_activity_link'] = $bp_activity_link_data;
 	return $response;
+}
+
+add_action( 'wp_head', 'bp_activity_link_preview_add_facebook_root_div' );
+function bp_activity_link_preview_add_facebook_root_div(){
+	if( bp_is_activity_directory() || bp_is_group() || bp_is_user_activity() ){
+		echo '<div id="fb-root"></div>';
+	}
 }
