@@ -27,6 +27,12 @@
 							  );
 						}
 					});
+
+					if (typeof FB !== 'undefined') {
+						FB.XFBML.parse();
+						} else {
+							console.error('Facebook SDK not loaded.');
+						}
 				}, 200);
 			}
 		});
@@ -53,6 +59,12 @@
 							);
 						}
 					});
+
+					if (typeof FB !== 'undefined') {
+						FB.XFBML.parse();
+					} else {
+						console.error('Facebook SDK not loaded.');
+					}
 				}, 200);
 			})
 
