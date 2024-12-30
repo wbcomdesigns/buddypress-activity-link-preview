@@ -3,8 +3,8 @@ Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, Activity, Link Preview
 Requires at least: 3.0.1
-Tested up to: 6.6.1
-Stable tag: 1.4.3
+Tested up to: 6.7.1
+Stable tag: 1.4.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,22 @@ The screenshots are present in the root of the plugin folder.
 1. screenshot-1
 
 == Changelog ==
+
+= 1.4.4 =
+* Fix: Hide raw Facebook and Twitter URLs in BuddyPress activity content. Only embed previews are displayed.
+* Fix: Addressed multiple issues with Facebook embed functionality, ensuring better DOM handling and error prevention.
+* Fix: Resolved issues with console errors during content injection.
+* Enhancement: Improved code quality for better readability and maintainability.
+* Update: Removed obsolete 'hard-g' folder for cleanup.
+* Update: Added support for Twitter, YouTube, and LinkedIn link previews.
+* Update: Enhanced compatibility with Reddit link previews.
+* Update: Improved handling of Instagram, Facebook, and Twitter previews for a consistent experience.
+* Update: Added spacing between link preview container and the post button for improved UI.
+* Feature: Included activity link preview data in the REST API activity endpoint.
+* Fix: Resolved a YouTube link preview issue. (#27)
+* Fix: Addressed issues where comments and replies could not be added to activities. (#18)
+* Misc: General code updates and PHPCS fixes for better standards compliance.
+
 = 1.4.3 =
 * Fix: Issue with Reddit
 * Fix: (#27) Issue with YouTube link preview
