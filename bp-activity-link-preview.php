@@ -259,9 +259,9 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		return $content;
 	}
 	if( true === str_contains($preview_data['url'], 'x.com') ){
-		$content .= '<div class="activity-link-preview-container" data-url="'.$preview_data['url'].'"></div>';
+		$content = '<div class="twitter-post" data-url="'.$preview_data['url'].'"></div>';
 	}elseif( true === str_contains($preview_data['url'], 'facebook.com') ){
-		$content .= '<div class="fb-post" data-href="'.$preview_data['url'].'" data-width="500" data-height="500"></div>';
+		$content = '<div class="fb-post" data-href="'.$preview_data['url'].'" data-width="500" data-height="500"></div>';
 	}else{
 		$description = $preview_data['description'];
 		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';

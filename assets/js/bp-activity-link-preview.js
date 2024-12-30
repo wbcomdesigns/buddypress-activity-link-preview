@@ -10,7 +10,7 @@
        		const parsedData = Object.fromEntries(params.entries());
 			if (parsedData.action.includes('activity_filter')) {
 				setTimeout(() => {
-					$(document).find( ".activity-link-preview-container" ).each(function( index, element ) {
+					$(document).find( ".twitter-post" ).each(function( index, element ) {
 						var url = $(element).data("url");
 						if( undefined != url){
 						const tweetIdMatch = url.match(/status\/(\d+)/);

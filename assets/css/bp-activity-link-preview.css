@@ -178,3 +178,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 #activity-link-preview-close-image:focus {
     outline: 0;
 }
+
+.activity-list .activity-item .activity-content .activity-inner .twitter-post, .activity-list .activity-item .activity-content .activity-inner .fb-post {
+    margin: 0 15px 15px;
+}
