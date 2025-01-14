@@ -200,7 +200,7 @@
 		if (image_count === 0) {
 			image_nav = 'display:none;';
 		}
-		var link_preview = '<div class="activity-url-scrapper-container error"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="activity-link-preview-close-image"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="activity-url-prevPicButton"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="activity-url-nextPicButton"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="activity-url-scrapper-img-count">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="link_url" value="' + url + '" /><input type="hidden" name="link_title" value="' + title + '" /><input type="hidden" name="link_description" value="' + escapeHtml(description) + '" /><input type="hidden" name="link_image" value="' + image + '" /></div></div>';
+		var link_preview = '<div class="activity-url-scrapper-container error"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="activity-link-preview-close-image"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="activity-url-prevPicButton"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="activity-url-nextPicButton"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="activity-url-scrapper-img-count">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="link_url" class="link_url" value="' + url + '" /><input type="hidden" name="link_title" value="' + title + '" /><input type="hidden" name="link_description" value="' + escapeHtml(description) + '" /><input type="hidden" name="link_image" value="' + image + '" /></div></div>';
 
 		$('#whats-new-attachments .activity-url-scrapper-container').remove();
 		$('#whats-new-attachments').append(link_preview);
@@ -227,6 +227,18 @@
 					console.error('Facebook SDK not loaded.');
 				}
 		}
+		// Create a custom event with response and url as data
+		const beauty_video_code = response.beauty_video_code;
+		const customEvent = new CustomEvent('activityPreview', {
+				detail: {
+					response : beauty_video_code,
+					url : url,
+				}
+			}
+		);
+        // Dispatch the custom event
+		document.dispatchEvent(customEvent);
+		
 	}
 
 

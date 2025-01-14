@@ -30,6 +30,7 @@ function bp_activity_link_preview_enqueue_scripts() {
 }
 add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
+
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
 
@@ -41,7 +42,7 @@ function bp_activity_parse_url_preview() {
 		wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
 	}
 		$parse_url_data = bp_activity_link_parse_url( $url );
-	
+		$parse_url_data = apply_filters('bp_activity_parse_url_preview',$parse_url_data,$url);
 	// If empty data then send error.
 	if ( empty( $parse_url_data ) ) {
 		wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
@@ -69,7 +70,7 @@ function bp_activity_link_parse_url( $url ) {
 	$parsed_url_data = array();
 	// Fetch the oembed code for URL.
 	$embed_code = wp_oembed_get( $url, array( 'discover' => false ) );
-
+	
 	if ( ! empty( $embed_code ) || true === str_contains( $url , 'facebook') ) {
 		$parsed_url_data['title']       = ' ';
 		$parsed_url_data['description'] = $embed_code;
@@ -211,7 +212,6 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$link_title       = ! empty( $_POST['link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['link_title'] ) ) : '';
 		$link_description = ! empty( $_POST['link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['link_description'] ) ) : '';
 		$link_image       = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
-
 		$link_preview_data['url'] = $link_url;
 		if ( false !== strpos( $link_preview_data['url'] , 'www.reddit.com') )  {
 			return ;
