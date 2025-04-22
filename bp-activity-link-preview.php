@@ -33,23 +33,41 @@ add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
+    // Get URL.
+    $url = ! empty( $_POST['url'] ) ? filter_var( $_POST['url'], FILTER_VALIDATE_URL ) : '';// phpcs:ignore
 
-	// Get URL.
-	$url = ! empty( $_POST['url'] ) ? filter_var( $_POST['url'], FILTER_VALIDATE_URL ) : '';// phpcs:ignore
+    // Check if URL is validated.
+    if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+        wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
+    }
 
-	// Check if URL is validated.
-	if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-		wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
-	}
-		$parse_url_data = bp_activity_link_parse_url( $url );
-		$parse_url_data = apply_filters('bp_activity_parse_url_preview',$parse_url_data,$url);
-	// If empty data then send error.
-	if ( empty( $parse_url_data ) ) {
-		wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
-	}
+    // Parse URL to get host
+    $parsed_url = parse_url($url);
+    $host = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+    
+    // Block requests to private/internal IP ranges and localhost
+    if (empty($host) || 
+        (filter_var($host, FILTER_VALIDATE_IP) && 
+         (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false)) ||
+        $host === '127.0.0.1' || 
+        $host === 'localhost' ||
+        preg_match('/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host)
+    ) {
+        wp_send_json( array( 'error' => __( 'This URL cannot be previewed for security reasons.', 'buddypress-activity-link-preview' ) ) );
+    }
 
-	// send json success.
-	wp_send_json( $parse_url_data );
+    $parse_url_data = bp_activity_link_parse_url( $url );
+    
+    // If empty data then send error.
+    if ( empty( $parse_url_data ) ) {
+        wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
+    }
+
+    // Apply filter to allow modification of parsed data
+    $parse_url_data = apply_filters('bp_activity_parse_url_preview', $parse_url_data, $url);
+
+    // send json success.
+    wp_send_json( $parse_url_data );
 }
 
 add_action( 'wp_ajax_bp_activity_parse_url_preview', 'bp_activity_parse_url_preview' );
