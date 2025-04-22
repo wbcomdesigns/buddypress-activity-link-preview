@@ -33,6 +33,11 @@ add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
+	
+	// Check if user is logged in
+    if ( ! is_user_logged_in() ) {
+        wp_send_json( array( 'error' => __( 'You must be logged in to perform this action.', 'buddypress-activity-link-preview' ) ) );
+    }
     // Get URL.
     $url = ! empty( $_POST['url'] ) ? filter_var( $_POST['url'], FILTER_VALIDATE_URL ) : '';// phpcs:ignore
 
@@ -102,6 +107,8 @@ function bp_activity_link_parse_url( $url ) {
 			$url,
 			array(
 				'user-agent' => '', // Default value being blocked by Cloudflare.
+				'sslverify'  => true,
+        		'timeout'    => 15,
 			)
 		);
 		$body     = wp_remote_retrieve_body( $response );
@@ -221,8 +228,8 @@ function bp_activity_link_parse_url( $url ) {
 function bp_activity_link_preview_save_link_data( $activity ) {
 	$bp_activity_nonce = isset( $_POST['_wpnonce_post_update'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce_post_update'] ) ) : '';
 	// Check for nonce security.	
-	if ( $bp_activity_nonce != '' &&  ! wp_verify_nonce( $bp_activity_nonce, 'post_update' ) ) {
-		die( 'Busted!' );
+	if ( empty( $bp_activity_nonce ) || ! wp_verify_nonce( $bp_activity_nonce, 'post_update' ) ) {
+		die( 'Security check failed.' );
 	}
 	if ( isset( $_POST['link_url'] ) && isset( $_POST['link_title'] ) && isset( $_POST['link_description'] ) && isset( $_POST['link_image'] ) ) {
 
@@ -277,9 +284,9 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		return $content;
 	}
 	if( true === str_contains($preview_data['url'], 'x.com') ){
-		$content = '<div class="twitter-post" data-url="'.$preview_data['url'].'"></div>';
+		$content = '<div class="twitter-post" data-url="' . esc_attr($preview_data['url']) . '"></div>';
 	}elseif( true === str_contains($preview_data['url'], 'facebook.com') ){
-		$content = '<div class="fb-post" data-href="'.$preview_data['url'].'" data-width="500" data-height="500"></div>';
+		$content = '<div class="fb-post" data-href="' . esc_attr($preview_data['url']) . '" data-width="500" data-height="500"></div>';
 	}else{
 		$description = $preview_data['description'];
 		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';
