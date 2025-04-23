@@ -5,71 +5,71 @@
 	var loadedURLs = [];
 	// $(document).ready(function(){
 
-		jQuery(document).ajaxComplete(function(event, xhr, settings) {
-			const params = new URLSearchParams(settings.data);
-       		const parsedData = Object.fromEntries(params.entries());
-			if (parsedData.action.includes('activity_filter')) {
-				setTimeout(() => {
-					$(document).find( ".twitter-post" ).each(function( index, element ) {
-						var url = $(element).data("url");
-						if( undefined != url){
+	jQuery(document).ajaxComplete(function (event, xhr, settings) {
+		const params = new URLSearchParams(settings.data);
+		const parsedData = Object.fromEntries(params.entries());
+		if (parsedData.action.includes('activity_filter')) {
+			setTimeout(() => {
+				$(document).find(".activity-link-preview-container").each(function (index, element) {
+					var url = $(element).data("url");
+					if (undefined != url) {
 						const tweetIdMatch = url.match(/status\/(\d+)/);
-							var tweetId = '';
-							if (tweetIdMatch && tweetIdMatch[1]) {
-								tweetId = tweetIdMatch[1]; // Return the matched tweet ID
-							}
-							twttr.widgets.createTweet(
-								tweetId,
-								element,
-								{
-								  theme: 'light'
-								}
-							  );
+						var tweetId = '';
+						if (tweetIdMatch && tweetIdMatch[1]) {
+							tweetId = tweetIdMatch[1]; // Return the matched tweet ID
 						}
-					});
-
-					if (typeof FB !== 'undefined') {
-						FB.XFBML.parse();
-						} else {
-							console.error('Facebook SDK not loaded.');
-						}
-				}, 200);
-			}
-		});
-		
-		$(document).ready(function(){
-
-			var parentElement = $(document).find("whats-new-submit").find("input[type='submit']");
-			$(document).on('click',parentElement,function(){
-				setTimeout(() => {
-					$(document).find( ".activity-link-preview-container" ).each(function( index, element ) {
-						var url = $(element).data("url");
-						if( undefined != url){
-						const tweetIdMatch = url.match(/status\/(\d+)/);
-							var tweetId = '';
-							if (tweetIdMatch && tweetIdMatch[1]) {
-								tweetId = tweetIdMatch[1]; // Return the matched tweet ID
-							}
-							twttr.widgets.createTweet(
-								tweetId,
-								element,
-								{
+						twttr.widgets.createTweet(
+							tweetId,
+							element,
+							{
 								theme: 'light'
-								}
-							);
-						}
-					});
-
-					if (typeof FB !== 'undefined') {
-						FB.XFBML.parse();
-					} else {
-						console.error('Facebook SDK not loaded.');
+							}
+						);
 					}
-				}, 200);
-			})
+				});
 
+				if (typeof FB !== 'undefined') {
+					FB.XFBML.parse();
+				} else {
+					console.error('Facebook SDK not loaded.');
+				}
+			}, 200);
+		}
+	});
+
+	$(document).ready(function () {
+
+		var parentElement = $(document).find("whats-new-submit").find("input[type='submit']");
+		$(document).on('click', parentElement, function () {
+			setTimeout(() => {
+				$(document).find(".activity-link-preview-container").each(function (index, element) {
+					var url = $(element).data("url");
+					if (undefined != url) {
+						const tweetIdMatch = url.match(/status\/(\d+)/);
+						var tweetId = '';
+						if (tweetIdMatch && tweetIdMatch[1]) {
+							tweetId = tweetIdMatch[1]; // Return the matched tweet ID
+						}
+						twttr.widgets.createTweet(
+							tweetId,
+							element,
+							{
+								theme: 'light'
+							}
+						);
+					}
+				});
+
+				if (typeof FB !== 'undefined') {
+					FB.XFBML.parse();
+				} else {
+					console.error('Facebook SDK not loaded.');
+				}
+			}, 200);
 		})
-		
+
+	})
+
 	// })
 
 
@@ -135,7 +135,7 @@
 			}
 
 
-			
+
 			if (!urlResponse) {
 				loadURLAjax = jQuery.post(ajaxurl, {
 					action: 'bp_activity_parse_url_preview',
@@ -200,11 +200,11 @@
 		if (image_count === 0) {
 			image_nav = 'display:none;';
 		}
-		var link_preview = '<div class="activity-url-scrapper-container error"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + escapeHtml(title) + '</p><div id="activity-url-scrapper-img-holder" style="' + escapeHtml(image_nav) + '"><div class="activity-link-preview-image"><img src="' + escapeHtml(image) + '"><a title="Cancel Preview Image" href="#" id="activity-link-preview-close-image"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="activity-url-prevPicButton"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="activity-url-nextPicButton"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="activity-url-scrapper-img-count">Image 1&nbsp;of&nbsp;' + escapeHtml(image_count.toString()) + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + escapeHtml(description) + '</p></div><a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="link_url" class="link_url" value="' + escapeHtml(url) + '" /><input type="hidden" name="link_title" value="' + escapeHtml(title) + '" /><input type="hidden" name="link_description" value="' + escapeHtml(description) + '" /><input type="hidden" name="link_image" value="' + escapeHtml(image) + '" /></div></div>';
+		var link_preview = '<div class="activity-url-scrapper-container error"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="activity-link-preview-close-image"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="activity-url-prevPicButton"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="activity-url-nextPicButton"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="activity-url-scrapper-img-count">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="link_url" value="' + url + '" /><input type="hidden" name="link_title" value="' + title + '" /><input type="hidden" name="link_description" value="' + escapeHtml(description) + '" /><input type="hidden" name="link_image" value="' + image + '" /></div></div>';
 
 		$('#whats-new-attachments .activity-url-scrapper-container').remove();
 		$('#whats-new-attachments').append(link_preview);
-		if(url.includes('x.com')){
+		if (url.includes('x.com')) {
 			const tweetIdMatch = url.match(/status\/(\d+)/);
 			var tweetId = '';
 			if (tweetIdMatch && tweetIdMatch[1]) {
@@ -215,38 +215,26 @@
 				tweetId,
 				$(document).find(".activity-link-preview-container")[0],
 				{
-				  theme: 'light'
+					theme: 'light'
 				}
-			  );
+			);
 		}
-		if(url.includes('facebook.com')){
-			$($(document).find(".activity-link-preview-container")[0]).html('<a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="'+url+'" data-width="500" data-height="500"></div>');
-			  if (typeof FB !== 'undefined') {
+		if (url.includes('facebook.com')) {
+			$($(document).find(".activity-link-preview-container")[0]).html('<a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + url + '" data-width="500" data-height="500"></div>');
+			if (typeof FB !== 'undefined') {
 				FB.XFBML.parse();
-				} else {
-					console.error('Facebook SDK not loaded.');
-				}
-		}
-		// Create a custom event with response and url as data
-		const beauty_video_code = response.beauty_video_code;
-		const customEvent = new CustomEvent('activityPreview', {
-				detail: {
-					response : beauty_video_code,
-					url : url,
-				}
+			} else {
+				console.error('Facebook SDK not loaded.');
 			}
-		);
-        // Dispatch the custom event
-		document.dispatchEvent(customEvent);
-		
+		}
 	}
 
 
 	var escapeHtml = function (text) {
-		if( ! text ){
+		if (!text) {
 			return text;
 		}
-			return text
+		return text
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")
 			.replace(/>/g, "&gt;")
@@ -304,7 +292,7 @@
 		var image_count = bp_activity_link_preview.link_images.length;
 
 
-		var link_preview = '<div class="activity-url-scrapper-container error"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + escapeHtml(title) + '</p><div id="activity-url-scrapper-img-holder" style="' + escapeHtml(image_nav) + '"><div class="activity-link-preview-image"><img src="' + escapeHtml(image) + '"><a title="Cancel Preview Image" href="#" id="activity-link-preview-close-image"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="activity-url-prevPicButton"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="activity-url-nextPicButton"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="activity-url-scrapper-img-count">Image 1&nbsp;of&nbsp;' + escapeHtml(image_count.toString()) + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + escapeHtml(description) + '</p></div><a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="link_url" class="link_url" value="' + escapeHtml(url) + '" /><input type="hidden" name="link_title" value="' + escapeHtml(title) + '" /><input type="hidden" name="link_description" value="' + escapeHtml(description) + '" /><input type="hidden" name="link_image" value="' + escapeHtml(image) + '" /></div></div>';
+		var link_preview = '<div class="activity-url-scrapper-container error"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="activity-link-preview-close-image"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="activity-url-prevPicButton"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="activity-url-nextPicButton"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="activity-url-scrapper-img-count">Image ' + (link_image_index + 1) + '&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="activity-close-link-suggestion"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="link_url" value="' + url + '" /><input type="hidden" name="link_title" value="' + title + '" /><input type="hidden" name="link_description" value="' + escapeHtml(description) + '" /><input type="hidden" name="link_image" value="' + image + '" /></div></div>';
 
 		$('#whats-new-attachments .activity-url-scrapper-container').remove();
 		$('#whats-new-attachments').append(link_preview);
