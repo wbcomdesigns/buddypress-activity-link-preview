@@ -284,7 +284,7 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		return $content;
 	}
 	if( true === str_contains($preview_data['url'], 'x.com') ){
-		$content = '<div class="twitter-post" data-url="' . esc_attr($preview_data['url']) . '"></div>';
+		$content = '<div class="activity-link-preview-container" data-url="' . esc_attr($preview_data['url']) . '"></div>';
 	}elseif( true === str_contains($preview_data['url'], 'facebook.com') ){
 		$content = '<div class="fb-post" data-href="' . esc_attr($preview_data['url']) . '" data-width="500" data-height="500"></div>';
 	}else{
