@@ -33,46 +33,46 @@ add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
-	
+
 	// Check if user is logged in
-    if ( ! is_user_logged_in() ) {
-        wp_send_json( array( 'error' => __( 'You must be logged in to perform this action.', 'buddypress-activity-link-preview' ) ) );
-    }
-    // Get URL.
+	if ( ! is_user_logged_in() ) {
+		wp_send_json( array( 'error' => __( 'You must be logged in to perform this action.', 'buddypress-activity-link-preview' ) ) );
+	}
+	// Get URL.
     $url = ! empty( $_POST['url'] ) ? filter_var( $_POST['url'], FILTER_VALIDATE_URL ) : '';// phpcs:ignore
 
-    // Check if URL is validated.
-    if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-        wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
-    }
+	// Check if URL is validated.
+	if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+		wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
+	}
 
-    // Parse URL to get host
-    $parsed_url = parse_url($url);
-    $host = isset($parsed_url['host']) ? $parsed_url['host'] : '';
-    
-    // Block requests to private/internal IP ranges and localhost
-    if (empty($host) || 
-        (filter_var($host, FILTER_VALIDATE_IP) && 
-         (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false)) ||
-        $host === '127.0.0.1' || 
-        $host === 'localhost' ||
-        preg_match('/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host)
-    ) {
-        wp_send_json( array( 'error' => __( 'This URL cannot be previewed for security reasons.', 'buddypress-activity-link-preview' ) ) );
-    }
+	// Parse URL to get host
+	$parsed_url = parse_url( $url );
+	$host       = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
 
-    $parse_url_data = bp_activity_link_parse_url( $url );
-    
-    // If empty data then send error.
-    if ( empty( $parse_url_data ) ) {
-        wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
-    }
+	// Block requests to private/internal IP ranges and localhost
+	if ( empty( $host ) ||
+		( filter_var( $host, FILTER_VALIDATE_IP ) &&
+		( filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) === false ) ) ||
+		$host === '127.0.0.1' ||
+		$host === 'localhost' ||
+		preg_match( '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host )
+	) {
+		wp_send_json( array( 'error' => __( 'This URL cannot be previewed for security reasons.', 'buddypress-activity-link-preview' ) ) );
+	}
 
-    // Apply filter to allow modification of parsed data
-    $parse_url_data = apply_filters('bp_activity_parse_url_preview', $parse_url_data, $url);
+	$parse_url_data = bp_activity_link_parse_url( $url );
 
-    // send json success.
-    wp_send_json( $parse_url_data );
+	// If empty data then send error.
+	if ( empty( $parse_url_data ) ) {
+		wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
+	}
+
+	// Apply filter to allow modification of parsed data
+	$parse_url_data = apply_filters( 'bp_activity_parse_url_preview', $parse_url_data, $url );
+
+	// send json success.
+	wp_send_json( $parse_url_data );
 }
 
 add_action( 'wp_ajax_bp_activity_parse_url_preview', 'bp_activity_parse_url_preview' );
@@ -84,33 +84,101 @@ add_action( 'wp_ajax_nopriv_bp_activity_parse_url_preview', 'bp_activity_parse_u
  * @param url $url url.
  */
 function bp_activity_link_parse_url( $url ) {
-	$cache_key = 'bp_activity_oembed_' . md5( serialize( $url ) );
+
+	$parse_url_data = wp_parse_url( $url, PHP_URL_HOST );
+	$original_url   = $url;
+
+	if ( in_array( $parse_url_data, apply_filters( 'bp_activity_link_parse_url_shorten_url_provider', array( 'bit.ly', 'snip.ly', 'rb.gy', 'tinyurl.com', 'tiny.one', 'rotf.lol', 'b.link', '4ubr.short.gy', '' ) ), true ) ) {
+		$response = wp_safe_remote_get(
+			$url,
+			array(
+				'stream'  => true,
+				'headers' => array(
+					'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+				),
+			),
+		);
+
+		if ( ! is_wp_error( $response ) && ! empty( $response['http_response']->get_response_object()->url ) && $response['http_response']->get_response_object()->url !== $url ) {
+			$new_url = $response['http_response']->get_response_object()->url;
+			if ( filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
+				$url = $new_url;
+			}
+		}
+
+		if ( $original_url === $url ) {
+			$context = array(
+				'http' => array(
+					'method'        => 'GET',
+					'max_redirects' => 1,
+				),
+			);
+
+			@file_get_contents( $url, null, stream_context_create( $context ) );
+			if ( isset( $http_response_header ) && isset( $http_response_header[6] ) ) {
+				$new_url = str_replace( 'Location: ', '', $http_response_header[6] );
+				if ( filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
+					$url = $new_url;
+				}
+			}
+		}
+	}
+
+	$cache_key = 'bp_oembed_' . md5( maybe_serialize( $url ) );
+
 	// get transient data for url.
 	$parsed_url_data = get_transient( $cache_key );
 	if ( ! empty( $parsed_url_data ) ) {
 		return $parsed_url_data;
 	}
+
 	$parsed_url_data = array();
+
+	if ( strstr( $url, site_url() ) && ( strstr( $url, 'download_document_file' ) || strstr( $url, 'download_media_file' ) || strstr( $url, 'download_video_file' ) ) ) {
+		return array();
+	}
+
+	if ( ! function_exists( '_wp_oembed_get_object' ) ) {
+		require ABSPATH . WPINC . '/class-oembed.php';
+	}
+
+	$embed_code = '';
+	$oembed_obj = _wp_oembed_get_object();
+	$discover   = apply_filters( 'bp_oembed_discover_support', false, $url );
+	$is_oembed  = $oembed_obj->get_data( $url, array( 'discover' => $discover ) );
+
+	if ( $is_oembed ) {
+		$embed_code = wp_oembed_get( $url, array( 'discover' => $discover ) );
+	}
+
 	// Fetch the oembed code for URL.
-	$embed_code = wp_oembed_get( $url, array( 'discover' => false ) );
-	
-	if ( ! empty( $embed_code ) || true === str_contains( $url , 'facebook') ) {
+	if ( ! empty( $embed_code ) ) {
 		$parsed_url_data['title']       = ' ';
 		$parsed_url_data['description'] = $embed_code;
 		$parsed_url_data['images']      = '';
 		$parsed_url_data['error']       = '';
 		$parsed_url_data['wp_embed']    = true;
 	} else {
+		$args = array( 'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0' );
+
+		if ( bp_is_same_site_url( $url ) ) {
+			if ( ! bp_enable_private_network() ) {
+				// Add the custom header with the JWT token.
+				$args['headers'] = array(
+					'bb-preview-token' => bb_create_jwt(
+						array(
+							'url' => $url,
+							'iat' => time(),
+							'exp' => time() + 120, // Token validity 2 minutes.
+						)
+					),
+				);
+			}
+			$args['sslverify'] = false;
+		}
 
 		// safely get URL and response body.
-		$response = wp_safe_remote_get(
-			$url,
-			array(
-				'user-agent' => '', // Default value being blocked by Cloudflare.
-				'sslverify'  => true,
-        		'timeout'    => 15,
-			)
-		);
+		$response = wp_safe_remote_get( $url, $args );
 		$body     = wp_remote_retrieve_body( $response );
 
 		// if response is not empty.
@@ -118,7 +186,7 @@ function bp_activity_link_parse_url( $url ) {
 
 			// Load HTML to DOM Object.
 			$dom = new DOMDocument();
-			$dom->loadHTML( mb_convert_encoding( $body, 'HTML-ENTITIES', 'UTF-8' ) );
+			@$dom->loadHTML( mb_convert_encoding( $body, 'HTML-ENTITIES', 'UTF-8' ) );
 
 			$meta_tags   = array();
 			$images      = array();
@@ -137,13 +205,13 @@ function bp_activity_link_parse_url( $url ) {
 			if ( is_array( $meta_tags ) && ! empty( $meta_tags ) ) {
 				foreach ( $meta_tags as $tag ) {
 					if ( is_array( $tag ) && ! empty( $tag ) ) {
-						if ( 'og:title' === $tag[0] ) {
+						if ( $tag[0] == 'og:title' ) {
 							$title = $tag[1];
 						}
-						if ( 'og:description' === $tag[0] || 'description' === strtolower( $tag[0] ) ) {
+						if ( $tag[0] == 'og:description' || 'description' === strtolower( $tag[0] ) ) {
 							$description = html_entity_decode( $tag[1], ENT_QUOTES, 'utf-8' );
 						}
-						if ( 'og:image' === $tag[0] ) {
+						if ( $tag[0] == 'og:image' ) {
 							$images[] = $tag[1];
 						}
 					}
@@ -153,13 +221,13 @@ function bp_activity_link_parse_url( $url ) {
 			// Parse DOM to get Title.
 			if ( empty( $title ) ) {
 				$nodes = $dom->getElementsByTagName( 'title' );
-				$title = $nodes->item( 0 )->nodeValue;
+				$title = $nodes && $nodes->length > 0 ? $nodes->item( 0 )->nodeValue : '';
 			}
 
 			// Parse DOM to get Meta Description.
 			if ( empty( $description ) ) {
 				$metas = $dom->getElementsByTagName( 'meta' );
-				for ( $i = 0; $i < $metas->length; $i ++ ) {
+				for ( $i = 0; $i < $metas->length; $i++ ) {
 					$meta = $metas->item( $i );
 					if ( 'description' === $meta->getAttribute( 'name' ) ) {
 						$description = $meta->getAttribute( 'content' );
@@ -167,9 +235,10 @@ function bp_activity_link_parse_url( $url ) {
 					}
 				}
 			}
+
 			// Parse DOM to get Images.
 			$image_elements = $dom->getElementsByTagName( 'img' );
-			for ( $i = 0; $i < $image_elements->length; $i ++ ) {
+			for ( $i = 0; $i < $image_elements->length; $i++ ) {
 				$image = $image_elements->item( $i );
 				$src   = $image->getAttribute( 'src' );
 
@@ -203,6 +272,7 @@ function bp_activity_link_parse_url( $url ) {
 			}
 		}
 	}
+
 	if ( ! empty( $parsed_url_data ) ) {
 		// set the transient.
 		set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
@@ -211,12 +281,33 @@ function bp_activity_link_parse_url( $url ) {
 	/**
 	 * Filters parsed URL data.
 	 *
-	 * @since BuddyBoss 1.0.0
-	 * @param array $parsed_url_data Parse URL data.
+	 * @since 1.4.6
+	 *
+	 * * @param array $parsed_url_data Parse URL data.
 	 */
 	return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
 }
 
+
+/**
+ * Check if the requested URL is from same site.
+ *
+ * @since 1.4.6
+ *
+ * @param string $url URL to check.
+ *
+ * @return bool
+ */
+function bp_is_same_site_url( $url ) {
+	$parsed_url = wp_parse_url( $url );
+	$home_url   = wp_parse_url( home_url( '/' ) );
+
+	if ( ! empty( $parsed_url['host'] ) && ! empty( $parsed_url['scheme'] ) ) {
+		return ( strtolower( $parsed_url['host'] ) === strtolower( $home_url['host'] ) ) && ( $parsed_url['scheme'] === $home_url['scheme'] );
+	}
+
+	return false;
+}
 
 /**
  * Save link preview data into activity meta key "_bp_activity_link_preview_data"
@@ -227,19 +318,19 @@ function bp_activity_link_parse_url( $url ) {
  */
 function bp_activity_link_preview_save_link_data( $activity ) {
 	$bp_activity_nonce = isset( $_POST['_wpnonce_post_update'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce_post_update'] ) ) : '';
-	// Check for nonce security.	
+	// Check for nonce security.
 	if ( empty( $bp_activity_nonce ) || ! wp_verify_nonce( $bp_activity_nonce, 'post_update' ) ) {
 		die( 'Security check failed.' );
 	}
 	if ( isset( $_POST['link_url'] ) && isset( $_POST['link_title'] ) && isset( $_POST['link_description'] ) && isset( $_POST['link_image'] ) ) {
 
-		$link_url         = ! empty( $_POST['link_url'] ) ? sanitize_text_field( wp_unslash( $_POST['link_url'] ) ) : '';
-		$link_title       = ! empty( $_POST['link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['link_title'] ) ) : '';
-		$link_description = ! empty( $_POST['link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['link_description'] ) ) : '';
-		$link_image       = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
+		$link_url                 = ! empty( $_POST['link_url'] ) ? sanitize_text_field( wp_unslash( $_POST['link_url'] ) ) : '';
+		$link_title               = ! empty( $_POST['link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['link_title'] ) ) : '';
+		$link_description         = ! empty( $_POST['link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['link_description'] ) ) : '';
+		$link_image               = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
 		$link_preview_data['url'] = $link_url;
-		if ( false !== strpos( $link_preview_data['url'] , 'www.reddit.com') )  {
-			return ;
+		if ( false !== strpos( $link_preview_data['url'], 'www.reddit.com' ) ) {
+			return;
 		}
 		if ( ! empty( $link_image ) ) {
 			$link_preview_data['image_url'] = $link_image;
@@ -283,17 +374,17 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 	if ( empty( $preview_data['url'] ) || ( empty( trim( $preview_data['title'] ) ) && empty( trim( $preview_data['description'] ) ) ) ) {
 		return $content;
 	}
-	if( true === str_contains($preview_data['url'], 'x.com') ){
-		$content = '<div class="activity-link-preview-container" data-url="' . esc_attr($preview_data['url']) . '"></div>';
-	}elseif( true === str_contains($preview_data['url'], 'facebook.com') ){
-		$content = '<div class="fb-post" data-href="' . esc_attr($preview_data['url']) . '" data-width="500" data-height="500"></div>';
-	}else{
+	if ( true === str_contains( $preview_data['url'], 'x.com' ) ) {
+		$content .= '<div class="activity-link-preview-container" data-url="' . esc_attr( $preview_data['url'] ) . '"></div>';
+	} elseif ( true === str_contains( $preview_data['url'], 'facebook.com' ) ) {
+		$content .= '<div class="fb-post" data-href="' . esc_attr( $preview_data['url'] ) . '" data-width="500" data-height="500"></div>';
+	} else {
 		$description = $preview_data['description'];
 		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';
 		$description = wp_trim_words( $description, 40, $read_more );
-	
+
 		$content = make_clickable( $content );
-	
+
 		$content .= '<div class="activity-link-preview-container">';
 		$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
 		if ( ! empty( $preview_data['image_url'] ) ) {
@@ -304,8 +395,8 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
 		$content .= '</div>';
 	}
-	
-	return htmlspecialchars_decode($content);
+
+	return htmlspecialchars_decode( $content );
 }
 
 add_filter( 'bp_get_activity_content_body', 'bp_activity_link_preview_content_body', 8, 2 );
@@ -336,7 +427,7 @@ function bp_activity_link_preview_required_plugin_admin_notice() {
 	$bp_plugin       = esc_html__( 'BuddyPress', 'buddypress-activity-link-preview' );
 	echo '<div class="error"><p>';
 	/* translators: %s: */
-	echo sprintf( esc_html__( '%1$s is ineffective as it requires %2$s to be installed and active.', 'buddypress-activity-link-preview' ), '<strong>' . esc_html( $bpquotes_plugin ) . '</strong>', '<strong>' . esc_html( $bp_plugin ) . '</strong>' );
+	printf( esc_html__( '%1$s is ineffective as it requires %2$s to be installed and active.', 'buddypress-activity-link-preview' ), '<strong>' . esc_html( $bpquotes_plugin ) . '</strong>', '<strong>' . esc_html( $bp_plugin ) . '</strong>' );
 	echo '</p></div>';
 	if ( null !== filter_input( INPUT_GET, 'activate' ) ) {
 		$activate = filter_input( INPUT_GET, 'activate' );
@@ -360,9 +451,23 @@ function bp_activity_link_preview_data_embed_rest_api( $response, $request, $act
 	return $response;
 }
 
-add_action( 'wp_head', 'bp_activity_link_preview_add_facebook_root_div' );
-function bp_activity_link_preview_add_facebook_root_div(){
-	if( bp_is_activity_directory() || bp_is_group() || bp_is_user_activity() ){
+
+/**
+ * Outputs a Facebook root div element in specific BuddyPress contexts.
+ *
+ * This function checks if the current page is one of the following:
+ * - The BuddyPress activity directory
+ * - A BuddyPress group page
+ * - A BuddyPress user activity page
+ *
+ * If any of these conditions are met, it echoes a `<div>` element with the ID `fb-root`.
+ * This is typically required for Facebook SDK integration.
+ *
+ * @return void
+ */
+function bp_activity_link_preview_add_facebook_root_div() {
+	if ( bp_is_activity_directory() || bp_is_group() || bp_is_user_activity() ) {
 		echo '<div id="fb-root"></div>';
 	}
 }
+add_action( 'wp_head', 'bp_activity_link_preview_add_facebook_root_div' );
