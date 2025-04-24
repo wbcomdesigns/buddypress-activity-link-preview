@@ -43,7 +43,7 @@ function bp_activity_parse_url_preview() {
 
 	// Check if URL is validated.
 	if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-		wp_send_json( array( 'error' => __( 'URL is not valid.', 'buddypress-activity-link-preview' ) ) );
+		wp_send_json( array( 'error' => __( 'The URL you entered is not valid.', 'buddypress-activity-link-preview' ) ) );
 	}
 
 	// Parse URL to get host
@@ -65,7 +65,7 @@ function bp_activity_parse_url_preview() {
 
 	// If empty data then send error.
 	if ( empty( $parse_url_data ) ) {
-		wp_send_json( array( 'error' => __( 'Sorry! preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
+		wp_send_json( array( 'error' => __( 'Sorry! Preview is not available right now. Please try again later.', 'buddypress-activity-link-preview' ) ) );
 	}
 
 	// Apply filter to allow modification of parsed data
@@ -380,7 +380,7 @@ function bp_activity_link_preview_content_body( $content, $activity ) {
 		$content .= '<div class="fb-post" data-href="' . esc_attr( $preview_data['url'] ) . '" data-width="500" data-height="500"></div>';
 	} else {
 		$description = $preview_data['description'];
-		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Continue reading', 'buddypress-activity-link-preview' ) . '</a>';
+		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
 		$description = wp_trim_words( $description, 40, $read_more );
 
 		$content = make_clickable( $content );
@@ -427,7 +427,7 @@ function bp_activity_link_preview_required_plugin_admin_notice() {
 	$bp_plugin       = esc_html__( 'BuddyPress', 'buddypress-activity-link-preview' );
 	echo '<div class="error"><p>';
 	/* translators: %s: */
-	printf( esc_html__( '%1$s is ineffective as it requires %2$s to be installed and active.', 'buddypress-activity-link-preview' ), '<strong>' . esc_html( $bpquotes_plugin ) . '</strong>', '<strong>' . esc_html( $bp_plugin ) . '</strong>' );
+	printf( esc_html__( '%1$s is ineffective because it requires %2$s to be installed and active.', 'buddypress-activity-link-preview' ), '<strong>' . esc_html( $bpquotes_plugin ) . '</strong>', '<strong>' . esc_html( $bp_plugin ) . '</strong>' );
 	echo '</p></div>';
 	if ( null !== filter_input( INPUT_GET, 'activate' ) ) {
 		$activate = filter_input( INPUT_GET, 'activate' );
