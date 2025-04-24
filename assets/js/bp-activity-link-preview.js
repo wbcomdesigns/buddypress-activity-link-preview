@@ -26,6 +26,7 @@
 							}
 						);
 					}
+
 				});
 
 				if (typeof FB !== 'undefined') {
@@ -34,30 +35,28 @@
 					console.error('Facebook SDK not loaded.');
 				}
 			}, 200);
-		}
-	});
-
-	$(document).ready(function () {
-
-		var parentElement = $(document).find("whats-new-submit").find("input[type='submit']");
-		$(document).on('click', parentElement, function () {
+		} else if (parsedData.action.includes('post_update')) {
 			setTimeout(() => {
 				$(document).find(".activity-link-preview-container").each(function (index, element) {
-					var url = $(element).data("url");
-					if (undefined != url) {
-						const tweetIdMatch = url.match(/status\/(\d+)/);
-						var tweetId = '';
-						if (tweetIdMatch && tweetIdMatch[1]) {
-							tweetId = tweetIdMatch[1]; // Return the matched tweet ID
-						}
-						twttr.widgets.createTweet(
-							tweetId,
-							element,
-							{
-								theme: 'light'
+					if (0 == index) {
+						var url = $(element).data("url");
+						if (undefined != url) {
+							const tweetIdMatch = url.match(/status\/(\d+)/);
+							var tweetId = '';
+							if (tweetIdMatch && tweetIdMatch[1]) {
+								tweetId = tweetIdMatch[1]; // Return the matched tweet ID
 							}
-						);
+							twttr.widgets.createTweet(
+								tweetId,
+								element,
+								{
+									theme: 'light'
+								}
+							);
+						}
+
 					}
+
 				});
 
 				if (typeof FB !== 'undefined') {
@@ -66,9 +65,9 @@
 					console.error('Facebook SDK not loaded.');
 				}
 			}, 200);
-		})
 
-	})
+		}
+	});
 
 	// })
 
