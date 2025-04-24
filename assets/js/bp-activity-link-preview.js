@@ -38,7 +38,7 @@
 		} else if (parsedData.action.includes('post_update')) {
 			setTimeout(() => {
 				$(document).find(".activity-link-preview-container").each(function (index, element) {
-					if (0 == index) {
+					if (1 == index) {
 						var url = $(element).data("url");
 						if (undefined != url) {
 							const tweetIdMatch = url.match(/status\/(\d+)/);
