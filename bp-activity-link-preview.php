@@ -5,7 +5,7 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview display as image title and description from the site When links are used in activity posts.
- * Version:           1.4.4
+ * Version:           1.6.0
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
