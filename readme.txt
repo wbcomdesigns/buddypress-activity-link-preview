@@ -3,8 +3,8 @@ Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, Activity, Link Preview
 Requires at least: 3.0.1
-Tested up to: 6.7.1
-Stable tag: 1.4.4
+Tested up to: 6.8.0
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,18 @@ The screenshots are present in the root of the plugin folder.
 1. screenshot-1
 
 == Changelog ==
+
+= 1.6.0 =
+* Added: Filter and event hooks to extend the activity preview functionality.
+* Fixed: Twitter card preview duplication issue in multiple activities.
+* Fixed: Twitter preview incorrectly appended to the second activity.
+* Fixed: Activity content not displaying when preview is enabled.
+* Fixed: Iframe not rendering correctly in activity previews.
+* Fixed: Preview not visible when sharing X (formerly Twitter) links.
+* Fixed: Activity link preview index logic for accurate rendering.
+* Improved: String labels and content clarity across the plugin.
+* Security: Patched SSRF (Server Side Request Forgery) vulnerability in the URL parser.
+* Security: Fixed XSS issues in link preview rendering to improve safety.
 
 = 1.4.4 =
 * Fix: Hide raw Facebook and Twitter URLs in BuddyPress activity content. Only embed previews are displayed.
