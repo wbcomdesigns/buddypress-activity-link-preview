@@ -35,6 +35,8 @@ The screenshots are present in the root of the plugin folder.
 1. screenshot-1
 
 == Changelog ==
+= 1.6.1 =
+* Security: Patched SSRF (Server Side Request Forgery) vulnerability in the URL parser.
 
 = 1.6.0 =
 * Added: Filter and event hooks to extend the activity preview functionality.
