@@ -499,10 +499,16 @@ function bp_activity_link_preview_comment_content( $content ) {
 	return $content;
 }
 
-// Add the comment-specific filter back (with enable/disable option)
-if ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) ) {
-	add_filter( 'bp_activity_comment_content', 'bp_activity_link_preview_comment_content' );
+/**
+ * Register comment content filter after plugins are loaded.
+ * This allows other plugins to disable comment previews via filter.
+ */
+function bp_activity_link_preview_init_comment_filter() {
+	if ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) ) {
+		add_filter( 'bp_activity_comment_content', 'bp_activity_link_preview_comment_content' );
+	}
 }
+add_action( 'bp_init', 'bp_activity_link_preview_init_comment_filter' );
 
 /**
  * Helper function to render preview
