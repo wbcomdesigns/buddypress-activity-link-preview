@@ -44,6 +44,11 @@ The screenshots are present in the root of the plugin folder.
 * Fixed: Use wp_parse_url() instead of parse_url() for better compatibility
 * Fixed: Added translators comments for internationalization
 * Fixed: Plugin Check compatibility improvements
+* Fixed: Nonce verification now mandatory for security (CSRF protection)
+* Fixed: BuddyPress/BuddyBoss compatibility - function_exists checks added
+* Fixed: PHP 8.2+ compatibility - removed deprecated HTML-ENTITIES encoding
+* Fixed: BuddyPress class name detection improved
+* Added: Plugin version constant for proper asset cache busting
 * Updated: Tested up to WordPress 6.9
 * Updated: Requires PHP 7.4 minimum
 

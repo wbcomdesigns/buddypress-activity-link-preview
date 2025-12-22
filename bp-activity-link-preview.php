@@ -18,15 +18,16 @@
  * @since             1.0.0
  */
 
+define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.0' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
-	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), '1.0.0', 'all' );
-	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), '1.0.0', true );
-	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v14.0', array( 'jquery' ), '1.0.0', true );
-	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), '1.0.0', true );
+	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), BP_ACTIVITY_LINK_PREVIEW_VERSION, 'all' );
+	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
+	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v14.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
+	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	
 	// Add localized data for comment handling
 	wp_localize_script( 'bp-activity-link-preview-js', 'bp_activity_link_preview', array(
@@ -39,14 +40,15 @@ add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
-	// Verify nonce if provided
-	if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'bp_activity_link_preview_nonce' ) ) {
-		wp_send_json( array( 'error' => __( 'Security check failed.', 'buddypress-activity-link-preview' ) ) );
+	// Check if user is logged in first
+	if ( ! is_user_logged_in() ) {
+		wp_send_json_error( array( 'message' => __( 'You must be logged in to perform this action.', 'buddypress-activity-link-preview' ) ) );
 	}
 
-	// Check if user is logged in
-	if ( ! is_user_logged_in() ) {
-		wp_send_json( array( 'error' => __( 'You must be logged in to perform this action.', 'buddypress-activity-link-preview' ) ) );
+	// Verify nonce - required for security
+	$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+	if ( empty( $nonce ) || ! wp_verify_nonce( $nonce, 'bp_activity_link_preview_nonce' ) ) {
+		wp_send_json_error( array( 'message' => __( 'Security check failed.', 'buddypress-activity-link-preview' ) ) );
 	}
 	
 	// Get URL and comment ID (if it's a comment)
@@ -92,7 +94,6 @@ function bp_activity_parse_url_preview() {
 	wp_send_json( $parse_url_data );
 }
 add_action( 'wp_ajax_bp_activity_parse_url_preview', 'bp_activity_parse_url_preview' );
-add_action( 'wp_ajax_nopriv_bp_activity_parse_url_preview', 'bp_activity_parse_url_preview' );
 
 /**
  * Bp_activity_link_parse_url
@@ -173,17 +174,20 @@ function bp_activity_link_parse_url( $url ) {
 		$args = array( 'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0' );
 
 		if ( bp_is_same_site_url( $url ) ) {
-			if ( ! bp_enable_private_network() ) {
-				// Add the custom header with the JWT token.
-				$args['headers'] = array(
-					'bb-preview-token' => bb_create_jwt(
-						array(
-							'url' => $url,
-							'iat' => time(),
-							'exp' => time() + 120, // Token validity 2 minutes.
-						)
-					),
-				);
+			// BuddyBoss Platform compatibility - add JWT token if available.
+			if ( function_exists( 'bp_enable_private_network' ) && function_exists( 'bb_create_jwt' ) ) {
+				if ( ! bp_enable_private_network() ) {
+					// Add the custom header with the JWT token.
+					$args['headers'] = array(
+						'bb-preview-token' => bb_create_jwt(
+							array(
+								'url' => $url,
+								'iat' => time(),
+								'exp' => time() + 120, // Token validity 2 minutes.
+							)
+						),
+					);
+				}
 			}
 			$args['sslverify'] = false;
 		}
@@ -197,7 +201,10 @@ function bp_activity_link_parse_url( $url ) {
 
 			// Load HTML to DOM Object.
 			$dom = new DOMDocument();
-			@$dom->loadHTML( mb_convert_encoding( $body, 'HTML-ENTITIES', 'UTF-8' ) );
+			// Suppress warnings for malformed HTML and handle encoding properly.
+			libxml_use_internal_errors( true );
+			$dom->loadHTML( '<?xml encoding="UTF-8">' . $body, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+			libxml_clear_errors();
 
 			$meta_tags   = array();
 			$images      = array();
@@ -584,10 +591,11 @@ function bp_activity_link_preview_allowed_tags( $tags ) {
 add_filter( 'bp_activity_allowed_tags', 'bp_activity_link_preview_allowed_tags' );
 
 /**
- *  Check if buddypress activate.
+ * Check if BuddyPress is activated.
  */
 function bp_activity_link_preview_requires_buddypress() {
-	if ( ! class_exists( 'Buddypress' ) ) {
+	// Check for both BuddyPress and BuddyBoss Platform.
+	if ( ! class_exists( 'BuddyPress' ) && ! class_exists( 'buddypress' ) ) {
 		deactivate_plugins( plugin_basename( __FILE__ ) );
 		add_action( 'admin_notices', 'bp_activity_link_preview_required_plugin_admin_notice' );
 		if ( null !== filter_input( INPUT_GET, 'activate' ) ) {
