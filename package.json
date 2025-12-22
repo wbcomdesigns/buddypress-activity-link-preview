@@ -1,31 +1,26 @@
 {
   "name": "buddypress-activity-link-preview",
-  "version": "1.0.0",
+  "version": "1.7.0",
   "url": "https://github.com/wbcomdesigns/buddypress-activity-link-preview",
   "license": "GPL-2.0+",
-  "description": "BuddyPress activity link preview display as image title and description from the site when links are used in activity posts.",
+  "description": "BuddyPress activity link preview displays image, title and description from websites when links are shared in activity posts.",
   "devDependencies": {
-    "eslint": "^4.15.0",
-    "eslint-plugin-wordpress": "^0.1.0",
-    "grunt": "^1.0.4",
-    "grunt-check-dependencies": "~1.0.0",
+    "grunt": "^1.6.1",
     "grunt-checktextdomain": "^1.0.1",
-    "grunt-jsvalidate": "~0.2.2",
-    "grunt-stylelint": "^0.8.0",
-    "grunt-wp-i18n": "^1.0.1",
-    "stylelint": "~7.10.1",
-    "stylelint-config-wordpress": "^11.0.0"
+    "grunt-contrib-clean": "^2.0.1",
+    "grunt-contrib-compress": "^2.0.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-wp-i18n": "^1.0.3",
+    "load-grunt-tasks": "^5.1.0"
   },
   "engines": {
-    "node": "16.4.0",
-    "npm": "7.24.2"
+    "node": ">=16.0.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/wbcomdesigns/buddypress-activity-link-preview"
   },
-  "dependencies": {
-    "grunt-checktextdomain": "^1.0.1",
-    "load-grunt-tasks": "^3.5.2"
+  "scripts": {
+    "build": "grunt build"
   }
 }

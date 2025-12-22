@@ -1,0 +1,80 @@
+# Copyright (C) 2025 wbcomdesigns
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Activity Link Preview For BuddyPress 1.7.0\n"
+"Report-Msgid-Bugs-To: developer@developer.developer\n"
+"POT-Creation-Date: 2025-12-22 09:28:37+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Wbcom Designs\n"
+"Language-Team: Wbcom Designs\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Country: United States\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: "
+"__;_e;_x:1,2c;_ex:1,2c;_n:1,2;_nx:1,2,4c;_n_noop:1,2;_nx_noop:1,2,3c;esc_"
+"attr__;esc_html__;esc_attr_e;esc_html_e;esc_attr_x:1,2c;esc_html_x:1,2c;\n"
+"X-Poedit-Basepath: ../\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-Bookmarks: \n"
+"X-Textdomain-Support: yes\n"
+"X-Generator: grunt-wp-i18n 1.0.3\n"
+
+#: bp-activity-link-preview.php:45
+msgid "You must be logged in to perform this action."
+msgstr ""
+
+#: bp-activity-link-preview.php:51
+msgid "Security check failed."
+msgstr ""
+
+#: bp-activity-link-preview.php:60
+msgid "The URL you entered is not valid."
+msgstr ""
+
+#: bp-activity-link-preview.php:75
+msgid "This URL cannot be previewed for security reasons."
+msgstr ""
+
+#: bp-activity-link-preview.php:82
+msgid "Sorry! Preview is not available right now. Please try again later."
+msgstr ""
+
+#: bp-activity-link-preview.php:537
+msgid "Read more"
+msgstr ""
+
+#. Plugin Name of the plugin/theme
+msgid "Activity Link Preview For BuddyPress"
+msgstr ""
+
+#: bp-activity-link-preview.php:620
+msgid "BuddyPress"
+msgstr ""
+
+#: bp-activity-link-preview.php:623
+#. translators: %1$s: Plugin name, %2$s: Required plugin name
+msgid "%1$s is ineffective because it requires %2$s to be installed and active."
+msgstr ""
+
+#. Plugin URI of the plugin/theme
+msgid "https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"BuddyPress activity link preview displays as image title and description "
+"from the site when links are used in activity posts."
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "wbcomdesigns"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "https://wbcomdesigns.com/"
+msgstr ""
