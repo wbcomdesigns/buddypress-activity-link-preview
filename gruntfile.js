@@ -11,7 +11,7 @@ module.exports = function ( grunt ) {
 		// Clean build directory
 		clean: {
 			build: [ 'build/' ],
-			zip: [ '*.zip' ]
+			dist: [ 'dist/' ]
 		},
 
 		// Copy files to build directory
@@ -24,6 +24,7 @@ module.exports = function ( grunt ) {
 							'**',
 							'!node_modules/**',
 							'!build/**',
+							'!dist/**',
 							'!.git/**',
 							'!.gitignore',
 							'!gruntfile.js',
@@ -60,7 +61,7 @@ module.exports = function ( grunt ) {
 		compress: {
 			build: {
 				options: {
-					archive: 'buddypress-activity-link-preview-<%= pkg.version %>.zip',
+					archive: 'dist/buddypress-activity-link-preview-<%= pkg.version %>.zip',
 					mode: 'zip'
 				},
 				files: [
@@ -137,7 +138,7 @@ module.exports = function ( grunt ) {
 	// Build distribution zip
 	grunt.registerTask( 'build', [
 		'clean:build',
-		'clean:zip',
+		'clean:dist',
 		'checktextdomain',
 		'makepot',
 		'copy:build',
