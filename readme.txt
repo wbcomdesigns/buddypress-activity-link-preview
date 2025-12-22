@@ -1,12 +1,15 @@
-=== Wbcom Designs - Activity Link Preview For BuddyPress ===
+=== Activity Link Preview For BuddyPress ===
 Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, Activity, Link Preview
-Requires at least: 3.0.1
-Tested up to: 6.8.0
-Stable tag: 1.6.1
+Requires at least: 5.0
+Tested up to: 6.9
+Stable tag: 1.7.0
+Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+
+BuddyPress activity link preview displays image, title and description from websites when links are shared in activity posts.
 
 == Description ==
 
@@ -35,6 +38,15 @@ The screenshots are present in the root of the plugin folder.
 1. screenshot-1
 
 == Changelog ==
+= 1.7.0 =
+* Fixed: Scripts now load in footer for better performance
+* Fixed: Proper input sanitization with wp_unslash() for POST data
+* Fixed: Use wp_parse_url() instead of parse_url() for better compatibility
+* Fixed: Added translators comments for internationalization
+* Fixed: Plugin Check compatibility improvements
+* Updated: Tested up to WordPress 6.9
+* Updated: Requires PHP 7.4 minimum
+
 = 1.6.1 =
 * Security: Patched SSRF (Server Side Request Forgery) vulnerability in the URL parser.
 

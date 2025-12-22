@@ -5,7 +5,7 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview displays as image title and description from the site when links are used in activity posts.
- * Version:           1.6.1
+ * Version:           1.7.0
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
@@ -24,9 +24,9 @@ define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), '1.0.0', 'all' );
-	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), '1.0.0' );
-	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v14.0', array( 'jquery' ), '1.0.0' );
-	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), '1.0.0' );
+	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), '1.0.0', true );
+	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v14.0', array( 'jquery' ), '1.0.0', true );
+	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), '1.0.0', true );
 	
 	// Add localized data for comment handling
 	wp_localize_script( 'bp-activity-link-preview-js', 'bp_activity_link_preview', array(
@@ -40,7 +40,7 @@ add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
 	// Verify nonce if provided
-	if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( $_POST['nonce'], 'bp_activity_link_preview_nonce' ) ) {
+	if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'bp_activity_link_preview_nonce' ) ) {
 		wp_send_json( array( 'error' => __( 'Security check failed.', 'buddypress-activity-link-preview' ) ) );
 	}
 
@@ -50,8 +50,8 @@ function bp_activity_parse_url_preview() {
 	}
 	
 	// Get URL and comment ID (if it's a comment)
-    $url = ! empty( $_POST['url'] ) ? filter_var( $_POST['url'], FILTER_VALIDATE_URL ) : '';// phpcs:ignore
-	$comment_id = ! empty( $_POST['comment_id'] ) ? sanitize_text_field( $_POST['comment_id'] ) : '';
+	$url        = ! empty( $_POST['url'] ) ? filter_var( wp_unslash( $_POST['url'] ), FILTER_VALIDATE_URL ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- URL is validated with FILTER_VALIDATE_URL.
+	$comment_id = ! empty( $_POST['comment_id'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_id'] ) ) : '';
 
 	// Check if URL is validated.
 	if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
@@ -59,7 +59,7 @@ function bp_activity_parse_url_preview() {
 	}
 
 	// Parse URL to get host
-	$parsed_url = parse_url( $url );
+	$parsed_url = wp_parse_url( $url );
 	$host       = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
 
 	// Block requests to private/internal IP ranges and localhost
@@ -308,8 +308,12 @@ function bp_is_same_site_url( $url ) {
 
 /**
  * Save link preview data into activity meta
+ *
+ * @param BP_Activity_Activity $activity Activity object.
  */
 function bp_activity_link_preview_save_link_data( $activity ) {
+	// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verification is handled by BuddyPress before bp_activity_after_save hook is fired.
+
 	// Handle main activity posts
 	if ( isset( $_POST['link_url'] ) && isset( $_POST['link_title'] ) && isset( $_POST['link_description'] ) && isset( $_POST['link_image'] ) ) {
 		$link_url                 = ! empty( $_POST['link_url'] ) ? sanitize_text_field( wp_unslash( $_POST['link_url'] ) ) : '';
@@ -381,6 +385,8 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 			}
 		}
 	}
+
+	// phpcs:enable WordPress.Security.NonceVerification.Missing
 }
 add_action( 'bp_activity_after_save', 'bp_activity_link_preview_save_link_data', 10, 1 );
 
@@ -599,6 +605,7 @@ function bp_activity_link_preview_required_plugin_admin_notice() {
 	$bpquotes_plugin = esc_html__( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' );
 	$bp_plugin       = esc_html__( 'BuddyPress', 'buddypress-activity-link-preview' );
 	echo '<div class="error"><p>';
+	/* translators: %1$s: Plugin name, %2$s: Required plugin name */
 	printf( esc_html__( '%1$s is ineffective because it requires %2$s to be installed and active.', 'buddypress-activity-link-preview' ), '<strong>' . esc_html( $bpquotes_plugin ) . '</strong>', '<strong>' . esc_html( $bp_plugin ) . '</strong>' );
 	echo '</p></div>';
 	if ( null !== filter_input( INPUT_GET, 'activate' ) ) {
