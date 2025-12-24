@@ -5,96 +5,70 @@
 	var loadedURLs = [];
 	var currentCommentId = null;
 
+	// Track initialized Twitter widgets to prevent duplicates
+	var initializedTwitterWidgets = new Set();
+
 	// Enhanced AJAX complete handler with backward compatibility
 	jQuery(document).ajaxComplete(function (event, xhr, settings) {
 		const params = new URLSearchParams(settings.data);
 		const parsedData = Object.fromEntries(params.entries());
 		
-		if (parsedData.action && (parsedData.action.includes('activity_filter') || parsedData.action.includes('post_update') || parsedData.action.includes('new_activity_comment'))) {
-			setTimeout(() => {
-				// Handle both original and comment containers
-				$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
-					var url = $(element).data("url");
-					if (undefined != url) {
-						const tweetIdMatch = url.match(/status\/(\d+)/);
-						var tweetId = '';
-						if (tweetIdMatch && tweetIdMatch[1]) {
-							tweetId = tweetIdMatch[1];
-						}
-						if (tweetId) {
-							twttr.widgets.createTweet(
-								tweetId,
-								element,
-								{ theme: 'light' }
-							);
-						}
-					}
-				});
-
-				if (typeof FB !== 'undefined') {
-					FB.XFBML.parse();
-				} else {
-					console.error('Facebook SDK not loaded.');
-				}
-			}, 200);
+		// Only proceed for relevant actions
+		if (!parsedData.action || !(parsedData.action.includes('activity_filter') || 
+			parsedData.action.includes('post_update') || 
+			parsedData.action.includes('new_activity_comment'))) {
+			return;
 		}
 
-		// Original activity_filter handling
-		if (parsedData.action && parsedData.action.includes('activity_filter')) {
-			setTimeout(() => {
-				$(document).find(".activity-link-preview-container").each(function (index, element) {
-					var url = $(element).data("url");
-					if (undefined != url) {
-						const tweetIdMatch = url.match(/status\/(\d+)/);
-						var tweetId = '';
-						if (tweetIdMatch && tweetIdMatch[1]) {
-							tweetId = tweetIdMatch[1];
-						}
-						twttr.widgets.createTweet(
-							tweetId,
-							element,
-							{
-								theme: 'light'
-							}
-						);
-					}
+		setTimeout(() => {
+			// Handle both original and comment containers
+			$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
+				var $container = $(element);
+				var url = $container.data("url");
+				
+				if (!url) return;
+				
+				// Check if this is a Twitter URL
+				const tweetIdMatch = url.match(/status\/(\d+)/);
+				if (!tweetIdMatch || !tweetIdMatch[1]) return;
+				
+				const tweetId = tweetIdMatch[1];
+				const widgetId = 'twitter-widget-' + tweetId;
+				
+				// Skip if already initialized
+				if (initializedTwitterWidgets.has(widgetId)) return;
+				
+				// Mark as initialized
+				initializedTwitterWidgets.add(widgetId);
+				
+				// Clear any existing Twitter iframe to prevent duplicates
+				$container.find('iframe').remove();
+				
+				// Initialize Twitter widget
+				twttr.widgets.createTweet(
+					tweetId,
+					element,
+					{ theme: 'light' }
+				).then(function() {
+					// Widget created successfully
+				}).catch(function(error) {
+					console.error('Error creating Twitter widget:', error);
+					// Remove from initialized set to allow retry
+					initializedTwitterWidgets.delete(widgetId);
 				});
+			});
 
-				if (typeof FB !== 'undefined') {
+			// Handle Facebook embeds
+			if (typeof FB !== 'undefined') {
+				try {
 					FB.XFBML.parse();
-				} else {
-					console.error('Facebook SDK not loaded.');
+				} catch (e) {
+					console.error('Error initializing Facebook widgets:', e);
 				}
-			}, 200);
-		} else if (parsedData.action && parsedData.action.includes('post_update')) {
-			setTimeout(() => {
-				$(document).find(".activity-link-preview-container").each(function (index, element) {
-					if (0 === index) {
-						var url = $(element).data("url");
-						if (undefined != url) {
-							const tweetIdMatch = url.match(/status\/(\d+)/);
-							var tweetId = '';
-							if (tweetIdMatch && tweetIdMatch[1]) {
-								tweetId = tweetIdMatch[1];
-							}
-							twttr.widgets.createTweet(
-								tweetId,
-								element,
-								{
-									theme: 'light'
-								}
-							);
-						}
-					}
-				});
-
-				if (typeof FB !== 'undefined') {
-					FB.XFBML.parse();
-				} else {
-					console.error('Facebook SDK not loaded.');
-				}
-			}, 200);
-		}
+			} else {
+				console.warn('Facebook SDK not loaded.');
+			}
+		}, 200);
 	});
 
 	// Enhanced URL scraping function with backward compatibility
