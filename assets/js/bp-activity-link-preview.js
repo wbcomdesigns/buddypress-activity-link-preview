@@ -8,6 +8,69 @@
 	// Track initialized Twitter widgets to prevent duplicates
 	var initializedTwitterWidgets = new Set();
 
+	// BuddyBoss AJAX interceptor - inject link preview data into post_update requests
+	// BuddyBoss constructs its own AJAX data and doesn't serialize form hidden fields
+	jQuery(document).ajaxSend(function (event, jqXHR, settings) {
+		// Skip if BuddyBoss has its own link preview active
+		if (typeof bp_activity_link_preview !== 'undefined' && bp_activity_link_preview.buddyboss_link_preview_active) {
+			return;
+		}
+
+		// Only intercept post_update actions
+		if (!settings.data || typeof settings.data !== 'string') {
+			return;
+		}
+
+		// Check if this is a post_update action (could be JSON or URL-encoded)
+		var isPostUpdate = false;
+		var dataObj = null;
+
+		try {
+			// Try parsing as JSON first (BuddyBoss format)
+			dataObj = JSON.parse(settings.data);
+			if (dataObj.action === 'post_update') {
+				isPostUpdate = true;
+			}
+		} catch (e) {
+			// Try URL-encoded format
+			if (settings.data.indexOf('action=post_update') !== -1) {
+				isPostUpdate = true;
+			}
+		}
+
+		if (!isPostUpdate) {
+			return;
+		}
+
+		// Get link preview data from hidden fields
+		var $linkUrl = $('input[name="link_url"]');
+		var $linkTitle = $('input[name="link_title"]');
+		var $linkDescription = $('input[name="link_description"]');
+		var $linkImage = $('input[name="link_image"]');
+
+		// Only add if we have link preview data
+		if ($linkUrl.length > 0 && $linkUrl.val()) {
+			if (dataObj) {
+				// JSON format - add to object and re-stringify
+				dataObj.link_url = $linkUrl.val();
+				dataObj.link_title = $linkTitle.val() || '';
+				dataObj.link_description = $linkDescription.val() || '';
+				if (!dataObj.link_image && $linkImage.length > 0) {
+					dataObj.link_image = $linkImage.val();
+				}
+				settings.data = JSON.stringify(dataObj);
+			} else {
+				// URL-encoded format - append parameters
+				settings.data += '&link_url=' + encodeURIComponent($linkUrl.val());
+				settings.data += '&link_title=' + encodeURIComponent($linkTitle.val() || '');
+				settings.data += '&link_description=' + encodeURIComponent($linkDescription.val() || '');
+				if (settings.data.indexOf('link_image=') === -1 && $linkImage.length > 0) {
+					settings.data += '&link_image=' + encodeURIComponent($linkImage.val());
+				}
+			}
+		}
+	});
+
 	// Enhanced AJAX complete handler with backward compatibility
 	jQuery(document).ajaxComplete(function (event, xhr, settings) {
 		const params = new URLSearchParams(settings.data);
@@ -25,37 +88,47 @@
 			$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
 				var $container = $(element);
 				var url = $container.data("url");
-				
+
 				if (!url) return;
-				
+
+				// Skip if already has rendered content (iframe or widget)
+				if ($container.find('iframe, .twitter-tweet-rendered').length > 0) {
+					return;
+				}
+
 				// Check if this is a Twitter URL
 				const tweetIdMatch = url.match(/status\/(\d+)/);
 				if (!tweetIdMatch || !tweetIdMatch[1]) return;
-				
+
 				const tweetId = tweetIdMatch[1];
-				const widgetId = 'twitter-widget-' + tweetId;
-				
+
+				// Get activity ID for unique widget tracking (fixes re-post issue)
+				var activityId = $container.closest('.activity-item, [data-bp-activity-id]').data('bp-activity-id') ||
+					$container.closest('.activity').attr('id') ||
+					'container-' + index;
+
+				const widgetId = 'twitter-widget-' + activityId + '-' + tweetId;
+
 				// Skip if already initialized
 				if (initializedTwitterWidgets.has(widgetId)) return;
-				
+
 				// Mark as initialized
 				initializedTwitterWidgets.add(widgetId);
-				
-				// Clear any existing Twitter iframe to prevent duplicates
-				$container.find('iframe').remove();
-				
+
 				// Initialize Twitter widget
-				twttr.widgets.createTweet(
-					tweetId,
-					element,
-					{ theme: 'light' }
-				).then(function() {
-					// Widget created successfully
-				}).catch(function(error) {
-					console.error('Error creating Twitter widget:', error);
-					// Remove from initialized set to allow retry
-					initializedTwitterWidgets.delete(widgetId);
-				});
+				if (typeof twttr !== 'undefined' && twttr.widgets) {
+					twttr.widgets.createTweet(
+						tweetId,
+						element,
+						{ theme: 'light' }
+					).then(function() {
+						// Widget created successfully
+					}).catch(function(error) {
+						console.error('Error creating Twitter widget:', error);
+						// Remove from initialized set to allow retry
+						initializedTwitterWidgets.delete(widgetId);
+					});
+				}
 			});
 
 			// Handle Facebook embeds
@@ -353,24 +426,36 @@
 		$(attachmentContainer).append(link_preview);
 	}
 
+	// Helper function to get input value from textarea or contenteditable div (BuddyBoss compatibility)
+	var getInputValue = function ($element) {
+		if ($element.is('textarea')) {
+			return $element.val();
+		} else if ($element.attr('contenteditable') === 'true') {
+			// BuddyBoss uses contenteditable div instead of textarea
+			return $element.text();
+		}
+		return $element.val() || $element.text();
+	};
+
 	$(document).ready(function () {
-		// Main activity form handler (original functionality preserved)
-		$(document).on('keyup', '#whats-new', function () {
+		// Main activity form handler (works with both BuddyPress textarea and BuddyBoss contenteditable div)
+		$(document).on('keyup input', '#whats-new', function () {
+			var $whatsNew = $(this);
 			setTimeout(function () {
-				scrap_URL($('#whats-new').val(), false, null);
+				scrap_URL(getInputValue($whatsNew), false, null);
 			}, 500);
 		});
 
-		// Comment form handlers (new functionality)
-		$(document).on('keyup', '.ac-input', function () {
+		// Comment form handlers (works with both textarea and contenteditable)
+		$(document).on('keyup input', '.ac-input', function () {
 			var $this = $(this);
 			var commentId = $this.closest('.ac-form').attr('id');
 			if (commentId) {
 				commentId = commentId.replace('ac-form-', '');
 				currentCommentId = commentId;
-				
+
 				setTimeout(function () {
-					scrap_URL($this.val(), true, commentId);
+					scrap_URL(getInputValue($this), true, commentId);
 				}, 500);
 			}
 		});

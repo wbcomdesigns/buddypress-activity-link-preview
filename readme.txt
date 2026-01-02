@@ -4,7 +4,7 @@ Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -96,6 +96,11 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 
 == Changelog ==
 
+= 1.7.1 =
+* Fixed: Plugin now auto-deactivates when BuddyPress or BuddyBoss Platform is not active
+* Fixed: Added proper dependency check on admin_init hook
+* Improved: Better error handling for missing dependencies
+
 = 1.7.0 =
 * Fixed: Scripts now load in footer for better performance
 * Fixed: Proper input sanitization with wp_unslash() for POST data
@@ -166,6 +171,9 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.7.1 =
+Dependency handling improvement. Plugin now properly deactivates when BuddyPress or BuddyBoss is not active.
 
 = 1.7.0 =
 Security and compatibility update. Includes CSRF protection improvements, PHP 8.2+ compatibility, and BuddyBoss Platform support. Recommended for all users.
