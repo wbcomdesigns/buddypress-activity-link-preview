@@ -1,6 +1,6 @@
 {
   "name": "buddypress-activity-link-preview",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "url": "https://github.com/wbcomdesigns/buddypress-activity-link-preview",
   "license": "GPL-2.0+",
   "description": "BuddyPress activity link preview displays image, title and description from websites when links are shared in activity posts.",
