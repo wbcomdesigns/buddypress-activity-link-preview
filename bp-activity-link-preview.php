@@ -22,21 +22,140 @@ define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.0' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
+/**
+ * Check if BuddyPress or BuddyBoss Platform is active.
+ *
+ * @since 1.7.1
+ * @return bool True if either BuddyPress or BuddyBoss is active.
+ */
+function bp_activity_link_preview_is_bp_active() {
+	// Check for BuddyPress.
+	if ( class_exists( 'BuddyPress' ) ) {
+		return true;
+	}
+	// Check for BuddyBoss Platform.
+	if ( defined( 'BP_PLATFORM_VERSION' ) || class_exists( 'BuddyBoss_Platform' ) ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Display admin notice if BuddyPress/BuddyBoss is not active.
+ *
+ * @since 1.7.1
+ */
+function bp_activity_link_preview_admin_notice() {
+	?>
+	<div class="notice notice-error">
+		<p>
+			<strong><?php esc_html_e( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' ); ?></strong>
+			<?php esc_html_e( 'requires BuddyPress or BuddyBoss Platform to be installed and active.', 'buddypress-activity-link-preview' ); ?>
+		</p>
+	</div>
+	<?php
+}
+
+/**
+ * Deactivate plugin if BuddyPress/BuddyBoss is not active.
+ *
+ * @since 1.7.1
+ */
+function bp_activity_link_preview_requires_buddypress() {
+	if ( ! bp_activity_link_preview_is_bp_active() ) {
+		deactivate_plugins( plugin_basename( __FILE__ ) );
+		add_action( 'admin_notices', 'bp_activity_link_preview_admin_notice' );
+	}
+}
+add_action( 'admin_init', 'bp_activity_link_preview_requires_buddypress' );
+
+/**
+ * Bootstrap the plugin - register all hooks.
+ * This is called from plugins_loaded only when BuddyPress/BuddyBoss is active.
+ *
+ * @since 1.7.1
+ */
+function bp_activity_link_preview_bootstrap() {
+	// Enqueue scripts and styles.
+	add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
+
+	// Remove BuddyBoss duplicate preview.
+	add_action( 'bp_init', 'bp_activity_link_preview_disable_buddyboss_preview', 999 );
+
+	// AJAX handler.
+	add_action( 'wp_ajax_bp_activity_parse_url_preview', 'bp_activity_parse_url_preview' );
+
+	// Save link preview data.
+	add_action( 'bp_activity_after_save', 'bp_activity_link_preview_save_link_data', 10, 1 );
+
+	// Render link preview in activity content.
+	add_filter( 'bp_get_activity_content_body', 'bp_activity_link_preview_content_body_with_comments', 8, 2 );
+
+	// Initialize comment filter.
+	add_action( 'bp_init', 'bp_activity_link_preview_init_comment_filter' );
+
+	// Allow additional HTML tags.
+	add_filter( 'bp_activity_allowed_tags', 'bp_activity_link_preview_allowed_tags' );
+
+	// REST API integration.
+	add_filter( 'bp_rest_activity_prepare_value', 'bp_activity_link_preview_data_embed_rest_api', 10, 3 );
+
+	// Facebook SDK root div.
+	add_action( 'wp_head', 'bp_activity_link_preview_add_facebook_root_div' );
+}
+
+// Check dependency on plugins_loaded - either bootstrap or show admin notice.
+add_action(
+	'plugins_loaded',
+	function () {
+		if ( bp_activity_link_preview_is_bp_active() ) {
+			bp_activity_link_preview_bootstrap();
+		} else {
+			add_action( 'admin_notices', 'bp_activity_link_preview_admin_notice' );
+		}
+	},
+	20
+);
+
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), BP_ACTIVITY_LINK_PREVIEW_VERSION, 'all' );
 	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
-	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v14.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
+	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	
-	// Add localized data for comment handling
+	// Detect if BuddyBoss is active with its own link preview.
+	$buddyboss_active = function_exists( 'buddyboss_theme' ) || class_exists( 'BuddyBoss_Platform' );
+	$buddyboss_link_preview_active = $buddyboss_active && function_exists( 'bp_is_activity_link_preview_active' ) && bp_is_activity_link_preview_active();
+
+	// Detect if Youzify is active with its URL preview feature.
+	$youzify_active              = defined( 'YOUZIFY_VERSION' ) || class_exists( 'Youzify' );
+	$youzify_url_preview_enabled = $youzify_active && function_exists( 'youzify_option' ) && 'on' === youzify_option( 'youzify_enable_wall_url_preview', 'on' );
+
+	// Add localized data for comment handling.
 	wp_localize_script( 'bp-activity-link-preview-js', 'bp_activity_link_preview', array(
-		'ajaxurl' => admin_url( 'admin-ajax.php' ),
-		'nonce' => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
-		'enable_comments' => apply_filters( 'bp_activity_link_preview_enable_comments', true )
+		'ajaxurl'                       => admin_url( 'admin-ajax.php' ),
+		'nonce'                         => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
+		'enable_comments'               => apply_filters( 'bp_activity_link_preview_enable_comments', true ),
+		'buddyboss_active'              => $buddyboss_active,
+		'buddyboss_link_preview_active' => $buddyboss_link_preview_active,
+		'youzify_active'                => $youzify_active,
+		'youzify_url_preview_active'    => $youzify_url_preview_enabled,
 	));
 }
-add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
+
+/**
+ * Remove BuddyBoss Platform's link preview filter when our plugin is active.
+ * BuddyBoss adds bp_activity_link_preview at priority 20 which causes duplicate previews.
+ *
+ * @since 1.7.1
+ */
+function bp_activity_link_preview_disable_buddyboss_preview() {
+	// Check if BuddyBoss Platform is active.
+	if ( defined( 'BP_PLATFORM_VERSION' ) && function_exists( 'bp_activity_link_preview' ) ) {
+		remove_filter( 'bp_get_activity_content_body', 'bp_activity_link_preview', 20 );
+	}
+}
 
 /** Bp_activity_parse_url_preview */
 function bp_activity_parse_url_preview() {
@@ -93,7 +212,6 @@ function bp_activity_parse_url_preview() {
 	// send json success.
 	wp_send_json( $parse_url_data );
 }
-add_action( 'wp_ajax_bp_activity_parse_url_preview', 'bp_activity_parse_url_preview' );
 
 /**
  * Bp_activity_link_parse_url
@@ -395,7 +513,6 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 
 	// phpcs:enable WordPress.Security.NonceVerification.Missing
 }
-add_action( 'bp_activity_after_save', 'bp_activity_link_preview_save_link_data', 10, 1 );
 
 /**
  * Extract URLs from content
@@ -411,19 +528,46 @@ function bp_activity_link_preview_extract_urls_from_content( $content ) {
  */
 function bp_activity_link_preview_content_body_with_comments( $content, $activity ) {
 	static $processed_activities = array();
-	
+
 	$activity_id = $activity->id;
-	
-	// ONLY process main activities, NOT comments
+
+	// Skip if BuddyBoss is active and has its own link preview feature.
+	// BuddyBoss renders link previews with class 'bb-activity-link-preview'.
+	if ( function_exists( 'buddyboss_theme' ) || class_exists( 'BuddyBoss_Platform' ) ) {
+		// Check if BuddyBoss link preview is enabled.
+		if ( function_exists( 'bp_is_activity_link_preview_active' ) && bp_is_activity_link_preview_active() ) {
+			return $content;
+		}
+		// Also check content for BuddyBoss preview markup.
+		if ( strpos( $content, 'bb-activity-link-preview' ) !== false || strpos( $content, 'bb-url-scrapper' ) !== false ) {
+			return $content;
+		}
+	}
+
+	// Skip if Youzify is active and has its own URL preview feature.
+	// Youzify stores link preview in 'url_preview' meta and renders via its own templates.
+	if ( defined( 'YOUZIFY_VERSION' ) || class_exists( 'Youzify' ) ) {
+		// Check if Youzify URL preview is enabled.
+		if ( function_exists( 'youzify_option' ) && 'on' === youzify_option( 'youzify_enable_wall_url_preview', 'on' ) ) {
+			return $content;
+		}
+		// Also check for Youzify preview meta data.
+		$youzify_preview = bp_activity_get_meta( $activity_id, 'url_preview', true );
+		if ( ! empty( $youzify_preview ) ) {
+			return $content;
+		}
+	}
+
+	// ONLY process main activities, NOT comments.
 	if ( $activity->type === 'activity_comment' ) {
 		return $content;
 	}
-	
+
 	// Prevent duplicate processing for the same activity
 	if ( isset( $processed_activities[ $activity_id ] ) ) {
 		return $content;
 	}
-	
+
 	// Check if content already contains a preview to avoid double processing
 	if ( strpos( $content, 'activity-link-preview-container' ) !== false ) {
 		return $content;
@@ -440,7 +584,6 @@ function bp_activity_link_preview_content_body_with_comments( $content, $activit
 
 	return htmlspecialchars_decode( $content );
 }
-add_filter( 'bp_get_activity_content_body', 'bp_activity_link_preview_content_body_with_comments', 8, 2 );
 
 /**
  * Add comment-specific filter to ensure comments get processed
@@ -508,7 +651,6 @@ function bp_activity_link_preview_init_comment_filter() {
 		add_filter( 'bp_activity_comment_content', 'bp_activity_link_preview_comment_content' );
 	}
 }
-add_action( 'bp_init', 'bp_activity_link_preview_init_comment_filter' );
 
 /**
  * Helper function to render preview
@@ -522,33 +664,42 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
 		)
 	);
 
-	if ( empty( $preview_data['url'] ) || ( empty( trim( $preview_data['title'] ) ) && empty( trim( $preview_data['description'] ) ) ) ) {
+	if ( empty( $preview_data['url'] ) ) {
 		return $content;
 	}
 
 	$css_class = $is_comment ? 'activity-comment-link-preview-container' : 'activity-link-preview-container';
 
-	if ( true === str_contains( $preview_data['url'], 'x.com' ) ) {
+	// Social media embeds use native widgets, so bypass the title/description check.
+	if ( true === str_contains( $preview_data['url'], 'x.com' ) || true === str_contains( $preview_data['url'], 'twitter.com' ) ) {
 		$content .= '<div class="' . esc_attr( $css_class ) . '" data-url="' . esc_attr( $preview_data['url'] ) . '"></div>';
+		return $content;
 	} elseif ( true === str_contains( $preview_data['url'], 'facebook.com' ) ) {
 		$content .= '<div class="fb-post" data-href="' . esc_attr( $preview_data['url'] ) . '" data-width="500" data-height="500"></div>';
-	} else {
-		$description = $preview_data['description'];
-		$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
-		$description = wp_trim_words( $description, 40, $read_more );
+		return $content;
+	}
 
-		$content = make_clickable( $content );
+	// For regular URLs, require title or description for the preview.
+	if ( empty( trim( $preview_data['title'] ) ) && empty( trim( $preview_data['description'] ) ) ) {
+		return $content;
+	}
 
-		$content .= '<div class="' . esc_attr( $css_class ) . '">';
-		$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
-		if ( ! empty( $preview_data['image_url'] ) ) {
-			$content .= '<div class="activity-link-preview-image">';
-			$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" /></a>';
-			$content .= '</div>';
-		}
-		$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
+	// Regular link preview.
+	$description = $preview_data['description'];
+	$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
+	$description = wp_trim_words( $description, 40, $read_more );
+
+	$content = make_clickable( $content );
+
+	$content .= '<div class="' . esc_attr( $css_class ) . '">';
+	$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
+	if ( ! empty( $preview_data['image_url'] ) ) {
+		$content .= '<div class="activity-link-preview-image">';
+		$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" /></a>';
 		$content .= '</div>';
 	}
+	$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
+	$content .= '</div>';
 
 	return $content;
 }
@@ -594,39 +745,6 @@ function bp_activity_link_preview_allowed_tags( $tags ) {
 	
 	return $tags;
 }
-add_filter( 'bp_activity_allowed_tags', 'bp_activity_link_preview_allowed_tags' );
-
-/**
- * Check if BuddyPress is activated.
- */
-function bp_activity_link_preview_requires_buddypress() {
-	// Check for both BuddyPress and BuddyBoss Platform.
-	if ( ! class_exists( 'BuddyPress' ) && ! class_exists( 'buddypress' ) ) {
-		deactivate_plugins( plugin_basename( __FILE__ ) );
-		add_action( 'admin_notices', 'bp_activity_link_preview_required_plugin_admin_notice' );
-		if ( null !== filter_input( INPUT_GET, 'activate' ) ) {
-			$activate = filter_input( INPUT_GET, 'activate' );
-			unset( $activate );
-		}
-	}
-}
-add_action( 'admin_init', 'bp_activity_link_preview_requires_buddypress' );
-
-/**
- * Throw an Alert to tell the Admin why it didn't activate.
- */
-function bp_activity_link_preview_required_plugin_admin_notice() {
-	$bpquotes_plugin = esc_html__( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' );
-	$bp_plugin       = esc_html__( 'BuddyPress', 'buddypress-activity-link-preview' );
-	echo '<div class="error"><p>';
-	/* translators: %1$s: Plugin name, %2$s: Required plugin name */
-	printf( esc_html__( '%1$s is ineffective because it requires %2$s to be installed and active.', 'buddypress-activity-link-preview' ), '<strong>' . esc_html( $bpquotes_plugin ) . '</strong>', '<strong>' . esc_html( $bp_plugin ) . '</strong>' );
-	echo '</p></div>';
-	if ( null !== filter_input( INPUT_GET, 'activate' ) ) {
-		$activate = filter_input( INPUT_GET, 'activate' );
-		unset( $activate );
-	}
-}
 
 /**
  * Embed bp activity link preview data in rest api activity endpoint.
@@ -643,7 +761,6 @@ function bp_activity_link_preview_data_embed_rest_api( $response, $request, $act
 	
 	return $response;
 }
-add_filter( 'bp_rest_activity_prepare_value', 'bp_activity_link_preview_data_embed_rest_api', 10, 3 );
 
 /**
  * Outputs a Facebook root div element in specific BuddyPress contexts.
@@ -653,7 +770,6 @@ function bp_activity_link_preview_add_facebook_root_div() {
 		echo '<div id="fb-root"></div>';
 	}
 }
-add_action( 'wp_head', 'bp_activity_link_preview_add_facebook_root_div' );
 
 /**
  * DEVELOPER DOCUMENTATION
