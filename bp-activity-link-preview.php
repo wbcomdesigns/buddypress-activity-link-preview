@@ -5,7 +5,7 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview displays as image title and description from the site when links are used in activity posts.
- * Version:           1.7.1
+ * Version:           1.7.2
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
@@ -18,7 +18,7 @@
  * @since             1.0.0
  */
 
-define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.1' );
+define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.2' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
@@ -123,9 +123,9 @@ function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
-	
+
 	// Detect if BuddyBoss is active with its own link preview.
-	$buddyboss_active = function_exists( 'buddyboss_theme' ) || class_exists( 'BuddyBoss_Platform' );
+	$buddyboss_active              = function_exists( 'buddyboss_theme' ) || class_exists( 'BuddyBoss_Platform' );
 	$buddyboss_link_preview_active = $buddyboss_active && function_exists( 'bp_is_activity_link_preview_active' ) && bp_is_activity_link_preview_active();
 
 	// Detect if Youzify is active with its URL preview feature.
@@ -133,15 +133,19 @@ function bp_activity_link_preview_enqueue_scripts() {
 	$youzify_url_preview_enabled = $youzify_active && function_exists( 'youzify_option' ) && 'on' === youzify_option( 'youzify_enable_wall_url_preview', 'on' );
 
 	// Add localized data for comment handling.
-	wp_localize_script( 'bp-activity-link-preview-js', 'bp_activity_link_preview', array(
-		'ajaxurl'                       => admin_url( 'admin-ajax.php' ),
-		'nonce'                         => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
-		'enable_comments'               => apply_filters( 'bp_activity_link_preview_enable_comments', true ),
-		'buddyboss_active'              => $buddyboss_active,
-		'buddyboss_link_preview_active' => $buddyboss_link_preview_active,
-		'youzify_active'                => $youzify_active,
-		'youzify_url_preview_active'    => $youzify_url_preview_enabled,
-	));
+	wp_localize_script(
+		'bp-activity-link-preview-js',
+		'bp_activity_link_preview',
+		array(
+			'ajaxurl'                       => admin_url( 'admin-ajax.php' ),
+			'nonce'                         => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
+			'enable_comments'               => apply_filters( 'bp_activity_link_preview_enable_comments', true ),
+			'buddyboss_active'              => $buddyboss_active,
+			'buddyboss_link_preview_active' => $buddyboss_link_preview_active,
+			'youzify_active'                => $youzify_active,
+			'youzify_url_preview_active'    => $youzify_url_preview_enabled,
+		)
+	);
 }
 
 /**
@@ -169,7 +173,7 @@ function bp_activity_parse_url_preview() {
 	if ( empty( $nonce ) || ! wp_verify_nonce( $nonce, 'bp_activity_link_preview_nonce' ) ) {
 		wp_send_json_error( array( 'message' => __( 'Security check failed.', 'buddypress-activity-link-preview' ) ) );
 	}
-	
+
 	// Get URL and comment ID (if it's a comment)
 	$url        = ! empty( $_POST['url'] ) ? filter_var( wp_unslash( $_POST['url'] ), FILTER_VALIDATE_URL ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- URL is validated with FILTER_VALIDATE_URL.
 	$comment_id = ! empty( $_POST['comment_id'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_id'] ) ) : '';
@@ -256,7 +260,7 @@ function bp_activity_link_parse_url( $url ) {
 		}
 	}
 
-	$cache_key = 'bp_oembed_' . md5( maybe_serialize( $url ) );
+	$cache_key       = 'bp_oembed_' . md5( maybe_serialize( $url ) );
 	$parsed_url_data = get_transient( $cache_key );
 	if ( ! empty( $parsed_url_data ) ) {
 		return $parsed_url_data;
@@ -446,11 +450,11 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$link_description         = ! empty( $_POST['link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['link_description'] ) ) : '';
 		$link_image               = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
 		$link_preview_data['url'] = $link_url;
-		
+
 		if ( false !== strpos( $link_preview_data['url'], 'www.reddit.com' ) ) {
 			return;
 		}
-		
+
 		if ( ! empty( $link_image ) ) {
 			$link_preview_data['image_url'] = $link_image;
 		}
@@ -466,17 +470,17 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 
 	// Handle comment link previews (only if enabled)
 	if ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && $activity->type === 'activity_comment' && isset( $_POST['comment_link_url'] ) && isset( $_POST['comment_link_title'] ) && isset( $_POST['comment_link_description'] ) && isset( $_POST['comment_link_image'] ) ) {
-		$comment_link_url = ! empty( $_POST['comment_link_url'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_url'] ) ) : '';
-		$comment_link_title = ! empty( $_POST['comment_link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_title'] ) ) : '';
+		$comment_link_url         = ! empty( $_POST['comment_link_url'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_url'] ) ) : '';
+		$comment_link_title       = ! empty( $_POST['comment_link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_title'] ) ) : '';
 		$comment_link_description = ! empty( $_POST['comment_link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_description'] ) ) : '';
-		$comment_link_image = ! empty( $_POST['comment_link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_image'] ) ) : '';
-		
+		$comment_link_image       = ! empty( $_POST['comment_link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_image'] ) ) : '';
+
 		$comment_link_preview_data['url'] = $comment_link_url;
-		
+
 		if ( false !== strpos( $comment_link_preview_data['url'], 'www.reddit.com' ) ) {
 			return;
 		}
-		
+
 		if ( ! empty( $comment_link_image ) ) {
 			$comment_link_preview_data['image_url'] = $comment_link_image;
 		}
@@ -486,24 +490,28 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		if ( ! empty( $comment_link_description ) ) {
 			$comment_link_preview_data['description'] = $comment_link_description;
 		}
-		
+
 		bp_activity_update_meta( $activity->id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
 	}
 	// Fallback: If comment doesn't have preview data but has URLs in content, try to extract and save (only if enabled)
 	elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && $activity->type === 'activity_comment' && ! empty( $activity->content ) ) {
 		$urls = bp_activity_link_preview_extract_urls_from_content( $activity->content );
 		if ( ! empty( $urls ) ) {
-			$url = $urls[0]; // Use first URL found
+			$url         = $urls[0]; // Use first URL found.
 			$parsed_data = bp_activity_link_parse_url( $url );
-			
-			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) ) ) {
+
+			// Check if it's a social media URL that uses native embeds (Twitter, Facebook).
+			$is_social_media = bp_activity_link_preview_is_social_media_url( $url );
+
+			// Save preview data if we have title/description OR if it's a social media URL.
+			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) || $is_social_media ) ) {
 				$comment_link_preview_data = array(
-					'url' => $url,
-					'title' => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
+					'url'         => $url,
+					'title'       => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
 					'description' => ! empty( $parsed_data['description'] ) ? $parsed_data['description'] : '',
-					'image_url' => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : ''
+					'image_url'   => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : '',
 				);
-				
+
 				if ( false === strpos( $url, 'www.reddit.com' ) ) {
 					bp_activity_update_meta( $activity->id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
 				}
@@ -516,11 +524,51 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 
 /**
  * Extract URLs from content
+ *
+ * @param string $content       The content to extract URLs from.
+ * @param bool   $exclude_internal Whether to exclude same-site URLs (default: true).
+ * @return array Array of URLs found in content.
  */
-function bp_activity_link_preview_extract_urls_from_content( $content ) {
+function bp_activity_link_preview_extract_urls_from_content( $content, $exclude_internal = true ) {
 	$pattern = '/https?:\/\/[^\s<>"]{2,}/i';
 	preg_match_all( $pattern, $content, $matches );
-	return isset( $matches[0] ) ? $matches[0] : array();
+	$urls = isset( $matches[0] ) ? $matches[0] : array();
+
+	// Filter out same-site URLs (like @mention profile links) if requested.
+	if ( $exclude_internal && ! empty( $urls ) ) {
+		$urls = array_filter(
+			$urls,
+			function ( $url ) {
+				return ! bp_is_same_site_url( $url );
+			}
+		);
+		$urls = array_values( $urls ); // Re-index array.
+	}
+
+	return $urls;
+}
+
+/**
+ * Check if URL is a social media URL that uses native embeds.
+ * These platforms block scraping but have native embed widgets.
+ *
+ * @param string $url The URL to check.
+ * @return bool True if URL is a social media embed URL.
+ */
+function bp_activity_link_preview_is_social_media_url( $url ) {
+	$social_domains = array(
+		'x.com',
+		'twitter.com',
+		'facebook.com',
+	);
+
+	foreach ( $social_domains as $domain ) {
+		if ( false !== strpos( $url, $domain ) ) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**
@@ -572,7 +620,7 @@ function bp_activity_link_preview_content_body_with_comments( $content, $activit
 	if ( strpos( $content, 'activity-link-preview-container' ) !== false ) {
 		return $content;
 	}
-	
+
 	// Mark this activity as processed
 	$processed_activities[ $activity_id ] = true;
 
@@ -593,15 +641,15 @@ function bp_activity_link_preview_comment_content( $content ) {
 	if ( ! apply_filters( 'bp_activity_link_preview_enable_comments', true ) ) {
 		return $content;
 	}
-	
+
 	global $activities_template;
-	
+
 	// Make sure we have an activity object
 	if ( empty( $activities_template->activity ) ) {
 		return $content;
 	}
-	
-	$activity = $activities_template->activity;
+
+	$activity    = $activities_template->activity;
 	$activity_id = $activity->id;
 
 	// Check if content already contains a preview to avoid double processing
@@ -611,27 +659,31 @@ function bp_activity_link_preview_comment_content( $content ) {
 
 	// Check if we already have preview data
 	$comment_preview_data = bp_activity_get_meta( $activity_id, '_bp_activity_comment_link_preview_data', true );
-	
+
 	if ( ! empty( $comment_preview_data ) ) {
 		$content = bp_activity_link_preview_render_preview( $content, $comment_preview_data, true );
 	}
-	// If no preview data but content has URLs, generate it
+	// If no preview data but content has URLs, generate it.
 	elseif ( ! empty( $content ) ) {
 		$urls = bp_activity_link_preview_extract_urls_from_content( $content );
 		if ( ! empty( $urls ) ) {
-			$url = $urls[0];
+			$url         = $urls[0];
 			$parsed_data = bp_activity_link_parse_url( $url );
-			
-			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) ) ) {
+
+			// Check if it's a social media URL that uses native embeds.
+			$is_social_media = bp_activity_link_preview_is_social_media_url( $url );
+
+			// Generate preview if we have title/description OR if it's a social media URL.
+			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) || $is_social_media ) ) {
 				$comment_link_preview_data = array(
-					'url' => $url,
-					'title' => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
+					'url'         => $url,
+					'title'       => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
 					'description' => ! empty( $parsed_data['description'] ) ? $parsed_data['description'] : '',
-					'image_url' => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : ''
+					'image_url'   => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : '',
 				);
-				
+
 				if ( false === strpos( $url, 'www.reddit.com' ) ) {
-					// Save for future use and render
+					// Save for future use and render.
 					bp_activity_update_meta( $activity_id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
 					$content = bp_activity_link_preview_render_preview( $content, $comment_link_preview_data, true );
 				}
@@ -709,40 +761,40 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
  */
 function bp_activity_link_preview_allowed_tags( $tags ) {
 	$tags['div'] = array(
-		'class' => array(),
-		'id' => array(),
-		'style' => array(),
-		'data-url' => array(),
-		'data-href' => array(),
-		'data-width' => array(),
+		'class'       => array(),
+		'id'          => array(),
+		'style'       => array(),
+		'data-url'    => array(),
+		'data-href'   => array(),
+		'data-width'  => array(),
 		'data-height' => array(),
 	);
-	
+
 	$tags['img'] = array(
-		'src' => array(),
-		'alt' => array(),
-		'width' => array(),
+		'src'    => array(),
+		'alt'    => array(),
+		'width'  => array(),
 		'height' => array(),
-		'class' => array(),
-		'id' => array(),
+		'class'  => array(),
+		'id'     => array(),
 	);
-	
+
 	$tags['button'] = array(
-		'type' => array(),
-		'id' => array(),
+		'type'  => array(),
+		'id'    => array(),
 		'class' => array(),
 	);
-	
+
 	$tags['span'] = array(
 		'class' => array(),
-		'id' => array(),
+		'id'    => array(),
 	);
-	
+
 	$tags['i'] = array(
 		'class' => array(),
-		'id' => array(),
+		'id'    => array(),
 	);
-	
+
 	return $tags;
 }
 
@@ -752,13 +804,13 @@ function bp_activity_link_preview_allowed_tags( $tags ) {
 function bp_activity_link_preview_data_embed_rest_api( $response, $request, $activity ) {
 	$bp_activity_link_data              = bp_activity_get_meta( $activity->id, '_bp_activity_link_preview_data', true );
 	$response->data['bp_activity_link'] = $bp_activity_link_data;
-	
+
 	// Add comment link preview data if it's a comment
 	if ( $activity->type === 'activity_comment' ) {
-		$bp_activity_comment_link_data = bp_activity_get_meta( $activity->id, '_bp_activity_comment_link_preview_data', true );
+		$bp_activity_comment_link_data              = bp_activity_get_meta( $activity->id, '_bp_activity_comment_link_preview_data', true );
 		$response->data['bp_activity_comment_link'] = $bp_activity_comment_link_data;
 	}
-	
+
 	return $response;
 }
 
@@ -773,13 +825,13 @@ function bp_activity_link_preview_add_facebook_root_div() {
 
 /**
  * DEVELOPER DOCUMENTATION
- * 
+ *
  * How to disable comment link previews:
  * Add this to your theme's functions.php or plugin:
- * 
+ *
  * // Disable comment link previews completely
  * add_filter( 'bp_activity_link_preview_enable_comments', '__return_false' );
- * 
+ *
  * // Or conditionally disable for specific user roles
  * add_filter( 'bp_activity_link_preview_enable_comments', function( $enabled ) {
  *     if ( current_user_can( 'some_capability' ) ) {
@@ -787,7 +839,7 @@ function bp_activity_link_preview_add_facebook_root_div() {
  *     }
  *     return $enabled; // Keep enabled for others
  * });
- * 
+ *
  * // Or disable on specific pages
  * add_filter( 'bp_activity_link_preview_enable_comments', function( $enabled ) {
  *     if ( bp_is_group() ) {

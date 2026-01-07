@@ -283,10 +283,10 @@
 			}
 		}
 
-		var title = response.title;
-		var description = response.description;
-		var image = (response.images) ? response.images[0] : '';
-		var image_count = (response.images) ? response.images.length : 0;
+		var title = response.title || '';
+		var description = response.description || '';
+		var image = (response.images && Array.isArray(response.images) && response.images.length > 0) ? response.images[0] : '';
+		var image_count = (response.images && Array.isArray(response.images)) ? response.images.length : 0;
 
 		setLinkPreviewStorage(storageKey, 'link-preview', {
 			link_success: true,
@@ -407,12 +407,15 @@
 		}
 
 		var bp_activity_link_preview = getLinkPreviewStorage(storageKey, 'link-preview');
-		var link_image_index = bp_activity_link_preview.link_image_index;
-		var url = bp_activity_link_preview.link_url;
-		var title = bp_activity_link_preview.link_title;
-		var description = bp_activity_link_preview.link_description;
-		var image = bp_activity_link_preview.link_images[link_image_index];
-		var image_count = bp_activity_link_preview.link_images.length;
+
+		// Safely get values with defaults
+		var link_images = (bp_activity_link_preview && Array.isArray(bp_activity_link_preview.link_images)) ? bp_activity_link_preview.link_images : [];
+		var link_image_index = (bp_activity_link_preview && typeof bp_activity_link_preview.link_image_index !== 'undefined') ? bp_activity_link_preview.link_image_index : 0;
+		var url = (bp_activity_link_preview && bp_activity_link_preview.link_url) ? bp_activity_link_preview.link_url : '';
+		var title = (bp_activity_link_preview && bp_activity_link_preview.link_title) ? bp_activity_link_preview.link_title : '';
+		var description = (bp_activity_link_preview && bp_activity_link_preview.link_description) ? bp_activity_link_preview.link_description : '';
+		var image = (link_images.length > link_image_index) ? link_images[link_image_index] : '';
+		var image_count = link_images.length;
 
 		var closeId = isComment ? 'activity-close-comment-link-suggestion-' + commentId : 'activity-close-link-suggestion';
 		var imageCloseId = isComment ? 'activity-comment-link-preview-close-image-' + commentId : 'activity-link-preview-close-image';
@@ -597,22 +600,31 @@
 		});
 
 		// Original close handler
-		$(document).on('click', '#activity-close-link-suggestion', function () {
+		$(document).on('click', '#activity-close-link-suggestion', function (e) {
+			e.preventDefault();
 			$('.activity-url-scrapper-container').remove();
 		});
 
 		// Enhanced close handlers for comments
-		$(document).on('click', '[id^="activity-close-comment-link-suggestion"]', function () {
+		$(document).on('click', '[id^="activity-close-comment-link-suggestion"]', function (e) {
+			e.preventDefault();
 			var buttonId = $(this).attr('id');
 			var commentId = buttonId.replace('activity-close-comment-link-suggestion-', '');
 			$('#comment-attachments-' + commentId + ' .activity-comment-url-scrapper-container').remove();
 		});
 
 		// Enhanced image close handlers
-		$(document).on('click', '[id^="activity-comment-link-preview-close-image"]', function () {
+		$(document).on('click', '[id^="activity-comment-link-preview-close-image"]', function (e) {
+			e.preventDefault();
 			var buttonId = $(this).attr('id');
 			var commentId = buttonId.replace('activity-comment-link-preview-close-image-', '');
 			$('#comment-attachments-' + commentId + ' #activity-url-scrapper-img-holder').hide();
+		});
+
+		// Main activity image close handler
+		$(document).on('click', '#activity-link-preview-close-image', function (e) {
+			e.preventDefault();
+			$('#activity-url-scrapper-img-holder').hide();
 		});
 	});
 

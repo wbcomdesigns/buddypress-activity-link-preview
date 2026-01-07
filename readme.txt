@@ -4,7 +4,7 @@ Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -96,6 +96,15 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 
 == Changelog ==
 
+= 1.7.2 =
+* Fixed: Twitter/X and Facebook link previews now work in activity comments
+* Fixed: @mentions no longer generate unwanted link previews
+* Fixed: Hash symbol (#) no longer added to browser URL when closing previews
+* Fixed: "Image X of undefined" no longer shows when images can't be determined
+* Added: Helper function to detect social media URLs for native embed handling
+* Added: Same-site URL filtering to prevent internal profile links from generating previews
+* Improved: Better null checking for image navigation in JavaScript
+
 = 1.7.1 =
 * Fixed: Plugin now auto-deactivates when BuddyPress or BuddyBoss Platform is not active
 * Fixed: Added proper dependency check on admin_init hook
@@ -171,6 +180,9 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.7.2 =
+Bug fix release. Fixes Twitter/Facebook previews in comments, @mention link preview issue, hash symbol in URL, and undefined image count. Recommended for all users.
 
 = 1.7.1 =
 Dependency handling improvement. Plugin now properly deactivates when BuddyPress or BuddyBoss is not active.
