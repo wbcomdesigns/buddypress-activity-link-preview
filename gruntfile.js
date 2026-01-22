@@ -47,9 +47,8 @@ module.exports = function ( grunt ) {
 							'!**/.DS_Store',
 							'!Thumbs.db',
 							'!**/Thumbs.db',
-							'!CHANGELOG.md',
-							'!CONTRIBUTING.md',
-							'!README.md'
+							'!*.md',
+							'!**/*.md'
 						],
 						dest: 'build/buddypress-activity-link-preview/'
 					}
