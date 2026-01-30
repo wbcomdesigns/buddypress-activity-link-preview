@@ -650,8 +650,8 @@ function bp_activity_link_preview_comment_content( $content ) {
 	}
 
 	$activity    = $activities_template->activity;
-	$activity_id = $activity->id;
-
+	$activity_id = $activity->current_comment->id;
+	
 	// Check if content already contains a preview to avoid double processing
 	if ( strpos( $content, 'activity-comment-link-preview-container' ) !== false ) {
 		return $content;
