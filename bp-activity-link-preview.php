@@ -503,9 +503,10 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		}
 
 		bp_activity_update_meta( $activity->id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
-	} elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && 'activity_comment' === $activity->type && ! empty( $activity->content ) ) {
-		// Fallback: If comment doesn't have preview data but has URLs in content, try to extract and save (only if enabled).
-		$urls = bp_activity_link_preview_extract_urls_from_content( $activity->content );
+	}
+	// Fallback: If comment doesn't have preview data but has URLs in content, try to extract and save (only if enabled)
+	elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && $activity->type === 'activity_comment' && ! empty( $activity->content ) ) {
+		$urls = bp_activity_link_preview_extract_urls_from_content( $activity->content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0]; // Use first URL found.
 			$parsed_data = bp_activity_link_parse_url( $url );
@@ -679,9 +680,10 @@ function bp_activity_link_preview_comment_content( $content ) {
 
 	if ( ! empty( $comment_preview_data ) ) {
 		$content = bp_activity_link_preview_render_preview( $content, $comment_preview_data, true );
-	} elseif ( ! empty( $content ) ) {
-		// If no preview data but content has URLs, generate it.
-		$urls = bp_activity_link_preview_extract_urls_from_content( $content );
+	}
+	// If no preview data but content has URLs, generate it.
+	elseif ( ! empty( $content ) ) {
+		$urls = bp_activity_link_preview_extract_urls_from_content( $content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0];
 			$parsed_data = bp_activity_link_parse_url( $url );
