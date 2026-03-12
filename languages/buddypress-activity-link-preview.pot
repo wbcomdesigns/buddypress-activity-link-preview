@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Activity Link Preview For BuddyPress 1.7.3\n"
 "Report-Msgid-Bugs-To: developer@developer.developer\n"
-"POT-Creation-Date: 2026-02-19 10:37:09+00:00\n"
+"POT-Creation-Date: 2026-03-12 13:39:42+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -52,7 +52,7 @@ msgstr ""
 msgid "Sorry! Preview is not available right now. Please try again later."
 msgstr ""
 
-#: bp-activity-link-preview.php:762
+#: bp-activity-link-preview.php:769
 msgid "Read more"
 msgstr ""
 
