@@ -4,7 +4,7 @@ Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -95,6 +95,13 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 4. Multiple image selection
 
 == Changelog ==
+
+= 1.7.3 =
+* Code Quality: Fixed all WordPress Coding Standards (WPCS) violations
+* Code Quality: Applied strict comparisons, Yoda conditions, and proper inline comment punctuation
+* Code Quality: Added ABSPATH direct access protection
+* Code Quality: Added missing PHPDoc parameter documentation for all functions
+* Code Quality: Fixed all Plugin Check errors (0 errors)
 
 = 1.7.2 =
 * Fixed: Twitter/X and Facebook link previews now work in activity comments
