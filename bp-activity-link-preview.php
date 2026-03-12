@@ -541,8 +541,13 @@ function bp_activity_link_preview_save_link_data( $activity ) {
  * @return array Array of URLs found in content.
  */
 function bp_activity_link_preview_extract_urls_from_content( $content, $exclude_internal = true ) {
+	// Strip HTML tags so that URLs only in href attributes (e.g. @mention profile links
+	// converted to <a href="...">) are not matched — only URLs visible as plain text are extracted.
+	$text_content = wp_strip_all_tags( $content );
+
 	$pattern = '/https?:\/\/[^\s<>"]{2,}/i';
-	preg_match_all( $pattern, $content, $matches );
+	// preg_match_all( $pattern, $text_content, $matches );
+	preg_match_all( $pattern, $text_content, $matches );
 	$urls = isset( $matches[0] ) ? $matches[0] : array();
 
 	// Filter out same-site URLs (like @mention profile links) if requested.
