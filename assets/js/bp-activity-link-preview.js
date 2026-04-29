@@ -4,6 +4,7 @@
 	var loadURLAjax = null;
 	var loadedURLs = [];
 	var currentCommentId = null;
+	var currentlyLoadingUrl = null; // Track URL currently being loaded to prevent duplicate requests
 
 	// Track initialized Twitter widgets to prevent duplicates
 	var initializedTwitterWidgets = new Set();
@@ -198,9 +199,23 @@
 				});
 			}
 
+			// If URL is already in cache, use it directly
+			if (urlResponse) {
+				setURLResponse(urlResponse, url, isComment, commentId);
+				return;
+			}
+
+			// Prevent duplicate requests for the same URL that's already loading
+			if (currentlyLoadingUrl === url) {
+				return;
+			}
+
 			if (loadURLAjax != null) {
 				loadURLAjax.abort();
+				loadURLAjax = null;
 			}
+
+			currentlyLoadingUrl = url; // Mark this URL as being loaded
 
 			if (!urlResponse) {
 				var ajaxData = {
@@ -219,12 +234,18 @@
 				}
 
 				loadURLAjax = jQuery.post(ajaxurl, ajaxData, function (response) {
+					currentlyLoadingUrl = null; // Reset when request completes
 					// Handle both old and new response formats
 					if (response.success) {
 						setURLResponse(response.data, url, isComment, commentId);
 					} else if (response && !response.error) {
 						// Backward compatibility with old response format
 						setURLResponse(response, url, isComment, commentId);
+					}
+				}).fail(function (jqXHR, textStatus) {
+					// Only reset if this is still the current URL being loaded
+					if (currentlyLoadingUrl === url) {
+						currentlyLoadingUrl = null;
 					}
 				});
 			}

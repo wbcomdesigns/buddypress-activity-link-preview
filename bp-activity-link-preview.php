@@ -301,7 +301,23 @@ function bp_activity_link_parse_url( $url ) {
 		$parsed_url_data['error']       = '';
 		$parsed_url_data['wp_embed']    = true;
 	} else {
-		$args = array( 'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0' );
+		// Try to parse internal URLs directly without HTTP request (avoids self-request performance issues).
+		if ( bp_is_same_site_url( $url ) ) {
+			$internal_data = bp_activity_link_parse_internal_url( $url );
+			if ( ! empty( $internal_data ) ) {
+				$parsed_url_data = $internal_data;
+				// Cache the result.
+				if ( ! empty( $parsed_url_data ) ) {
+					set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
+				}
+				return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
+			}
+		}
+
+		$args = array(
+			'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+			'timeout'    => 15,
+		);
 
 		if ( bp_is_same_site_url( $url ) ) {
 			// BuddyBoss Platform compatibility - add JWT token if available.
@@ -441,6 +457,137 @@ function bp_is_same_site_url( $url ) {
 
 	if ( ! empty( $parsed_url['host'] ) && ! empty( $parsed_url['scheme'] ) ) {
 		return ( strtolower( $parsed_url['host'] ) === strtolower( $home_url['host'] ) ) && ( $parsed_url['scheme'] === $home_url['scheme'] );
+	}
+
+	return false;
+}
+
+/**
+ * Parse internal BuddyPress/BuddyBoss URLs directly without HTTP requests.
+ * This avoids self-requests that cause performance issues on live sites.
+ *
+ * @param string $url The internal URL to parse.
+ * @return array|false Preview data array or false if not an internal BP page.
+ */
+function bp_activity_link_parse_internal_url( $url ) {
+	if ( ! bp_is_same_site_url( $url ) ) {
+		return false;
+	}
+
+	$parsed_url = wp_parse_url( $url );
+	$path       = isset( $parsed_url['path'] ) ? trim( $parsed_url['path'], '/' ) : '';
+
+	if ( empty( $path ) ) {
+		return false;
+	}
+
+	// Remove the site path if it's in the URL (for subdirectory installs).
+	$site_path = trim( wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+	if ( ! empty( $site_path ) && 0 === strpos( $path, $site_path ) ) {
+		$path = trim( substr( $path, strlen( $site_path ) ), '/' );
+	}
+
+	$path_parts = explode( '/', $path );
+
+	// Check for BuddyPress member profile: /members/username/ or /user/username/.
+	if ( ( isset( $path_parts[0] ) && in_array( $path_parts[0], array( 'members', 'user' ), true ) ) && ! empty( $path_parts[1] ) ) {
+		$username = sanitize_user( $path_parts[1] );
+		$user     = get_user_by( 'slug', $username );
+
+		if ( ! $user && is_numeric( $username ) ) {
+			$user = get_user_by( 'id', $username );
+		}
+
+		if ( $user ) {
+			// Get user data.
+			$display_name = $user->display_name;
+
+			// Try to get BuddyPress/XProfile data.
+			if ( function_exists( 'bp_get_profile_field_data' ) ) {
+				$args = array(
+					'field'   => 'About',
+					'user_id' => $user->ID,
+				);
+				$about = bp_get_profile_field_data( $args );
+				if ( empty( $about ) ) {
+					$args['field'] = 'Description';
+					$about         = bp_get_profile_field_data( $args );
+				}
+				if ( empty( $about ) ) {
+					$about = get_user_meta( $user->ID, 'description', true );
+				}
+			} else {
+				$about = get_user_meta( $user->ID, 'description', true );
+			}
+
+			// Get user avatar URL.
+			$avatar_url = '';
+			if ( function_exists( 'bp_core_fetch_avatar' ) ) {
+				$avatar_url = bp_core_fetch_avatar(
+					array(
+						'item_id' => $user->ID,
+						'object'  => 'user',
+						'type'    => 'full',
+						'html'    => false,
+					)
+				);
+			}
+			if ( empty( $avatar_url ) ) {
+				$avatar_url = get_avatar_url( $user->ID, array( 'size' => 150 ) );
+			}
+
+			return array(
+				'title'       => $display_name,
+				'description' => ! empty( $about ) ? wp_trim_words( $about, 30, '...' ) : sprintf( __( 'View %s\'s profile', 'buddypress-activity-link-preview' ), $display_name ),
+				'images'      => ! empty( $avatar_url ) ? array( $avatar_url ) : array(),
+				'error'       => '',
+			);
+		}
+	}
+
+	// Check for BuddyPress groups: /groups/group-name/.
+	if ( isset( $path_parts[0] ) && 'groups' === $path_parts[0] && ! empty( $path_parts[1] ) ) {
+		$group_slug = sanitize_text_field( $path_parts[1] );
+
+		if ( function_exists( 'groups_get_groups' ) ) {
+			$groups = groups_get_groups(
+				array(
+					'slug'     => $group_slug,
+					'per_page' => 1,
+				)
+			);
+
+			if ( ! empty( $groups['groups'] ) ) {
+				$group = $groups['groups'][0];
+
+				// Get group avatar.
+				$avatar_url = '';
+				if ( function_exists( 'bp_core_fetch_avatar' ) ) {
+					$avatar_url = bp_core_fetch_avatar(
+						array(
+							'item_id'    => $group->id,
+							'object'     => 'group',
+							'type'       => 'full',
+							'html'       => false,
+							'avatar_dir' => 'group-avatars',
+						)
+					);
+				}
+
+				// Get group description.
+				$description = '';
+				if ( ! empty( $group->description ) ) {
+					$description = wp_trim_words( $group->description, 30, '...' );
+				}
+
+				return array(
+					'title'       => $group->name,
+					'description' => ! empty( $description ) ? $description : sprintf( __( 'View the %s group', 'buddypress-activity-link-preview' ), $group->name ),
+					'images'      => ! empty( $avatar_url ) ? array( $avatar_url ) : array(),
+					'error'       => '',
+				);
+			}
+		}
 	}
 
 	return false;
