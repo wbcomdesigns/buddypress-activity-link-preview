@@ -1,0 +1,151 @@
+{
+  "$schema": "https://wpmediaverse.com/schemas/wp-plugin-manifest-v2.json",
+  "plugin": {
+    "slug": "buddypress-activity-link-preview",
+    "name": "Activity Link Preview For BuddyPress",
+    "version": "1.7.3",
+    "namespace": null,
+    "main_file": "bp-activity-link-preview.php",
+    "text_domain": "buddypress-activity-link-preview",
+    "extends": null,
+    "extension_hook_consumed": null,
+    "extension_hook_fired": null,
+    "architecture": "single-file procedural; no classes, no namespace",
+    "requires": "BuddyPress OR BuddyBoss Platform (auto-deactivates if neither active)",
+    "branch": "v1.7.4",
+    "header_version_vs_branch_note": "Plugin header + BP_ACTIVITY_LINK_PREVIEW_VERSION + readme Stable tag all say 1.7.3; dev branch is named v1.7.4 (version bump not yet applied in code)."
+  },
+  "rest": {
+    "namespace": "consumes BuddyPress REST (buddypress/v1) — registers no routes of its own",
+    "endpoints": [
+      {
+        "route": "filter: bp_rest_activity_prepare_value",
+        "methods": ["GET"],
+        "handler": "bp-activity-link-preview.php::bp_activity_link_preview_data_embed_rest_api",
+        "permission": "inherits BuddyPress activity endpoint permission",
+        "purpose": "Embeds bp_activity_link (+ bp_activity_comment_link for comments) preview meta into the BuddyPress activity REST response. Not an own route — a filter on BP's response."
+      }
+    ]
+  },
+  "ajax": [
+    {
+      "action": "bp_activity_parse_url_preview",
+      "handler": "bp-activity-link-preview.php::bp_activity_parse_url_preview",
+      "nonce": "bp_activity_link_preview_nonce",
+      "capability": "is_user_logged_in() (any authenticated user)",
+      "auth_model": "logged-in gate + nonce + SSRF guard (blocks private/internal IPs, localhost, RFC1918 ranges)",
+      "nopriv": false,
+      "purpose": "Fetches Open Graph / oEmbed preview data for a URL typed in the activity composer. Returns title/description/images JSON."
+    }
+  ],
+  "admin_pages": [],
+  "settings": [],
+  "shortcodes": [],
+  "blocks": [],
+  "post_types": [],
+  "taxonomies": [],
+  "tables": [],
+  "capabilities": [],
+  "services": [],
+  "hooks_fired": [
+    { "name": "bp_activity_link_parse_url_shorten_url_provider", "type": "filter", "args_count": 1, "args_signature": ["array $providers"], "where": "bp-activity-link-preview.php:235", "consumed_by": [], "purpose": "Filter the list of short-URL host providers that trigger redirect resolution (bit.ly, tinyurl, etc.)." },
+    { "name": "bp_activity_parse_url_preview", "type": "filter", "args_count": 2, "args_signature": ["array $parse_url_data", "string $url"], "where": "bp-activity-link-preview.php:219", "consumed_by": [], "purpose": "Filter the parsed preview payload returned by the AJAX handler before JSON output." },
+    { "name": "bp_activity_link_parse_url", "type": "filter", "args_count": 1, "args_signature": ["array $parsed_url_data"], "where": "bp-activity-link-preview.php:313,445", "consumed_by": [], "purpose": "Filter the final parsed URL data (internal-URL path and external-scrape path both fire it)." },
+    { "name": "bp_oembed_discover_support", "type": "filter", "args_count": 2, "args_signature": ["bool $discover", "string $url"], "where": "bp-activity-link-preview.php:289", "consumed_by": [], "purpose": "Toggle oEmbed discovery for a given URL (default false)." },
+    { "name": "bp_activity_link_preview_enable_comments", "type": "filter", "args_count": 1, "args_signature": ["bool $enabled"], "where": "bp-activity-link-preview.php:147,630,655,811,872", "consumed_by": [], "purpose": "Master switch (default true) for comment link previews. Read in localize, save, render, and filter registration paths." }
+  ],
+  "hooks_consumed": [
+    { "name": "plugins_loaded", "priority": 20, "callback": "anonymous bootstrap closure", "where": "bp-activity-link-preview.php:113", "purpose": "Bootstrap after BP loads (BP uses default 10)." },
+    { "name": "admin_init", "priority": 10, "callback": "bp_activity_link_preview_requires_buddypress", "where": "bp-activity-link-preview.php:75", "purpose": "Auto-deactivate if BuddyPress/BuddyBoss not active." },
+    { "name": "admin_notices", "priority": 10, "callback": "bp_activity_link_preview_admin_notice", "where": "bp-activity-link-preview.php:72,119", "purpose": "Dependency-missing notice." },
+    { "name": "wp_enqueue_scripts", "priority": 10, "callback": "bp_activity_link_preview_enqueue_scripts", "where": "bp-activity-link-preview.php:85", "purpose": "Enqueue CSS/JS + Twitter + Facebook SDK + localized data." },
+    { "name": "bp_init", "priority": 999, "callback": "bp_activity_link_preview_disable_buddyboss_preview", "where": "bp-activity-link-preview.php:88", "purpose": "Remove BuddyBoss's own link preview filter to avoid duplicates." },
+    { "name": "bp_init", "priority": 10, "callback": "bp_activity_link_preview_init_comment_filter", "where": "bp-activity-link-preview.php:100", "purpose": "Register comment-content filter when comment previews enabled." },
+    { "name": "wp_ajax_bp_activity_parse_url_preview", "priority": 10, "callback": "bp_activity_parse_url_preview", "where": "bp-activity-link-preview.php:91", "purpose": "AJAX URL-parse endpoint." },
+    { "name": "bp_activity_after_save", "priority": 10, "callback": "bp_activity_link_preview_save_link_data", "where": "bp-activity-link-preview.php:94", "purpose": "Persist preview data to activity meta on save." },
+    { "name": "bp_get_activity_content_body", "priority": 8, "callback": "bp_activity_link_preview_content_body_with_comments", "where": "bp-activity-link-preview.php:97", "purpose": "Append rendered preview to activity content body." },
+    { "name": "bp_activity_comment_content", "priority": 10, "callback": "bp_activity_link_preview_comment_content", "where": "bp-activity-link-preview.php:873", "purpose": "Append rendered preview to comment content (conditionally registered)." },
+    { "name": "bp_activity_allowed_tags", "priority": 10, "callback": "bp_activity_link_preview_allowed_tags", "where": "bp-activity-link-preview.php:103", "purpose": "Allow div/img/button/span/i markup in activity content for previews." },
+    { "name": "bp_rest_activity_prepare_value", "priority": 10, "callback": "bp_activity_link_preview_data_embed_rest_api", "where": "bp-activity-link-preview.php:106", "purpose": "Embed preview meta into BP REST activity response." },
+    { "name": "wp_head", "priority": 10, "callback": "bp_activity_link_preview_add_facebook_root_div", "where": "bp-activity-link-preview.php:109", "purpose": "Output #fb-root div on BP activity/group/user pages for Facebook SDK." }
+  ],
+  "activity_meta": [
+    { "key": "_bp_activity_link_preview_data", "object": "activity", "purpose": "Preview payload (url, title, description, image_url) for main activity posts." },
+    { "key": "_bp_activity_comment_link_preview_data", "object": "activity", "purpose": "Preview payload for activity comments." }
+  ],
+  "caching": [
+    { "mechanism": "transient", "key_pattern": "bp_oembed_<md5(url)>", "ttl": "DAY_IN_SECONDS", "where": "bp-activity-link-preview.php:271,311,442", "purpose": "Cache parsed URL preview data per-URL for 24h." }
+  ],
+  "interactivity": [],
+  "ui_activation": [],
+  "static_analysis": {
+    "dead_listeners": [],
+    "cap_context_mismatches": [],
+    "extensibility_gaps": [],
+    "js_only_activation": [
+      { "selector": "#whats-new / .ac-input keyup handlers + AJAX-injected preview cards", "default_hidden_by": "n/a — composer-time enhancement", "php_fallback": true, "note": "Composer-time preview UI is JS-only by nature (live URL detection as user types). Render of SAVED previews on read is PHP-side (bp_get_activity_content_body filter), so persisted previews show with JS off. Acceptable." }
+    ],
+    "rest_hang_risks": [],
+    "visual_required_no_enforcement": [],
+    "grid_track_overflow_risks": [],
+    "hook_signature_drift": [],
+    "adapter_undefined_calls": [],
+    "registry_bypasses": [],
+    "suppressed_baseline_inventory": { "stub_class_missing": { "count": 0, "action": "n/a" }, "stub_const_missing": { "count": 0, "action": "n/a" }, "undef_var_risk": { "count": 0, "action": "n/a" }, "real_type_debt": { "count": 0, "action": "n/a" }, "phpcs_excludes": { "count": 4, "action": "Inline phpcs:ignore/disable at lines 183 (validated URL), 261 (file_get_contents fallback), 602-680 (nonce handled by BP). All justified with comments." } },
+    "registry_strategy": []
+  },
+  "buddypress_integration": {
+    "enabled_when": "class_exists('BuddyPress') || defined('BP_PLATFORM_VERSION') || class_exists('BuddyBoss_Platform')",
+    "manager": "procedural bootstrap (bp_activity_link_preview_bootstrap)",
+    "sub_classes": [],
+    "compat_notes": "Detects and stands down for BuddyBoss native link preview and Youzify wall URL preview to avoid duplicate cards. BuddyBoss JWT (bb-preview-token) used for same-site private-network scrapes."
+  },
+  "frontend_assets": {
+    "js": [
+      { "handle": "bp-activity-link-preview-js", "src": "assets/js/bp-activity-link-preview.js", "deps": ["jquery"], "in_footer": true },
+      { "handle": "twitter-js", "src": "https://platform.twitter.com/widgets.js", "deps": ["jquery"], "in_footer": true, "external": true },
+      { "handle": "facebook-js", "src": "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0", "deps": ["jquery"], "in_footer": true, "external": true }
+    ],
+    "css": [
+      { "handle": "bp-activity-link-preview-css", "src": "assets/css/bp-activity-link-preview.css", "deps": [] }
+    ],
+    "localized": { "object": "bp_activity_link_preview", "handle": "bp-activity-link-preview-js", "keys": ["ajaxurl", "nonce", "enable_comments", "buddyboss_active", "buddyboss_link_preview_active", "youzify_active", "youzify_url_preview_active"] }
+  },
+  "cron": [],
+  "wp_cli": [],
+  "storage_drivers": [],
+  "security": {
+    "uploads_gate": "n/a — no uploads",
+    "ajax_auth": "is_user_logged_in() + wp_verify_nonce('bp_activity_link_preview_nonce')",
+    "ssrf_guard": "AJAX handler blocks empty host, FILTER_VALIDATE_IP private/reserved ranges, 127.0.0.1, localhost, and 10./172.16-31./192.168. CIDRs before fetching (bp-activity-link-preview.php:196-204)",
+    "url_validation": "FILTER_VALIDATE_URL on input and on resolved redirect targets",
+    "remote_fetch": "wp_safe_remote_get primary; raw file_get_contents fallback only for short-URL Location header resolution (line 261)",
+    "output_escaping": "esc_attr/esc_url/esc_html in render; oEmbed/embed code passed through (trusted WP oEmbed)",
+    "signing_entry_points": [],
+    "always_sign_filter": null,
+    "rate_limit_middleware": "none"
+  },
+  "ci_guards": { "script": ".github/workflows/ci.yml", "url_emission_regex": null, "storage_internal_marker": null, "phpstan_level": null },
+  "coding_rules": [],
+  "build_commands": { "release": "grunt (copy:build -> compress -> dist/<slug>-<version>.zip)", "ci_local": "grunt" },
+  "category_sources": {
+    "rest": ["bp-activity-link-preview.php"],
+    "ajax": ["bp-activity-link-preview.php"],
+    "admin_pages": ["bp-activity-link-preview.php"],
+    "settings": ["bp-activity-link-preview.php"],
+    "hooks_fired": ["bp-activity-link-preview.php"],
+    "frontend_assets": ["bp-activity-link-preview.php", "assets/**/*"],
+    "security": ["bp-activity-link-preview.php"]
+  },
+  "generated": {
+    "at": "2026-06-05T00:00:00+00:00",
+    "from": "wp-plugin-onboard skill",
+    "branch": "v1.7.4",
+    "schema_version": "v2.2",
+    "scan_scope": "gruntfile",
+    "scan_path": ".",
+    "php_file_count": 1,
+    "size_class": "tiny-single-file",
+    "notes": "Single-file procedural plugin (1 PHP file). No classes, namespaces, admin pages, settings, CPTs, taxonomies, DB tables, cron, WP-CLI, blocks, or shortcodes. Phase 4.5/4.7/4.8 paired-plugin + CI + cleanup scaffolds intentionally NOT created (onboarding-only run, no functional/scaffold changes per task scope). Coverage gate: all enumerated categories match ground-truth grep exactly (0 gap)."
+  }
+}
