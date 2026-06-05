@@ -5,7 +5,7 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview displays as image title and description from the site when links are used in activity posts.
- * Version:           1.7.3
+ * Version:           1.7.4
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.3' );
+define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.4' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
@@ -193,13 +193,7 @@ function bp_activity_parse_url_preview() {
 	$host       = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
 
 	// Block requests to private/internal IP ranges and localhost.
-	if ( empty( $host ) ||
-		( filter_var( $host, FILTER_VALIDATE_IP ) &&
-		( false === filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) ) ||
-		'127.0.0.1' === $host ||
-		'localhost' === $host ||
-		preg_match( '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host )
-	) {
+	if ( bp_activity_link_preview_is_blocked_host( $host ) ) {
 		wp_send_json( array( 'error' => __( 'This URL cannot be previewed for security reasons.', 'buddypress-activity-link-preview' ) ) );
 	}
 
@@ -220,6 +214,39 @@ function bp_activity_parse_url_preview() {
 
 	// send json success.
 	wp_send_json( $parse_url_data );
+}
+
+/**
+ * Determine whether a host points at a private, loopback, or reserved address.
+ *
+ * Centralizes the SSRF host guard so it can be applied both to the original
+ * input URL in the AJAX handler and to any redirect-resolved URL during
+ * short-URL resolution. Returns true when the host should be BLOCKED.
+ *
+ * @since 1.7.4
+ * @param string $host The host portion of a URL (no scheme/path).
+ * @return bool True if the host must be blocked for security reasons.
+ */
+function bp_activity_link_preview_is_blocked_host( $host ) {
+	if ( empty( $host ) ) {
+		return true;
+	}
+
+	if ( filter_var( $host, FILTER_VALIDATE_IP ) &&
+		( false === filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) )
+	) {
+		return true;
+	}
+
+	if ( '127.0.0.1' === $host || 'localhost' === $host ) {
+		return true;
+	}
+
+	if ( preg_match( '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host ) ) {
+		return true;
+	}
+
+	return false;
 }
 
 /**
@@ -251,18 +278,32 @@ function bp_activity_link_parse_url( $url ) {
 		}
 
 		if ( $original_url === $url ) {
-			$context = array(
-				'http' => array(
-					'method'        => 'GET',
-					'max_redirects' => 1,
-				),
+			// Fallback: resolve the short URL through the WordPress HTTP API so the
+			// request honours WP_HTTP_BLOCK_EXTERNAL and the configured transports.
+			// Follow a single redirect and read the resolved Location.
+			$head_response = wp_safe_remote_head(
+				$url,
+				array(
+					'redirection' => 1,
+					'timeout'     => 5,
+					'headers'     => array(
+						'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+					),
+				)
 			);
 
-			@file_get_contents( $url, null, stream_context_create( $context ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- Fallback for short URL resolution when wp_safe_remote_get fails.
-			if ( isset( $http_response_header ) && isset( $http_response_header[6] ) ) {
-				$new_url = str_replace( 'Location: ', '', $http_response_header[6] );
-				if ( filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
-					$url = $new_url;
+			if ( ! is_wp_error( $head_response ) ) {
+				$new_url = wp_remote_retrieve_header( $head_response, 'location' );
+
+				if ( ! empty( $new_url ) && filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
+					// Re-validate the redirect-resolved host against the same SSRF
+					// guard used on the original input URL. A malicious or compromised
+					// short-URL provider could redirect to a private/loopback address;
+					// if so, abort resolution and keep the original URL.
+					$resolved_host = wp_parse_url( $new_url, PHP_URL_HOST );
+					if ( ! bp_activity_link_preview_is_blocked_host( $resolved_host ) ) {
+						$url = $new_url;
+					}
 				}
 			}
 		}

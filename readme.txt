@@ -4,7 +4,7 @@ Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.7.3
+Stable tag: 1.7.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -95,6 +95,9 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 4. Multiple image selection
 
 == Changelog ==
+
+= 1.7.4 =
+* Security: Hardened short-URL resolution to route redirect resolution through the WordPress HTTP API (wp_safe_remote_head) and re-validate the redirect-resolved host against the SSRF private/loopback IP guard, closing a residual SSRF vector via malicious short-URL providers.
 
 = 1.7.3 =
 * Code Quality: Fixed all WordPress Coding Standards (WPCS) violations
