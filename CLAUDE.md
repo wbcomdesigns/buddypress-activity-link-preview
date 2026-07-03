@@ -51,4 +51,7 @@ This onboarding pass was **artefacts-only** (manifest + audit reports + graph + 
 ## Recent changes
 | Date | Type | Description | Files |
 |---|---|---|---|
+| 2026-07-03 | bug-fix | URL detection no longer extends into following text (contenteditable: getInputValue returns .html(), getURL anchor-first + boundary-normalized fallback) | `assets/js/bp-activity-link-preview.js` |
+| 2026-07-03 | bug-fix | Live preview auto-removed when URL deleted from input (new removeLinkPreview counterpart in scrap_URL) | `assets/js/bp-activity-link-preview.js` |
+| 2026-07-03 | bug-fix | Dark mode contrast: --bpalp-* tokens consuming BuddyX --bx-color-* with light fallbacks; data-bx-mode dark/auto overrides; token-driven prev/next button hover | `assets/css/bp-activity-link-preview.css` |
 | 2026-06-05 | onboard | Generated audit/ manifest + reports + graph + wppqa baseline; wrote READ-FIRST CLAUDE.md | `audit/*`, `CLAUDE.md` |
