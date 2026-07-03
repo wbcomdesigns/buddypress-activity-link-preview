@@ -414,7 +414,9 @@ function bp_activity_link_parse_url( $url ) {
 							$title = $tag[1];
 						}
 						if ( 'og:description' === $tag[0] || 'description' === strtolower( $tag[0] ) ) {
-							$description = html_entity_decode( $tag[1], ENT_QUOTES, 'utf-8' );
+							// DOMDocument already decodes attribute entities once; decoding again
+							// would turn a double-encoded payload on a remote page into live markup.
+							$description = $tag[1];
 						}
 						if ( 'og:image' === $tag[0] ) {
 							$images[] = $tag[1];
@@ -704,11 +706,12 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 
 			// Save preview data if we have title/description OR if it's a social media URL.
 			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) || $is_social_media ) ) {
+				// Scraped remote content is untrusted - sanitize before storing in activity meta.
 				$comment_link_preview_data = array(
-					'url'         => $url,
-					'title'       => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
-					'description' => ! empty( $parsed_data['description'] ) ? $parsed_data['description'] : '',
-					'image_url'   => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : '',
+					'url'         => esc_url_raw( $url ),
+					'title'       => ! empty( $parsed_data['title'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['title'] ) ) : '',
+					'description' => ! empty( $parsed_data['description'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['description'] ) ) : '',
+					'image_url'   => ! empty( $parsed_data['images'] ) ? esc_url_raw( $parsed_data['images'][0] ) : '',
 				);
 
 				if ( false === strpos( $url, 'www.reddit.com' ) ) {
@@ -886,11 +889,12 @@ function bp_activity_link_preview_comment_content( $content ) {
 
 			// Generate preview if we have title/description OR if it's a social media URL.
 			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) || $is_social_media ) ) {
+				// Scraped remote content is untrusted - sanitize before storing in activity meta.
 				$comment_link_preview_data = array(
-					'url'         => $url,
-					'title'       => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
-					'description' => ! empty( $parsed_data['description'] ) ? $parsed_data['description'] : '',
-					'image_url'   => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : '',
+					'url'         => esc_url_raw( $url ),
+					'title'       => ! empty( $parsed_data['title'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['title'] ) ) : '',
+					'description' => ! empty( $parsed_data['description'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['description'] ) ) : '',
+					'image_url'   => ! empty( $parsed_data['images'] ) ? esc_url_raw( $parsed_data['images'][0] ) : '',
 				);
 
 				if ( false === strpos( $url, 'www.reddit.com' ) ) {
@@ -952,9 +956,10 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
 		return $content;
 	}
 
-	// Regular link preview.
-	$description = $preview_data['description'];
-	$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
+	// Regular link preview. Escape the stored description before output; the
+	// "Read more" anchor is appended afterwards so it stays intact.
+	$description = esc_html( wp_strip_all_tags( $preview_data['description'] ) );
+	$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html__( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
 	$description = wp_trim_words( $description, 40, $read_more );
 
 	$content = make_clickable( $content );
