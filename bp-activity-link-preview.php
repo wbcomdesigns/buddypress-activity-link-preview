@@ -152,6 +152,9 @@ function bp_activity_link_preview_enqueue_scripts() {
 		return;
 	}
 
+	// The composer JS renders dashicon markup (close/prev/next buttons); dashicons
+	// is not guaranteed on the frontend (only loads with the admin bar), so enqueue it.
+	wp_enqueue_style( 'dashicons' );
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), BP_ACTIVITY_LINK_PREVIEW_VERSION, 'all' );
 	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );

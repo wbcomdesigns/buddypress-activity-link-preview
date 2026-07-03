@@ -42,7 +42,6 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
     --bpalp-btn-border: var(--bx-color-button-border, #c3c4c7);
     --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #dcdcde);
     --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #1d2327);
-    --bpalp-loading-bg: rgba(255, 255, 255, 0.9);
 }
 
 :root[data-bx-mode="dark"] .activity-url-scrapper-container,
@@ -64,7 +63,6 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
     --bpalp-btn-border: var(--bx-color-button-border, rgba(255, 255, 255, 0.24));
     --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #3a4048);
     --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
-    --bpalp-loading-bg: rgba(0, 0, 0, 0.75);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -87,7 +85,6 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
         --bpalp-btn-border: var(--bx-color-button-border, rgba(255, 255, 255, 0.24));
         --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #3a4048);
         --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
-        --bpalp-loading-bg: rgba(0, 0, 0, 0.75);
     }
 }
 
@@ -486,25 +483,6 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
 .activity-comment-link-preview-container .fb-post {
     margin: 0;
     max-width: 100%;
-}
-
-/* Loading state */
-.activity-comment-link-preview-container.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.activity-comment-link-preview-container.loading::after {
-    content: "Loading preview...";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--bpalp-loading-bg, rgba(255, 255, 255, 0.9));
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 12px;
-    color: var(--bpalp-text-strong, #666);
 }
 
 /* Focus states for accessibility */
