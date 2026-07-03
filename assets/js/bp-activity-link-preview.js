@@ -180,7 +180,33 @@
 			url_a.href = urlString;
 			var hostname = url_a.hostname;
 			loadLinkPreview(urlString, isComment, commentId);
+		} else {
+			// No URL left in the input: remove any stale preview so it does
+			// not stay attached after the user deletes the link text.
+			removeLinkPreview(isComment, commentId);
 		}
+	}
+
+	// Remove an existing link preview (and its hidden fields/storage) when
+	// the URL has been deleted from the input. Counterpart of loadLinkPreview.
+	var removeLinkPreview = function (isComment, commentId) {
+		var attachmentContainer = (isComment && commentId) ? '#comment-attachments-' + commentId : '#whats-new-attachments';
+		var containerClass = (isComment && commentId) ? 'activity-comment-url-scrapper-container' : 'activity-url-scrapper-container';
+		var storageKey = (isComment && commentId) ? 'bp-activity-comment-link-preview-' + commentId : 'bp-activity-link-preview';
+
+		if ($(attachmentContainer + ' .' + containerClass).length === 0) {
+			return;
+		}
+
+		// Abort any in-flight parse request for the removed URL.
+		if (loadURLAjax != null) {
+			loadURLAjax.abort();
+			loadURLAjax = null;
+		}
+		currentlyLoadingUrl = null;
+
+		$(attachmentContainer + ' .' + containerClass).remove();
+		setLinkPreviewStorage(storageKey, 'link-preview');
 	}
 
 	// Enhanced link preview loading function
