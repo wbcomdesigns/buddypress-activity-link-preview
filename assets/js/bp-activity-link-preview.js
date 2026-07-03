@@ -214,6 +214,12 @@
 	var showPreviewError = function (message, isComment, commentId) {
 		var attachmentContainer = (isComment && commentId) ? '#comment-attachments-' + commentId : '#whats-new-attachments';
 
+		// BP Nouveau markup has no #whats-new-attachments until a preview
+		// creates it — ensure it exists, same as setURLResponse does.
+		if (!(isComment && commentId) && $('#whats-new-attachments').length === 0) {
+			$('#whats-new-content').after('<div id="whats-new-attachments"></div>');
+		}
+
 		$(attachmentContainer + ' .bpalp-preview-error').remove();
 
 		// Use .text() so the server message is inserted as plain text.
