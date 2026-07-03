@@ -641,6 +641,7 @@ function bp_activity_link_parse_internal_url( $url ) {
 
 			return array(
 				'title'       => $display_name,
+				/* translators: %s: member display name. */
 				'description' => ! empty( $about ) ? wp_trim_words( $about, 30, '...' ) : sprintf( __( 'View %s\'s profile', 'buddypress-activity-link-preview' ), $display_name ),
 				'images'      => ! empty( $avatar_url ) ? array( $avatar_url ) : array(),
 				'error'       => '',
@@ -685,6 +686,7 @@ function bp_activity_link_parse_internal_url( $url ) {
 
 				return array(
 					'title'       => $group->name,
+					/* translators: %s: group name. */
 					'description' => ! empty( $description ) ? $description : sprintf( __( 'View the %s group', 'buddypress-activity-link-preview' ), $group->name ),
 					'images'      => ! empty( $avatar_url ) ? array( $avatar_url ) : array(),
 					'error'       => '',
@@ -755,7 +757,7 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		bp_activity_update_meta( $activity->id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
 	}
 	// Fallback: If comment doesn't have preview data but has URLs in content, try to extract and save (only if enabled)
-	elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && $activity->type === 'activity_comment' && ! empty( $activity->content ) ) {
+	elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && 'activity_comment' === $activity->type && ! empty( $activity->content ) ) {
 		$urls = bp_activity_link_preview_extract_urls_from_content( $activity->content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0]; // Use first URL found.
@@ -797,7 +799,6 @@ function bp_activity_link_preview_extract_urls_from_content( $content, $exclude_
 	$text_content = wp_strip_all_tags( $content );
 
 	$pattern = '/https?:\/\/[^\s<>"]{2,}/i';
-	// preg_match_all( $pattern, $text_content, $matches );
 	preg_match_all( $pattern, $text_content, $matches );
 	$urls = isset( $matches[0] ) ? $matches[0] : array();
 

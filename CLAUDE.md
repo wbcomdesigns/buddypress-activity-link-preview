@@ -6,8 +6,8 @@
 
 ## Quick reference
 - **Main file**: `bp-activity-link-preview.php` (single-file, procedural; 1033 lines, 20 functions)
-- **Version**: `1.7.3` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag`)
-- **Dev branch**: `v1.7.4` — NOTE: version bump not yet applied in code; all version strings still read 1.7.3.
+- **Version**: `1.7.4` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag` + package.json)
+- **Dev branch**: `v1.7.4`
 - **Namespace**: none (no classes)
 - **Text domain**: `buddypress-activity-link-preview`
 - **Extends**: none (standalone free plugin)
@@ -51,6 +51,10 @@ This onboarding pass was **artefacts-only** (manifest + audit reports + graph + 
 ## Recent changes
 | Date | Type | Description | Files |
 |---|---|---|---|
+| 2026-07-03 | security | Sanitize scraped title/description in both comment auto-extraction fallbacks; remove double html_entity_decode on og:description; esc_html description in shared renderer | `bp-activity-link-preview.php` |
+| 2026-07-03 | perf | Assets (own CSS/JS + Twitter/FB SDKs + dashicons) load only in activity contexts via bp_activity_link_preview_should_load_assets(); new bp_activity_link_preview_load_assets filter | `bp-activity-link-preview.php` |
+| 2026-07-03 | perf | bp_activity_link_parse_url gains negative caching (15-min bpalp_failed sentinel) and $cached_only mode; comment render fallback is cached-only (no live external fetch during render) | `bp-activity-link-preview.php` |
+| 2026-07-03 | bug-fix | AJAX response.error now surfaced via showPreviewError() role=alert notice; dashicons enqueued; dead .loading CSS removed; version strings bumped to 1.7.4 | `assets/js/bp-activity-link-preview.js`, `assets/css/bp-activity-link-preview.css`, `package.json`, `audit/manifest.json`, `readme.txt` |
 | 2026-07-03 | bug-fix | URL detection no longer extends into following text (contenteditable: getInputValue returns .html(), getURL anchor-first + boundary-normalized fallback) | `assets/js/bp-activity-link-preview.js` |
 | 2026-07-03 | bug-fix | Live preview auto-removed when URL deleted from input (new removeLinkPreview counterpart in scrap_URL) | `assets/js/bp-activity-link-preview.js` |
 | 2026-07-03 | bug-fix | Dark mode contrast: --bpalp-* tokens consuming BuddyX --bx-color-* with light fallbacks; data-bx-mode dark/auto overrides; token-driven prev/next button hover | `assets/css/bp-activity-link-preview.css` |

@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "buddypress-activity-link-preview",
     "name": "Activity Link Preview For BuddyPress",
-    "version": "1.7.3",
+    "version": "1.7.4",
     "namespace": null,
     "main_file": "bp-activity-link-preview.php",
     "text_domain": "buddypress-activity-link-preview",
@@ -13,7 +13,7 @@
     "architecture": "single-file procedural; no classes, no namespace",
     "requires": "BuddyPress OR BuddyBoss Platform (auto-deactivates if neither active)",
     "branch": "v1.7.4",
-    "header_version_vs_branch_note": "Plugin header + BP_ACTIVITY_LINK_PREVIEW_VERSION + readme Stable tag all say 1.7.3; dev branch is named v1.7.4 (version bump not yet applied in code)."
+    "header_version_vs_branch_note": "Plugin header + BP_ACTIVITY_LINK_PREVIEW_VERSION + readme Stable tag + package.json all say 1.7.4, matching the v1.7.4 dev branch."
   },
   "rest": {
     "namespace": "consumes BuddyPress REST (buddypress/v1) — registers no routes of its own",
