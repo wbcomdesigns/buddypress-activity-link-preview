@@ -378,17 +378,43 @@
 
 	var getURL = function (prefix, urlText) {
 		var urlString = '';
-		var startIndex = urlText.indexOf(prefix);
 		var responseUrl = '';
 
-		if (typeof $($.parseHTML(urlText)).attr('href') !== 'undefined') {
-			urlString = $(urlText).attr('href');
-		} else {
-			for (var i = startIndex; i < urlText.length; i++) {
-				if (urlText[i] === ' ' || urlText[i] === '\n') {
+		// Prefer an anchor href anywhere in the markup. Contenteditable
+		// editors (BuddyBoss) auto-link typed URLs, and the anchor's href
+		// attribute is the authoritative URL even when plain text precedes
+		// or follows the anchor. The previous check only looked at the
+		// first top-level parsed node, so "text before <a href=...>" fell
+		// through to the fragile character loop below.
+		var parsedNodes = $.parseHTML(urlText);
+		if (parsedNodes && parsedNodes.length) {
+			var $anchor = $('<div></div>').append(parsedNodes).find('a[href]').filter(function () {
+				return String($(this).attr('href')).indexOf(prefix) !== -1;
+			}).first();
+			if ($anchor.length) {
+				urlString = $anchor.attr('href');
+			}
+		}
+
+		if (urlString === '') {
+			// Plain-text fallback. Normalize element boundaries (<br>, <p>,
+			// block wrappers) and non-breaking spaces to whitespace first so
+			// text on the following line never gets concatenated into the
+			// detected URL (e.g. "https://example.com/<br>Test").
+			var plainText = urlText
+				.replace(/<[^>]*>/g, ' ')
+				.replace(/&nbsp;/gi, ' ');
+			var startIndex = plainText.indexOf(prefix);
+
+			if (startIndex === -1) {
+				return '';
+			}
+
+			for (var i = startIndex; i < plainText.length; i++) {
+				if (plainText[i] === ' ' || plainText[i] === '\n' || plainText[i] === '\r' || plainText[i] === '\t') {
 					break;
 				} else {
-					urlString += urlText[i];
+					urlString += plainText[i];
 				}
 			}
 			if (prefix === 'www') {
@@ -455,8 +481,11 @@
 		if ($element.is('textarea')) {
 			return $element.val();
 		} else if ($element.attr('contenteditable') === 'true') {
-			// BuddyBoss uses contenteditable div instead of textarea
-			return $element.text();
+			// BuddyBoss uses a contenteditable div instead of a textarea.
+			// Return HTML (not text) so auto-generated anchor tags keep
+			// their href attribute and element boundaries (<br>, <p>)
+			// survive for URL boundary detection in getURL().
+			return $element.html();
 		}
 		return $element.val() || $element.text();
 	};
