@@ -280,14 +280,19 @@ function bp_activity_link_preview_is_blocked_host( $host ) {
 /**
  * Parse a URL and return preview data.
  *
- * @param string $url The URL to parse.
- * @return array Parsed URL data.
+ * @param string $url         The URL to parse.
+ * @param bool   $cached_only When true, never performs a remote HTTP request:
+ *                            only the transient cache and the internal-URL
+ *                            (local DB) fast path are consulted. Used by
+ *                            render-time code so page views never block on
+ *                            external fetches.
+ * @return array Parsed URL data (empty array when unavailable).
  */
-function bp_activity_link_parse_url( $url ) {
+function bp_activity_link_parse_url( $url, $cached_only = false ) {
 	$parse_url_data = wp_parse_url( $url, PHP_URL_HOST );
 	$original_url   = $url;
 
-	if ( in_array( $parse_url_data, apply_filters( 'bp_activity_link_parse_url_shorten_url_provider', array( 'bit.ly', 'snip.ly', 'rb.gy', 'tinyurl.com', 'tiny.one', 'rotf.lol', 'b.link', '4ubr.short.gy', '' ) ), true ) ) {
+	if ( ! $cached_only && in_array( $parse_url_data, apply_filters( 'bp_activity_link_parse_url_shorten_url_provider', array( 'bit.ly', 'snip.ly', 'rb.gy', 'tinyurl.com', 'tiny.one', 'rotf.lol', 'b.link', '4ubr.short.gy', '' ) ), true ) ) {
 		$response = wp_safe_remote_get(
 			$url,
 			array(
@@ -339,6 +344,12 @@ function bp_activity_link_parse_url( $url ) {
 
 	$cache_key       = 'bp_oembed_' . md5( maybe_serialize( $url ) );
 	$parsed_url_data = get_transient( $cache_key );
+
+	// Negative cache hit: a recent parse failed - do not retry on every call.
+	if ( 'bpalp_failed' === $parsed_url_data ) {
+		return apply_filters( 'bp_activity_link_parse_url', array() );
+	}
+
 	if ( ! empty( $parsed_url_data ) ) {
 		return $parsed_url_data;
 	}
@@ -347,6 +358,20 @@ function bp_activity_link_parse_url( $url ) {
 
 	if ( strstr( $url, site_url() ) && ( strstr( $url, 'download_document_file' ) || strstr( $url, 'download_media_file' ) || strstr( $url, 'download_video_file' ) ) ) {
 		return array();
+	}
+
+	if ( $cached_only ) {
+		// Internal URLs resolve from the local database (no HTTP), so they are
+		// still allowed in cached-only mode; anything else returns empty rather
+		// than fetching a remote page synchronously during render.
+		if ( bp_is_same_site_url( $url ) ) {
+			$internal_data = bp_activity_link_parse_internal_url( $url );
+			if ( ! empty( $internal_data ) ) {
+				set_transient( $cache_key, $internal_data, DAY_IN_SECONDS );
+				return apply_filters( 'bp_activity_link_parse_url', $internal_data );
+			}
+		}
+		return apply_filters( 'bp_activity_link_parse_url', array() );
 	}
 
 	if ( ! function_exists( '_wp_oembed_get_object' ) ) {
@@ -511,6 +536,10 @@ function bp_activity_link_parse_url( $url ) {
 	if ( ! empty( $parsed_url_data ) ) {
 		// set the transient.
 		set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
+	} else {
+		// Negative cache: remember the failure for a short time so slow,
+		// blocked, or unreachable URLs are not re-fetched on every request.
+		set_transient( $cache_key, 'bpalp_failed', 15 * MINUTE_IN_SECONDS );
 	}
 
 	return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
@@ -905,12 +934,14 @@ function bp_activity_link_preview_comment_content( $content ) {
 	if ( ! empty( $comment_preview_data ) ) {
 		$content = bp_activity_link_preview_render_preview( $content, $comment_preview_data, true );
 	}
-	// If no preview data but content has URLs, generate it.
+	// If no preview data but content has URLs, generate it from the cache only.
+	// Render must never block on a live external fetch; save-time extraction
+	// (bp_activity_link_preview_save_link_data) is responsible for fetching.
 	elseif ( ! empty( $content ) ) {
 		$urls = bp_activity_link_preview_extract_urls_from_content( $content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0];
-			$parsed_data = bp_activity_link_parse_url( $url );
+			$parsed_data = bp_activity_link_parse_url( $url, true );
 
 			// Check if it's a social media URL that uses native embeds.
 			$is_social_media = bp_activity_link_preview_is_social_media_url( $url );
