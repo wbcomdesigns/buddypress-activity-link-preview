@@ -122,8 +122,36 @@ add_action(
 	20
 );
 
+/**
+ * Determine whether the current page renders a BuddyPress activity stream
+ * and therefore needs the link-preview assets (own CSS/JS + Twitter/Facebook SDKs).
+ *
+ * @since 1.7.4
+ * @return bool True when assets should be enqueued.
+ */
+function bp_activity_link_preview_should_load_assets() {
+	$should_load = function_exists( 'bp_is_activity_component' )
+		&& ( bp_is_activity_component() || bp_is_activity_directory() || bp_is_user_activity() || bp_is_group() );
+
+	/**
+	 * Filter whether the link-preview assets load on the current page.
+	 *
+	 * Lets site owners load assets on custom pages that embed an activity
+	 * stream (e.g. via shortcode/widget) or unload them from group screens.
+	 *
+	 * @since 1.7.4
+	 * @param bool $should_load Whether the current page is an activity context.
+	 */
+	return (bool) apply_filters( 'bp_activity_link_preview_load_assets', $should_load );
+}
+
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
+	// Do not load plugin assets (or third-party SDKs) sitewide - activity contexts only.
+	if ( ! bp_activity_link_preview_should_load_assets() ) {
+		return;
+	}
+
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), BP_ACTIVITY_LINK_PREVIEW_VERSION, 'all' );
 	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
@@ -1047,7 +1075,7 @@ function bp_activity_link_preview_data_embed_rest_api( $response, $request, $act
  * Outputs a Facebook root div element in specific BuddyPress contexts.
  */
 function bp_activity_link_preview_add_facebook_root_div() {
-	if ( bp_is_activity_directory() || bp_is_group() || bp_is_user_activity() ) {
+	if ( bp_activity_link_preview_should_load_assets() ) {
 		echo '<div id="fb-root"></div>';
 	}
 }
