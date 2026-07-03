@@ -209,6 +209,24 @@
 		setLinkPreviewStorage(storageKey, 'link-preview');
 	}
 
+	// Show a transient, dismiss-on-timeout error notice when the parse
+	// endpoint rejects a URL (invalid, blocked host, preview unavailable).
+	var showPreviewError = function (message, isComment, commentId) {
+		var attachmentContainer = (isComment && commentId) ? '#comment-attachments-' + commentId : '#whats-new-attachments';
+
+		$(attachmentContainer + ' .bpalp-preview-error').remove();
+
+		// Use .text() so the server message is inserted as plain text.
+		var $error = $('<div class="bpalp-preview-error" role="alert"></div>').text(message);
+		$(attachmentContainer).append($error);
+
+		setTimeout(function () {
+			$error.fadeOut(200, function () {
+				$(this).remove();
+			});
+		}, 5000);
+	}
+
 	// Enhanced link preview loading function
 	var loadLinkPreview = function (url, isComment, commentId) {
 		var regexp = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?$/;
@@ -262,9 +280,15 @@
 				loadURLAjax = jQuery.post(ajaxurl, ajaxData, function (response) {
 					currentlyLoadingUrl = null; // Reset when request completes
 					// Handle both old and new response formats
-					if (response.success) {
+					if (response && response.success) {
 						setURLResponse(response.data, url, isComment, commentId);
-					} else if (response && !response.error) {
+					} else if (response && response.error) {
+						// Parse endpoint rejected the URL - surface the message.
+						showPreviewError(response.error, isComment, commentId);
+					} else if (response && response.success === false && response.data && response.data.message) {
+						// wp_send_json_error() shape (auth/nonce failures).
+						showPreviewError(response.data.message, isComment, commentId);
+					} else if (response) {
 						// Backward compatibility with old response format
 						setURLResponse(response, url, isComment, commentId);
 					}

@@ -522,3 +522,34 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
 [id^="activity-comment-link-preview-close-image"]:hover {
     background: rgba(0, 0, 0, 0.8);
 }
+/*--------------------------------------------------------------
+4 - Preview error notice (parse endpoint rejected the URL)
+--------------------------------------------------------------*/
+
+.bpalp-preview-error {
+    --bpalp-error-fg: #8a1f2d;
+    --bpalp-error-bg: #fdeaea;
+    --bpalp-error-border: #f0b8b8;
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--bpalp-error-fg);
+    background: var(--bpalp-error-bg);
+    border: 1px solid var(--bpalp-error-border);
+}
+
+:root[data-bx-mode="dark"] .bpalp-preview-error {
+    --bpalp-error-fg: #f3b6bd;
+    --bpalp-error-bg: rgba(200, 60, 75, 0.16);
+    --bpalp-error-border: rgba(220, 95, 110, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root[data-bx-mode="auto"] .bpalp-preview-error {
+        --bpalp-error-fg: #f3b6bd;
+        --bpalp-error-bg: rgba(200, 60, 75, 0.16);
+        --bpalp-error-border: rgba(220, 95, 110, 0.45);
+    }
+}
