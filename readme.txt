@@ -40,6 +40,16 @@ BuddyPress activity link preview displays image, title and description from webs
 * PHP 7.4 or higher
 * BuddyPress 6.0+ or BuddyBoss Platform
 
+== More Free Tools from Wbcom Designs ==
+
+Rich link previews are just one ingredient of a lively activity feed. The free plugins below round out the rest of your community stack, so shared content, conversations, and members all have somewhere to thrive.
+
+* **[BuddyNext](https://wbcomdesigns.com/downloads/buddynext/)** - A complete free community platform with feeds, spaces, member profiles, private messaging, directories, and moderation built in.
+* **[Jetonomy](https://wbcomdesigns.com/downloads/jetonomy/)** - Free forums, Q&A boards, and idea spaces with trust-level auto-moderation, already proven across 100,000+ topics.
+* **[Mediaverse](https://wbcomdesigns.com/downloads/mediaverse/)** - A photo and video community with albums, reactions, following, direct messages, and AI-assisted moderation.
+* **[Listora](https://wbcomdesigns.com/downloads/listora/)** - Searchable directories spanning 10 listing types, complete with reviews, maps, and frontend submissions.
+* **[Learnomy](https://wbcomdesigns.com/downloads/learnomy/)** - A free LMS for building and selling courses, with quizzes, certificates, and payments all included.
+
 == Installation ==
 
 1. Upload the `buddypress-activity-link-preview` folder to `/wp-content/plugins/`
