@@ -65,29 +65,6 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
     --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
 }
 
-@media (prefers-color-scheme: dark) {
-    :root[data-bx-mode="auto"] .activity-url-scrapper-container,
-    :root[data-bx-mode="auto"] .activity-comment-url-scrapper-container,
-    :root[data-bx-mode="auto"] .activity-link-preview-container,
-    :root[data-bx-mode="auto"] .activity-comment-link-preview-container,
-    :root[data-bx-mode="auto"] .comment-attachments {
-        --bpalp-surface: var(--bx-color-bg-elevated, #1e2126);
-        --bpalp-surface-alt: var(--bx-color-bg-muted, #23262b);
-        --bpalp-border: rgba(255, 255, 255, 0.16);
-        --bpalp-border-soft: rgba(255, 255, 255, 0.12);
-        --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #e9eaec));
-        --bpalp-text: var(--bx-color-fg, #b6bcc3);
-        --bpalp-text-strong: var(--bx-color-fg, #cfd3d8);
-        --bpalp-muted: #9aa0a6;
-        --bpalp-close: rgba(255, 255, 255, 0.6);
-        --bpalp-btn-bg: var(--bx-color-button-bg, #2c3138);
-        --bpalp-btn-fg: var(--bx-color-button-fg, #e9eaec);
-        --bpalp-btn-border: var(--bx-color-button-border, rgba(255, 255, 255, 0.24));
-        --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #3a4048);
-        --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
-    }
-}
-
 /*--------------------------------------------------------------
 1 - Activity Page (Main Posts) - Original Styles
 --------------------------------------------------------------*/
@@ -522,12 +499,4 @@ theme. Explicit dark overrides cover BuddyX explicit dark mode
     --bpalp-error-fg: #f3b6bd;
     --bpalp-error-bg: rgba(200, 60, 75, 0.16);
     --bpalp-error-border: rgba(220, 95, 110, 0.45);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root[data-bx-mode="auto"] .bpalp-preview-error {
-        --bpalp-error-fg: #f3b6bd;
-        --bpalp-error-bg: rgba(200, 60, 75, 0.16);
-        --bpalp-error-border: rgba(220, 95, 110, 0.45);
-    }
 }
