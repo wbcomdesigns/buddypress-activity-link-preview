@@ -16,11 +16,20 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 /*--------------------------------------------------------------
 0 - Color Tokens (light defaults + dark mode)
 ----------------------------------------------------------------
-Consumes BuddyX / BuddyX Pro theme tokens (--bx-color-*) when the
-active theme provides them (they flip automatically in dark mode),
-with the plugin's original light values as fallbacks for any other
-theme. Explicit dark overrides cover BuddyX explicit dark mode
-(:root[data-bx-mode="dark"]) and auto mode following the OS.
+Previews are painted through the plugin's own --bpalp-* tokens, so
+you can retheme every preview from this one block. Each token reads
+the matching BuddyX / BuddyX Pro theme token (--bx-color-*) first,
+and falls back to the plugin's own light literal when the active
+theme does not define that token.
+
+Two rule sets assign the tokens:
+  1. Base rule (below)              - light defaults, applied always.
+  2. :root[data-bx-mode="dark"]     - BuddyX explicit dark mode.
+
+There is intentionally NO @media (prefers-color-scheme: dark) block.
+In auto mode BuddyX already flips its own --bx-color-* tokens, so the
+previews follow the active theme rather than the plugin maintaining a
+duplicate dark palette.
 --------------------------------------------------------------*/
 
 .activity-url-scrapper-container,
