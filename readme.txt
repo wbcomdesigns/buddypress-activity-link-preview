@@ -41,13 +41,13 @@ BuddyPress activity link preview displays image, title and description from webs
 
 == More Free Tools from Wbcom Designs ==
 
-Rich link previews are just one ingredient of a lively activity feed. The free plugins below round out the rest of your community stack, so shared content, conversations, and members all have somewhere to thrive.
+Building an active community? These free Wbcom Designs plugins pair well with rich activity previews:
 
-* **[BuddyNext](https://wbcomdesigns.com/downloads/buddynext/)** - A complete free community platform with feeds, spaces, member profiles, private messaging, directories, and moderation built in.
-* **[Jetonomy](https://wbcomdesigns.com/downloads/jetonomy/)** - Free forums, Q&A boards, and idea spaces with trust-level auto-moderation, already proven across 100,000+ topics.
-* **[Mediaverse](https://wbcomdesigns.com/downloads/mediaverse/)** - A photo and video community with albums, reactions, following, direct messages, and AI-assisted moderation.
-* **[Listora](https://wbcomdesigns.com/downloads/listora/)** - Searchable directories spanning 10 listing types, complete with reviews, maps, and frontend submissions.
-* **[Learnomy](https://wbcomdesigns.com/downloads/learnomy/)** - A free LMS for building and selling courses, with quizzes, certificates, and payments all included.
+* **[BuddyNext](https://wbcomdesigns.com/downloads/buddynext/)** - A complete free community platform for WordPress: activity feed, spaces, member profiles, private messaging, directory, and moderation in one plugin.
+* **[Mediaverse](https://wbcomdesigns.com/downloads/mediaverse/)** - A free photo and video community with albums, lightbox, reactions, following, direct messages, and six privacy levels.
+* **[Jetonomy](https://wbcomdesigns.com/downloads/jetonomy/)** - Free community forums, Q&A boards, and discussions with trust-level auto-moderation.
+* **[Listora](https://wbcomdesigns.com/downloads/listora/)** - A free WordPress directory plugin with 10 listing types, reviews, claims, maps, and frontend submissions.
+* **[Learnomy](https://wbcomdesigns.com/downloads/learnomy/)** - A free LMS to build courses, grade assessments, issue certificates, and accept payments on your own site.
 
 == Installation ==
 
