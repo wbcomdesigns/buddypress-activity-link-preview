@@ -387,7 +387,31 @@
 		var nextButtonId = isComment ? 'activity-comment-url-nextPicButton-' + commentId : 'activity-url-nextPicButton';
 		var imageCountId = isComment ? 'activity-comment-url-scrapper-img-count-' + commentId : 'activity-url-scrapper-img-count';
 
-		var link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="' + imageCountId + '">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + url + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + title + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + image + '" /></div></div>';
+		// Escape all scraped/user-derived values before injecting into the DOM.
+		// escapeHtml() encodes & < > " ' so it is safe for both text nodes and
+		// double-quoted attributes. The HTML parser decodes the entities back to
+		// the raw value on submit, so the server still receives the original
+		// string to sanitize -- no double-encoding. See task #1 (XSS fix).
+		var eTitle       = escapeHtml(title);
+		var eDescription = escapeHtml(description);
+		var eImage       = escapeHtml(image);
+		var eUrl         = escapeHtml(url);
+
+		// oEmbed videos (YouTube, Vimeo, etc.): response.description is the trusted
+		// WP-oEmbed iframe (whitelisted providers, generated server-side), so it is
+		// rendered raw to show the player. The hidden wp_embed flag tells the save
+		// handler to regenerate + persist the embed so it survives to the feed.
+		// Every scraped value (title/description/image/url) stays escaped above.
+		var isEmbed = !!response.wp_embed;
+		var link_preview;
+		if (isEmbed) {
+			// Emit all four hidden fields the save handler requires (url/title/
+			// description/image) plus the wp_embed flag; the server regenerates the
+			// embed from the URL, so the escaped title/description here are harmless.
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
+		} else {
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="' + imageCountId + '">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+		}
 
 		$(attachmentContainer + ' .' + containerClass).remove();
 		$(attachmentContainer).append(link_preview);
@@ -410,7 +434,7 @@
 		}
 		
 		if (url.includes('facebook.com')) {
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + url + '" data-width="500" data-height="500"></div>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + eUrl + '" data-width="500" data-height="500"></div>');
 			if (typeof FB !== 'undefined') {
 				FB.XFBML.parse();
 			} else {
@@ -526,7 +550,14 @@
 		var nextButtonId = isComment ? 'activity-comment-url-nextPicButton-' + commentId : 'activity-url-nextPicButton';
 		var imageCountId = isComment ? 'activity-comment-url-scrapper-img-count-' + commentId : 'activity-url-scrapper-img-count';
 
-		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="' + imageCountId + '">Image ' + (link_image_index + 1) + '&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + url + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + title + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + escapeHtml(description) + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + image + '" /></div></div>';
+		// Escape all scraped/user-derived values before injecting into the DOM
+		// (same rationale as setURLResponse -- task #1 XSS fix).
+		var eTitle       = escapeHtml(title);
+		var eDescription = escapeHtml(description);
+		var eImage       = escapeHtml(image);
+		var eUrl         = escapeHtml(url);
+
+		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="' + imageCountId + '">Image ' + (link_image_index + 1) + '&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 
 		$(attachmentContainer + ' .' + containerClass).remove();
 		$(attachmentContainer).append(link_preview);

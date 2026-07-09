@@ -251,9 +251,11 @@ duplicate dark palette.
     font-size: 20px;
 }
 
-#activity-close-link-suggestion:focus,
-#activity-link-preview-close-image:focus {
-    outline: 0;
+#activity-close-link-suggestion:focus-visible,
+#activity-link-preview-close-image:focus-visible {
+    outline: 2px solid var(--bpalp-title, #1d2327);
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 .activity-list .activity-item .activity-content .activity-inner .twitter-post, 

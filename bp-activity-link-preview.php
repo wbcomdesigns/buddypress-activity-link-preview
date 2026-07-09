@@ -160,26 +160,21 @@ function bp_activity_link_preview_enqueue_scripts() {
 	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 
-	// Detect if BuddyBoss is active with its own link preview.
+	// Detect if BuddyBoss is active with its own link preview (the JS stands
+	// down for BuddyBoss's native preview to avoid duplicate cards).
 	$buddyboss_active              = function_exists( 'buddyboss_theme' ) || class_exists( 'BuddyBoss_Platform' );
 	$buddyboss_link_preview_active = $buddyboss_active && function_exists( 'bp_is_activity_link_preview_active' ) && bp_is_activity_link_preview_active();
 
-	// Detect if Youzify is active with its URL preview feature.
-	$youzify_active              = defined( 'YOUZIFY_VERSION' ) || class_exists( 'Youzify' );
-	$youzify_url_preview_enabled = $youzify_active && function_exists( 'youzify_option' ) && 'on' === youzify_option( 'youzify_enable_wall_url_preview', 'on' );
-
-	// Add localized data for comment handling.
+	// Only the keys the frontend script actually reads are localized. Youzify
+	// stand-down is handled server-side in the render path, so no Youzify flags
+	// are passed to JS.
 	wp_localize_script(
 		'bp-activity-link-preview-js',
 		'bp_activity_link_preview',
 		array(
 			'ajaxurl'                       => admin_url( 'admin-ajax.php' ),
 			'nonce'                         => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
-			'enable_comments'               => apply_filters( 'bp_activity_link_preview_enable_comments', true ),
-			'buddyboss_active'              => $buddyboss_active,
 			'buddyboss_link_preview_active' => $buddyboss_link_preview_active,
-			'youzify_active'                => $youzify_active,
-			'youzify_url_preview_active'    => $youzify_url_preview_enabled,
 		)
 	);
 }
@@ -607,7 +602,7 @@ function bp_activity_link_parse_internal_url( $url ) {
 
 			// Try to get BuddyPress/XProfile data.
 			if ( function_exists( 'bp_get_profile_field_data' ) ) {
-				$args = array(
+				$args  = array(
 					'field'   => 'About',
 					'user_id' => $user->ID,
 				);
@@ -712,6 +707,7 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$link_title               = ! empty( $_POST['link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['link_title'] ) ) : '';
 		$link_description         = ! empty( $_POST['link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['link_description'] ) ) : '';
 		$link_image               = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
+		$link_wp_embed            = ! empty( $_POST['link_wp_embed'] );
 		$link_preview_data['url'] = $link_url;
 
 		if ( false !== strpos( $link_preview_data['url'], 'www.reddit.com' ) ) {
@@ -728,6 +724,18 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 			$link_preview_data['description'] = $link_description;
 		}
 
+		// Persist oEmbed videos (YouTube, Vimeo, etc.). The composer flags these
+		// with link_wp_embed; the embed HTML is regenerated server-side from the
+		// URL (wp_oembed_get, whitelisted providers only) so the saved activity
+		// renders the player without a live external fetch at render time.
+		if ( $link_wp_embed && ! empty( $link_url ) ) {
+			$embed_html = wp_oembed_get( $link_url );
+			if ( ! empty( $embed_html ) ) {
+				$link_preview_data['wp_embed']   = true;
+				$link_preview_data['embed_html'] = $embed_html;
+			}
+		}
+
 		bp_activity_update_meta( $activity->id, '_bp_activity_link_preview_data', $link_preview_data );
 	}
 
@@ -737,6 +745,7 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$comment_link_title       = ! empty( $_POST['comment_link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_title'] ) ) : '';
 		$comment_link_description = ! empty( $_POST['comment_link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_description'] ) ) : '';
 		$comment_link_image       = ! empty( $_POST['comment_link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_image'] ) ) : '';
+		$comment_link_wp_embed    = ! empty( $_POST['comment_link_wp_embed'] );
 
 		$comment_link_preview_data['url'] = $comment_link_url;
 
@@ -754,10 +763,18 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 			$comment_link_preview_data['description'] = $comment_link_description;
 		}
 
+		// Persist oEmbed videos in comments (see main-activity handling above).
+		if ( $comment_link_wp_embed && ! empty( $comment_link_url ) ) {
+			$comment_embed_html = wp_oembed_get( $comment_link_url );
+			if ( ! empty( $comment_embed_html ) ) {
+				$comment_link_preview_data['wp_embed']   = true;
+				$comment_link_preview_data['embed_html'] = $comment_embed_html;
+			}
+		}
+
 		bp_activity_update_meta( $activity->id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
-	}
-	// Fallback: If comment doesn't have preview data but has URLs in content, try to extract and save (only if enabled)
-	elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && 'activity_comment' === $activity->type && ! empty( $activity->content ) ) {
+	} elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && 'activity_comment' === $activity->type && ! empty( $activity->content ) ) {
+		// Fallback: comment has no saved preview data but its content has URLs, so extract and save (only if enabled).
 		$urls = bp_activity_link_preview_extract_urls_from_content( $activity->content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0]; // Use first URL found.
@@ -937,11 +954,10 @@ function bp_activity_link_preview_comment_content( $content ) {
 
 	if ( ! empty( $comment_preview_data ) ) {
 		$content = bp_activity_link_preview_render_preview( $content, $comment_preview_data, true );
-	}
-	// If no preview data but content has URLs, generate it from the cache only.
-	// Render must never block on a live external fetch; save-time extraction
-	// (bp_activity_link_preview_save_link_data) is responsible for fetching.
-	elseif ( ! empty( $content ) ) {
+	} elseif ( ! empty( $content ) ) {
+		// No saved preview data but the content has URLs: generate from cache only.
+		// Render must never block on a live external fetch; save-time extraction
+		// (bp_activity_link_preview_save_link_data) is responsible for fetching.
 		$urls = bp_activity_link_preview_extract_urls_from_content( $content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0];
@@ -1014,6 +1030,15 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
 		return $content;
 	}
 
+	// oEmbed videos (YouTube, Vimeo, etc.): output the embed HTML that was
+	// generated by wp_oembed_get() and persisted at save time. It is filtered
+	// through bp_activity_allowed_tags (which allows iframe) on display, so no
+	// live external fetch happens at render time.
+	if ( ! empty( $preview_data['wp_embed'] ) && ! empty( $preview_data['embed_html'] ) ) {
+		$content .= '<div class="' . esc_attr( $css_class ) . ' activity-video-preview">' . $preview_data['embed_html'] . '</div>';
+		return $content;
+	}
+
 	// For regular URLs, require title or description for the preview.
 	if ( empty( trim( $preview_data['title'] ) ) && empty( trim( $preview_data['description'] ) ) ) {
 		return $content;
@@ -1031,7 +1056,7 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
 	$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
 	if ( ! empty( $preview_data['image_url'] ) ) {
 		$content .= '<div class="activity-link-preview-image">';
-		$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" /></a>';
+		$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" alt="' . esc_attr( $preview_data['title'] ) . '" /></a>';
 		$content .= '</div>';
 	}
 	$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
@@ -1080,6 +1105,23 @@ function bp_activity_link_preview_allowed_tags( $tags ) {
 	$tags['i'] = array(
 		'class' => array(),
 		'id'    => array(),
+	);
+
+	// Allow oEmbed video iframes (YouTube, Vimeo, etc.). The iframe markup is
+	// produced server-side by wp_oembed_get() for whitelisted providers only,
+	// so it is trusted; this allowlist scopes which attributes survive display.
+	$tags['iframe'] = array(
+		'src'             => array(),
+		'width'           => array(),
+		'height'          => array(),
+		'title'           => array(),
+		'class'           => array(),
+		'style'           => array(),
+		'frameborder'     => array(),
+		'allow'           => array(),
+		'allowfullscreen' => array(),
+		'loading'         => array(),
+		'referrerpolicy'  => array(),
 	);
 
 	return $tags;

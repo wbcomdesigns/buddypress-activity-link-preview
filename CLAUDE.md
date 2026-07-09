@@ -51,6 +51,10 @@ This onboarding pass was **artefacts-only** (manifest + audit reports + graph + 
 ## Recent changes
 | Date | Type | Description | Files |
 |---|---|---|---|
+| 2026-07-09 | security | DOM-XSS fix: escape scraped title/description/image/url at every JS injection site (both render fns + FB data-href) via the existing escapeHtml(); trusted WP-oEmbed rendered raw. Live-verified payload neutralized. | `assets/js/bp-activity-link-preview.js` |
+| 2026-07-09 | bug-fix | YouTube/oEmbed videos now persist to the saved feed: JS sends wp_embed flag, save regenerates embed via wp_oembed_get() + stores wp_embed/embed_html, render outputs it, iframe added to bp_activity_allowed_tags. Was saving as a bare URL. | `bp-activity-link-preview.php`, `assets/js/bp-activity-link-preview.js` |
+| 2026-07-09 | a11y | img alt on composer + server-render previews; replaced `outline:0` focus suppression with token-driven `:focus-visible` ring | `bp-activity-link-preview.php`, `assets/js/*.js`, `assets/css/*.css` |
+| 2026-07-09 | chore | Removed 4 orphaned wp_localize_script keys + dead Youzify vars; WPCS clean; readme Tested-up-to 7.0; readme platform claims corrected (dropped Reddit/LinkedIn/Instagram); Gruntfile excludes .github/ + audit/ from dist zip | `bp-activity-link-preview.php`, `readme.txt`, `Gruntfile.js`, `assets/css/*.css` |
 | 2026-07-03 | security | Sanitize scraped title/description in both comment auto-extraction fallbacks; remove double html_entity_decode on og:description; esc_html description in shared renderer | `bp-activity-link-preview.php` |
 | 2026-07-03 | perf | Assets (own CSS/JS + Twitter/FB SDKs + dashicons) load only in activity contexts via bp_activity_link_preview_should_load_assets(); new bp_activity_link_preview_load_assets filter | `bp-activity-link-preview.php` |
 | 2026-07-03 | perf | bp_activity_link_parse_url gains negative caching (15-min bpalp_failed sentinel) and $cached_only mode; comment render fallback is cached-only (no live external fetch during render) | `bp-activity-link-preview.php` |

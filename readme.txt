@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 5.0
-Tested up to: 6.9
+Tested up to: 7.0
 Stable tag: 1.7.4
 Requires PHP: 7.4
 License: GPLv2 or later
@@ -20,7 +20,7 @@ BuddyPress activity link preview displays image, title and description from webs
 * **Automatic Link Detection** - Detects URLs as users type in the activity form
 * **Rich Previews** - Displays title, description, and featured image from shared links
 * **Comment Support** - Link previews work in activity comments and replies
-* **Social Media Embeds** - Special handling for Twitter/X, Facebook, YouTube, and more
+* **Social Media Embeds** - Native embeds for Twitter/X and Facebook, plus inline video via WordPress oEmbed (YouTube, Vimeo, and other supported providers)
 * **Short URL Support** - Resolves shortened URLs (bit.ly, tinyurl, etc.)
 * **Caching** - Previews are cached for better performance
 * **REST API Support** - Link preview data available via BuddyPress REST API
@@ -30,9 +30,8 @@ BuddyPress activity link preview displays image, title and description from webs
 
 * Twitter/X - Native tweet embeds
 * Facebook - Native post embeds
-* YouTube - Video embeds via oEmbed
-* LinkedIn, Instagram, Reddit - Link previews
-* Any website with Open Graph meta tags
+* YouTube, Vimeo, and other WordPress oEmbed providers - Inline video and rich embeds
+* Any website with Open Graph meta tags - Title, description, and image card
 
 = Requirements =
 
@@ -148,7 +147,7 @@ Yes, the plugin is fully compatible with both BuddyPress and BuddyBoss Platform.
 * Fixed: BuddyPress class name detection improved
 * Fixed: Comment filter registration timing for proper enable/disable support
 * Added: Plugin version constant for proper asset cache busting
-* Updated: Tested up to WordPress 6.9
+* Updated: Tested up to WordPress 7.0
 * Updated: Requires PHP 7.4 minimum
 
 = 1.6.1 =
