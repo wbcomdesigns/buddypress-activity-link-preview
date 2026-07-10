@@ -24,12 +24,17 @@ theme does not define that token.
 
 Two rule sets assign the tokens:
   1. Base rule (below)              - light defaults, applied always.
-  2. :root[data-bx-mode="dark"]     - BuddyX explicit dark mode.
+  2. :root[data-bx-mode="dark"]     - BuddyX / Reign explicit dark mode.
+
+Dark values still read --bx-color-* first, and BuddyX / Reign only flip
+those vars under [data-bx-mode="dark"] (NOT under a bare body dark class),
+so keying the dark scope off data-bx-mode is what actually produces a
+dark card - a body.buddyx-dark-theme scope would resolve back to the
+light --bx-color-* values and render light. Verified in-browser.
 
 There is intentionally NO @media (prefers-color-scheme: dark) block.
-In auto mode BuddyX already flips its own --bx-color-* tokens, so the
-previews follow the active theme rather than the plugin maintaining a
-duplicate dark palette.
+Dark is opt-in via the theme's explicit data-bx-mode attribute only; the
+plugin never maintains a duplicate OS-driven palette.
 --------------------------------------------------------------*/
 
 .activity-url-scrapper-container,
@@ -111,7 +116,7 @@ duplicate dark palette.
 .activity-link-preview-image {
     float: left;
     max-width: 160px;
-    margin-right: 20px;
+    margin-inline-end: 20px;
     margin-bottom: 20px;
     position: relative;
 }
@@ -211,7 +216,7 @@ duplicate dark palette.
     color: var(--bpalp-close, rgba(0, 0, 0, 0.4));
     font-size: 16px;
     position: absolute;
-    left: 3px;
+    inset-inline-start: 3px;
     top: 8px;
     text-decoration: none;
 }
@@ -222,8 +227,8 @@ duplicate dark palette.
 
 .activity-post-form-link-wp-embed #activity-close-link-suggestion {
     top: 30px;
-    left: 8px;
-    right: auto;
+    inset-inline-start: 8px;
+    inset-inline-end: auto;
     background: var(--bpalp-surface, #fff);
     z-index: 11;
     width: 20px;
@@ -241,7 +246,7 @@ duplicate dark palette.
     border: 0;
     color: #fff;
     font-size: 16px;
-    left: 3px;
+    inset-inline-start: 3px;
     position: absolute;
     top: 3px;
     text-decoration: none;
@@ -300,7 +305,7 @@ duplicate dark palette.
 .activity-comment-link-preview-container .activity-link-preview-image {
     float: left;
     max-width: 120px;
-    margin-right: 15px;
+    margin-inline-end: 15px;
     margin-bottom: 15px;
     position: relative;
 }
@@ -321,7 +326,7 @@ duplicate dark palette.
     color: var(--bpalp-close, rgba(0, 0, 0, 0.4));
     font-size: 14px;
     position: absolute;
-    right: 5px;
+    inset-inline-end: 5px;
     top: 5px;
     text-decoration: none;
     z-index: 10;
@@ -335,7 +340,7 @@ duplicate dark palette.
     border: 0;
     color: #fff;
     font-size: 14px;
-    left: 3px;
+    inset-inline-start: 3px;
     position: absolute;
     top: 3px;
     text-decoration: none;
@@ -399,9 +404,9 @@ duplicate dark palette.
     /* Main activity previews */
     #activity-close-link-suggestion {
         color: var(--bpalp-title, #000);
-        right: 5px;
+        inset-inline-end: 5px;
         top: 5px;
-        left: auto;
+        inset-inline-start: auto;
     }
 
     .activity-link-preview-container {
@@ -411,7 +416,7 @@ duplicate dark palette.
 
     .activity-link-preview-image {
         max-width: 100px;
-        margin-right: 10px;
+        margin-inline-end: 10px;
         margin-bottom: 10px;
     }
 
@@ -427,7 +432,7 @@ duplicate dark palette.
 
     .activity-comment-link-preview-container .activity-link-preview-image {
         max-width: 80px;
-        margin-right: 10px;
+        margin-inline-end: 10px;
         margin-bottom: 10px;
     }
 
@@ -441,7 +446,7 @@ duplicate dark palette.
     }
 
     [id^="activity-close-comment-link-suggestion"] {
-        right: 3px;
+        inset-inline-end: 3px;
         top: 3px;
         font-size: 12px;
     }
@@ -473,11 +478,12 @@ duplicate dark palette.
     max-width: 100%;
 }
 
-/* Focus states for accessibility */
-[id^="activity-close-comment-link-suggestion"]:focus,
-[id^="activity-comment-link-preview-close-image"]:focus {
-    outline: 2px solid #0073aa;
+/* Focus states for accessibility (keyboard-only ring, token-driven) */
+[id^="activity-close-comment-link-suggestion"]:focus-visible,
+[id^="activity-comment-link-preview-close-image"]:focus-visible {
+    outline: 2px solid var(--bpalp-title, #1d2327);
     outline-offset: 2px;
+    border-radius: 2px;
 }
 
 /* Hover effects */
@@ -510,4 +516,22 @@ duplicate dark palette.
     --bpalp-error-fg: #f3b6bd;
     --bpalp-error-bg: rgba(200, 60, 75, 0.16);
     --bpalp-error-border: rgba(220, 95, 110, 0.45);
+}
+
+/*--------------------------------------------------------------
+5 - RTL
+----------------------------------------------------------------
+Spacing and single-side offsets use logical properties
+(margin-inline-*, inset-inline-*) so they mirror automatically.
+The preview image float is the one thing logical values cannot flip
+with the browser support this plugin targets, so the side is flipped
+explicitly for RTL. Gated above the 24em stacking breakpoint so it
+never fights the small-screen "float: none" stack rule.
+--------------------------------------------------------------*/
+
+@media screen and (min-width: 24.0625em) {
+    [dir="rtl"] .activity-link-preview-image,
+    [dir="rtl"] .activity-comment-link-preview-container .activity-link-preview-image {
+        float: right;
+    }
 }
