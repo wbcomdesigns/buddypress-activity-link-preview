@@ -30,6 +30,30 @@ define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
 /**
+ * Load the plugin text domain for translation.
+ *
+ * WordPress only auto-loads language packs that exist on
+ * translate.wordpress.org; it never reads a plugin's own languages/ folder.
+ * This plugin ships its own translations, so the domain must be registered
+ * here. load_plugin_textdomain() checks the WordPress.org pack first and falls
+ * back to the bundled file, so both paths work.
+ *
+ * Runs on init: loading a text domain earlier triggers
+ * _load_textdomain_just_in_time on WordPress 6.7+.
+ *
+ * @since 1.7.4
+ * @return void
+ */
+function bp_activity_link_preview_load_textdomain() {
+	load_plugin_textdomain(
+		'buddypress-activity-link-preview',
+		false,
+		basename( BP_ACTIVITY_LINK_PREVIEW_PATH ) . '/languages/'
+	);
+}
+add_action( 'init', 'bp_activity_link_preview_load_textdomain' );
+
+/**
  * Check if BuddyPress or BuddyBoss Platform is active.
  *
  * @since 1.7.1
