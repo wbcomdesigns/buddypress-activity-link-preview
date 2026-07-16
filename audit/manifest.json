@@ -10,10 +10,10 @@
     "extends": null,
     "extension_hook_consumed": null,
     "extension_hook_fired": null,
-    "architecture": "single-file procedural; no classes, no namespace",
-    "requires": "BuddyPress OR BuddyBoss Platform (auto-deactivates if neither active)",
+    "architecture": "single-file procedural; no classes, no namespace (1185 lines, 22 functions)",
+    "requires": "BuddyPress OR BuddyBoss Platform (auto-deactivates if neither active). Plugin header: Requires at least WP 5.9, Requires PHP 7.4.",
     "branch": "v1.7.4",
-    "header_version_vs_branch_note": "Plugin header + BP_ACTIVITY_LINK_PREVIEW_VERSION + readme Stable tag + package.json all say 1.7.4, matching the v1.7.4 dev branch."
+    "header_version_vs_branch_note": "Plugin header (:8) + BP_ACTIVITY_LINK_PREVIEW_VERSION (:28) + readme Stable tag + package.json all say 1.7.4, matching the v1.7.4 dev branch."
   },
   "rest": {
     "namespace": "consumes BuddyPress REST (buddypress/v1) — registers no routes of its own",
@@ -23,7 +23,7 @@
         "methods": ["GET"],
         "handler": "bp-activity-link-preview.php::bp_activity_link_preview_data_embed_rest_api",
         "permission": "inherits BuddyPress activity endpoint permission",
-        "purpose": "Embeds bp_activity_link (+ bp_activity_comment_link for comments) preview meta into the BuddyPress activity REST response. Not an own route — a filter on BP's response."
+        "purpose": "Embeds bp_activity_link (:1142) into every activity REST response, plus bp_activity_comment_link (:1146-1147) when the activity type is activity_comment. Not an own route — a filter on BP's response. Registered at :108, handler defined at :1140."
       }
     ]
   },
@@ -33,9 +33,9 @@
       "handler": "bp-activity-link-preview.php::bp_activity_parse_url_preview",
       "nonce": "bp_activity_link_preview_nonce",
       "capability": "is_user_logged_in() (any authenticated user)",
-      "auth_model": "logged-in gate + nonce + SSRF guard (blocks private/internal IPs, localhost, RFC1918 ranges)",
+      "auth_model": "logged-in gate (:200-202) + nonce (:205-207) + SSRF guard (:224 via bp_activity_link_preview_is_blocked_host)",
       "nopriv": false,
-      "purpose": "Fetches Open Graph / oEmbed preview data for a URL typed in the activity composer. Returns title/description/images JSON."
+      "purpose": "Fetches Open Graph / oEmbed preview data for a URL typed in the activity composer. Returns title/description/images JSON. Registered at :93, handler defined at :198."
     }
   ],
   "admin_pages": [],
@@ -48,33 +48,34 @@
   "capabilities": [],
   "services": [],
   "hooks_fired": [
-    { "name": "bp_activity_link_parse_url_shorten_url_provider", "type": "filter", "args_count": 1, "args_signature": ["array $providers"], "where": "bp-activity-link-preview.php:235", "consumed_by": [], "purpose": "Filter the list of short-URL host providers that trigger redirect resolution (bit.ly, tinyurl, etc.)." },
-    { "name": "bp_activity_parse_url_preview", "type": "filter", "args_count": 2, "args_signature": ["array $parse_url_data", "string $url"], "where": "bp-activity-link-preview.php:219", "consumed_by": [], "purpose": "Filter the parsed preview payload returned by the AJAX handler before JSON output." },
-    { "name": "bp_activity_link_parse_url", "type": "filter", "args_count": 1, "args_signature": ["array $parsed_url_data"], "where": "bp-activity-link-preview.php:313,445", "consumed_by": [], "purpose": "Filter the final parsed URL data (internal-URL path and external-scrape path both fire it)." },
-    { "name": "bp_oembed_discover_support", "type": "filter", "args_count": 2, "args_signature": ["bool $discover", "string $url"], "where": "bp-activity-link-preview.php:289", "consumed_by": [], "purpose": "Toggle oEmbed discovery for a given URL (default false)." },
-    { "name": "bp_activity_link_preview_enable_comments", "type": "filter", "args_count": 1, "args_signature": ["bool $enabled"], "where": "bp-activity-link-preview.php:147,630,655,811,872", "consumed_by": [], "purpose": "Master switch (default true) for comment link previews. Read in localize, save, render, and filter registration paths." }
+    { "name": "bp_activity_link_preview_load_assets", "type": "filter", "args_count": 1, "args_signature": ["bool $should_load"], "where": "bp-activity-link-preview.php:147", "consumed_by": [], "purpose": "Override whether the plugin's CSS/JS are enqueued on the current request (return value of bp_activity_link_preview_should_load_assets, :134)." },
+    { "name": "bp_activity_parse_url_preview", "type": "filter", "args_count": 2, "args_signature": ["array $parse_url_data", "string $url"], "where": "bp-activity-link-preview.php:241", "consumed_by": [], "purpose": "Filter the parsed preview payload returned by the AJAX handler before JSON output." },
+    { "name": "bp_activity_link_parse_url_shorten_url_provider", "type": "filter", "args_count": 1, "args_signature": ["array $providers"], "where": "bp-activity-link-preview.php:295", "consumed_by": [], "purpose": "Filter the list of short-URL host providers that trigger redirect resolution (bit.ly, snip.ly, rb.gy, tinyurl.com, tiny.one, rotf.lol, b.link, 4ubr.short.gy)." },
+    { "name": "bp_activity_link_parse_url", "type": "filter", "args_count": 1, "args_signature": ["array $parsed_url_data"], "where": "bp-activity-link-preview.php:350,371,374,407,545", "consumed_by": [], "purpose": "Filter the final parsed URL data. Fired on every return path: cached-only miss (:350), internal-URL hit (:371), internal-URL miss (:374), oEmbed hit (:407), external-scrape path (:545)." },
+    { "name": "bp_oembed_discover_support", "type": "filter", "args_count": 2, "args_signature": ["bool $discover", "string $url"], "where": "bp-activity-link-preview.php:383", "consumed_by": [], "purpose": "Toggle oEmbed discovery for a given URL (default false)." },
+    { "name": "bp_activity_link_preview_enable_comments", "type": "filter", "args_count": 1, "args_signature": ["bool $enabled"], "where": "bp-activity-link-preview.php:745,778,935,998", "consumed_by": [], "purpose": "Master switch (default true) for comment link previews. Read in the save paths (:745 posted-field branch, :778 content-scrape branch), the comment render filter (:935), and the conditional filter registration (:998). Usage examples documented at :1169-1180." }
   ],
   "hooks_consumed": [
-    { "name": "plugins_loaded", "priority": 20, "callback": "anonymous bootstrap closure", "where": "bp-activity-link-preview.php:113", "purpose": "Bootstrap after BP loads (BP uses default 10)." },
-    { "name": "admin_init", "priority": 10, "callback": "bp_activity_link_preview_requires_buddypress", "where": "bp-activity-link-preview.php:75", "purpose": "Auto-deactivate if BuddyPress/BuddyBoss not active." },
-    { "name": "admin_notices", "priority": 10, "callback": "bp_activity_link_preview_admin_notice", "where": "bp-activity-link-preview.php:72,119", "purpose": "Dependency-missing notice." },
-    { "name": "wp_enqueue_scripts", "priority": 10, "callback": "bp_activity_link_preview_enqueue_scripts", "where": "bp-activity-link-preview.php:85", "purpose": "Enqueue CSS/JS + Twitter + Facebook SDK + localized data." },
-    { "name": "bp_init", "priority": 999, "callback": "bp_activity_link_preview_disable_buddyboss_preview", "where": "bp-activity-link-preview.php:88", "purpose": "Remove BuddyBoss's own link preview filter to avoid duplicates." },
-    { "name": "bp_init", "priority": 10, "callback": "bp_activity_link_preview_init_comment_filter", "where": "bp-activity-link-preview.php:100", "purpose": "Register comment-content filter when comment previews enabled." },
-    { "name": "wp_ajax_bp_activity_parse_url_preview", "priority": 10, "callback": "bp_activity_parse_url_preview", "where": "bp-activity-link-preview.php:91", "purpose": "AJAX URL-parse endpoint." },
-    { "name": "bp_activity_after_save", "priority": 10, "callback": "bp_activity_link_preview_save_link_data", "where": "bp-activity-link-preview.php:94", "purpose": "Persist preview data to activity meta on save." },
-    { "name": "bp_get_activity_content_body", "priority": 8, "callback": "bp_activity_link_preview_content_body_with_comments", "where": "bp-activity-link-preview.php:97", "purpose": "Append rendered preview to activity content body." },
-    { "name": "bp_activity_comment_content", "priority": 10, "callback": "bp_activity_link_preview_comment_content", "where": "bp-activity-link-preview.php:873", "purpose": "Append rendered preview to comment content (conditionally registered)." },
-    { "name": "bp_activity_allowed_tags", "priority": 10, "callback": "bp_activity_link_preview_allowed_tags", "where": "bp-activity-link-preview.php:103", "purpose": "Allow div/img/button/span/i markup in activity content for previews." },
-    { "name": "bp_rest_activity_prepare_value", "priority": 10, "callback": "bp_activity_link_preview_data_embed_rest_api", "where": "bp-activity-link-preview.php:106", "purpose": "Embed preview meta into BP REST activity response." },
-    { "name": "wp_head", "priority": 10, "callback": "bp_activity_link_preview_add_facebook_root_div", "where": "bp-activity-link-preview.php:109", "purpose": "Output #fb-root div on BP activity/group/user pages for Facebook SDK." }
+    { "name": "plugins_loaded", "priority": 20, "callback": "anonymous bootstrap closure", "where": "bp-activity-link-preview.php:115", "purpose": "Bootstrap after BP loads (BP uses default 10)." },
+    { "name": "admin_init", "priority": 10, "callback": "bp_activity_link_preview_requires_buddypress", "where": "bp-activity-link-preview.php:77", "purpose": "Auto-deactivate if BuddyPress/BuddyBoss not active." },
+    { "name": "admin_notices", "priority": 10, "callback": "bp_activity_link_preview_admin_notice", "where": "bp-activity-link-preview.php:74,121", "purpose": "Dependency-missing notice (registered from the deactivation guard and from the plugins_loaded closure)." },
+    { "name": "wp_enqueue_scripts", "priority": 10, "callback": "bp_activity_link_preview_enqueue_scripts", "where": "bp-activity-link-preview.php:87", "purpose": "Enqueue CSS/JS + dashicons + Twitter + Facebook SDK + localized data (gated by bp_activity_link_preview_should_load_assets)." },
+    { "name": "bp_init", "priority": 999, "callback": "bp_activity_link_preview_disable_buddyboss_preview", "where": "bp-activity-link-preview.php:90", "purpose": "Remove BuddyBoss's own link preview filter to avoid duplicates (remove_filter at :193)." },
+    { "name": "bp_init", "priority": 10, "callback": "bp_activity_link_preview_init_comment_filter", "where": "bp-activity-link-preview.php:102", "purpose": "Register comment-content filter when comment previews enabled." },
+    { "name": "wp_ajax_bp_activity_parse_url_preview", "priority": 10, "callback": "bp_activity_parse_url_preview", "where": "bp-activity-link-preview.php:93", "purpose": "AJAX URL-parse endpoint." },
+    { "name": "bp_activity_after_save", "priority": 10, "callback": "bp_activity_link_preview_save_link_data", "where": "bp-activity-link-preview.php:96", "purpose": "Persist preview data to activity meta on save (handler at :703)." },
+    { "name": "bp_get_activity_content_body", "priority": 8, "callback": "bp_activity_link_preview_content_body_with_comments", "where": "bp-activity-link-preview.php:99", "purpose": "Append rendered preview to activity content body (handler at :868)." },
+    { "name": "bp_activity_comment_content", "priority": 10, "callback": "bp_activity_link_preview_comment_content", "where": "bp-activity-link-preview.php:999", "purpose": "Append rendered preview to comment content (conditionally registered inside bp_activity_link_preview_init_comment_filter; handler at :933)." },
+    { "name": "bp_activity_allowed_tags", "priority": 10, "callback": "bp_activity_link_preview_allowed_tags", "where": "bp-activity-link-preview.php:105", "purpose": "Allow div/img/button/span/i/iframe markup in activity content for previews (handler at :1076)." },
+    { "name": "bp_rest_activity_prepare_value", "priority": 10, "callback": "bp_activity_link_preview_data_embed_rest_api", "where": "bp-activity-link-preview.php:108", "purpose": "Embed preview meta into BP REST activity response (handler at :1140)." },
+    { "name": "wp_head", "priority": 10, "callback": "bp_activity_link_preview_add_facebook_root_div", "where": "bp-activity-link-preview.php:111", "purpose": "Output #fb-root div on BP activity/group/user pages for Facebook SDK (handler at :1156)." }
   ],
   "activity_meta": [
-    { "key": "_bp_activity_link_preview_data", "object": "activity", "purpose": "Preview payload (url, title, description, image_url) for main activity posts." },
-    { "key": "_bp_activity_comment_link_preview_data", "object": "activity", "purpose": "Preview payload for activity comments." }
+    { "key": "_bp_activity_link_preview_data", "object": "activity", "purpose": "Preview payload (url, title, description, image_url) for main activity posts. Written :741; read :919, :1141." },
+    { "key": "_bp_activity_comment_link_preview_data", "object": "activity", "purpose": "Preview payload for activity comments. Written :777, :799, :983; read :955, :1146." }
   ],
   "caching": [
-    { "mechanism": "transient", "key_pattern": "bp_oembed_<md5(url)>", "ttl": "DAY_IN_SECONDS", "where": "bp-activity-link-preview.php:271,311,442", "purpose": "Cache parsed URL preview data per-URL for 24h." }
+    { "mechanism": "transient", "key_pattern": "bp_oembed_<md5(maybe_serialize(url))>", "ttl": "DAY_IN_SECONDS (success); 15 * MINUTE_IN_SECONDS for the 'bpalp_failed' negative-cache sentinel", "where": "bp-activity-link-preview.php:345,346,370,405,538,542", "purpose": "Cache parsed URL preview data per-URL for 24h; failed parses are negative-cached for 15 minutes to avoid refetch storms." }
   ],
   "interactivity": [],
   "ui_activation": [],
@@ -91,14 +92,14 @@
     "hook_signature_drift": [],
     "adapter_undefined_calls": [],
     "registry_bypasses": [],
-    "suppressed_baseline_inventory": { "stub_class_missing": { "count": 0, "action": "n/a" }, "stub_const_missing": { "count": 0, "action": "n/a" }, "undef_var_risk": { "count": 0, "action": "n/a" }, "real_type_debt": { "count": 0, "action": "n/a" }, "phpcs_excludes": { "count": 4, "action": "Inline phpcs:ignore/disable at lines 183 (validated URL), 261 (file_get_contents fallback), 602-680 (nonce handled by BP). All justified with comments." } },
+    "suppressed_baseline_inventory": { "stub_class_missing": { "count": 0, "action": "n/a" }, "stub_const_missing": { "count": 0, "action": "n/a" }, "undef_var_risk": { "count": 0, "action": "n/a" }, "real_type_debt": { "count": 0, "action": "n/a" }, "phpcs_excludes": { "count": 2, "action": "Inline suppressions at line 211 (phpcs:ignore ValidatedSanitizedInput — URL validated with FILTER_VALIDATE_URL) and the 704-805 region (phpcs:disable/enable NonceVerification.Missing — nonce handled by BuddyPress before bp_activity_after_save fires). Both justified with comments." } },
     "registry_strategy": []
   },
   "buddypress_integration": {
-    "enabled_when": "class_exists('BuddyPress') || defined('BP_PLATFORM_VERSION') || class_exists('BuddyBoss_Platform')",
-    "manager": "procedural bootstrap (bp_activity_link_preview_bootstrap)",
+    "enabled_when": "class_exists('BuddyPress') || defined('BP_PLATFORM_VERSION') || class_exists('BuddyBoss_Platform') (bp_activity_link_preview_is_bp_active, :38-44)",
+    "manager": "procedural bootstrap (bp_activity_link_preview_bootstrap, :85)",
     "sub_classes": [],
-    "compat_notes": "Detects and stands down for BuddyBoss native link preview and Youzify wall URL preview to avoid duplicate cards. BuddyBoss JWT (bb-preview-token) used for same-site private-network scrapes."
+    "compat_notes": "Detects and stands down for BuddyBoss native link preview (:192-193, :875) and Youzify wall URL preview (:886-895 — checks YOUZIFY_VERSION/Youzify class, the youzify_enable_wall_url_preview option, and the 'url_preview' activity meta) to avoid duplicate cards. BuddyBoss JWT (bb-preview-token, :422) used for same-site private-network scrapes. Youzify stand-down is server-side in the render path only — no Youzify flags are localized to JS."
   },
   "frontend_assets": {
     "js": [
@@ -107,20 +108,21 @@
       { "handle": "facebook-js", "src": "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0", "deps": ["jquery"], "in_footer": true, "external": true }
     ],
     "css": [
-      { "handle": "bp-activity-link-preview-css", "src": "assets/css/bp-activity-link-preview.css", "deps": [] }
+      { "handle": "bp-activity-link-preview-css", "src": "assets/css/bp-activity-link-preview.css", "deps": [] },
+      { "handle": "dashicons", "src": "WordPress core", "deps": [] }
     ],
-    "localized": { "object": "bp_activity_link_preview", "handle": "bp-activity-link-preview-js", "keys": ["ajaxurl", "nonce", "enable_comments", "buddyboss_active", "buddyboss_link_preview_active", "youzify_active", "youzify_url_preview_active"] }
+    "localized": { "object": "bp_activity_link_preview", "handle": "bp-activity-link-preview-js", "keys": ["ajaxurl", "nonce", "buddyboss_link_preview_active"], "where": "bp-activity-link-preview.php:173-181", "note": "Only the keys the frontend script actually reads are localized (see comment at :170-171). enable_comments, buddyboss_active, youzify_active, and youzify_url_preview_active were removed in the 2026-07-09 orphan-key cleanup — comment gating and Youzify stand-down are server-side decisions." }
   },
   "cron": [],
   "wp_cli": [],
   "storage_drivers": [],
   "security": {
     "uploads_gate": "n/a — no uploads",
-    "ajax_auth": "is_user_logged_in() + wp_verify_nonce('bp_activity_link_preview_nonce')",
-    "ssrf_guard": "AJAX handler blocks empty host, FILTER_VALIDATE_IP private/reserved ranges, 127.0.0.1, localhost, and 10./172.16-31./192.168. CIDRs before fetching (bp-activity-link-preview.php:196-204)",
-    "url_validation": "FILTER_VALIDATE_URL on input and on resolved redirect targets",
-    "remote_fetch": "wp_safe_remote_get primary; raw file_get_contents fallback only for short-URL Location header resolution (line 261)",
-    "output_escaping": "esc_attr/esc_url/esc_html in render; oEmbed/embed code passed through (trusted WP oEmbed)",
+    "ajax_auth": "is_user_logged_in() (:200-202) + wp_verify_nonce('bp_activity_link_preview_nonce') (:205-207)",
+    "ssrf_guard": "AJAX handler calls bp_activity_link_preview_is_blocked_host($host) at :224 before any fetch. Helper (:258-278) blocks empty host, FILTER_VALIDATE_IP private/reserved ranges, 127.0.0.1, localhost, and the 10./172.16-31./192.168. CIDRs.",
+    "url_validation": "FILTER_VALIDATE_URL on input (:211) and on resolved redirect targets",
+    "remote_fetch": "wp_safe_remote_get for page scrapes (:296, :436); wp_safe_remote_head + wp_remote_retrieve_header('location') (:317-329) for short-URL redirect resolution. No raw file_get_contents anywhere — the pre-1.7.4 file_get_contents fallback was removed in 1.7.4.",
+    "output_escaping": "esc_attr/esc_url/esc_html in render (bp_activity_link_preview_render_preview, :1011); oEmbed/embed code passed through (trusted WP oEmbed)",
     "signing_entry_points": [],
     "always_sign_filter": null,
     "rate_limit_middleware": "none"
@@ -138,14 +140,14 @@
     "security": ["bp-activity-link-preview.php"]
   },
   "generated": {
-    "at": "2026-06-05T00:00:00+00:00",
-    "from": "wp-plugin-onboard skill",
+    "at": "2026-07-16T10:29:00+00:00",
+    "from": "structural re-scan of shipped code (grep/glob), manual refresh",
     "branch": "v1.7.4",
     "schema_version": "v2.2",
-    "scan_scope": "gruntfile",
+    "scan_scope": "full_rescan",
     "scan_path": ".",
     "php_file_count": 1,
     "size_class": "tiny-single-file",
-    "notes": "Single-file procedural plugin (1 PHP file). No classes, namespaces, admin pages, settings, CPTs, taxonomies, DB tables, cron, WP-CLI, blocks, or shortcodes. Phase 4.5/4.7/4.8 paired-plugin + CI + cleanup scaffolds intentionally NOT created (onboarding-only run, no functional/scaffold changes per task scope). Coverage gate: all enumerated categories match ground-truth grep exactly (0 gap)."
+    "notes": "Single-file procedural plugin (1 PHP file, 1185 lines, 22 functions). No classes, namespaces, admin pages, settings, CPTs, taxonomies, DB tables, cron, WP-CLI, blocks, or shortcodes (re-verified: zero add_shortcode, zero register_block_type, zero block.json, zero register_rest_route). All line numbers re-derived from the 1.7.4 tree on 2026-07-16; the 2026-06-05 generation was 40-60 lines stale throughout. Corrections this pass: localized keys 7 -> 3; hooks_fired 5 -> 6 (bp_activity_link_preview_load_assets was missing); security.remote_fetch no longer claims a raw file_get_contents fallback (removed in 1.7.4, replaced by wp_safe_remote_head); caching now records the 15-minute 'bpalp_failed' negative cache and the $cached_only render path; plugin header Requires at least is 5.9."
   }
 }
