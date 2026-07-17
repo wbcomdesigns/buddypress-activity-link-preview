@@ -96,6 +96,21 @@ Our support team can help with setup, theme compatibility and troubleshooting. R
 
 A performance and security pass. Plugin assets and the Twitter and Facebook SDKs now load only in activity contexts instead of on every page. Failed link lookups are cached for 15 minutes and comment rendering never fetches remote URLs, so slow links no longer hold up a page. Blocked or invalid URLs now report the problem in the composer, scraped titles and descriptions are sanitized before saving, and short-URL resolution re-validates its redirect target against the SSRF guard.
 
+== Third-Party Services ==
+
+This plugin renders native Twitter/X and Facebook embeds. Those embeds can only be rendered by each network's own script, so the plugin loads that script directly from the network:
+
+* Twitter/X widgets.js, loaded from platform.twitter.com. Terms of service: https://twitter.com/en/tos - Privacy policy: https://twitter.com/en/privacy
+* Facebook SDK, loaded from connect.facebook.net. Terms of service: https://www.facebook.com/terms.php - Privacy policy: https://www.facebook.com/privacy/policy/
+
+These scripts load only on BuddyPress activity screens (the activity directory, member activity and group screens), never site-wide. On those screens they load whether or not a Twitter or Facebook link is actually present, so the visitor's browser contacts Twitter and Facebook on every activity page view. Those services can therefore see the visitor's IP address, user agent and referring page, and may set their own cookies.
+
+If your site needs to avoid that (for example to satisfy a consent requirement), use the bp_activity_link_preview_load_assets filter to stop the assets loading:
+
+`add_filter( 'bp_activity_link_preview_load_assets', '__return_false' );`
+
+No data is sent to Wbcom Designs, and the plugin itself collects nothing.
+
 == More Free Tools from Wbcom Designs ==
 
 Rich link previews make your activity stream worth reading, but a stream is only one part of a community. These other free tools from Wbcom Designs fill in the rest of the space your members spend time in, from the theme and social network itself to forums, media, events, gamification, directories, jobs, and courses.
