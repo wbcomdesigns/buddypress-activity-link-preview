@@ -12,8 +12,8 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       buddypress-activity-link-preview
  * Domain Path:       /languages
- * Requires at least: 5.9
- * Requires PHP:      7.4
+ * Requires at least: 6.5
+ * Requires PHP:      8.0
  *
  * @package           Buddypress-activity-link-preview
  * @link              https://wbcomdesigns.com/

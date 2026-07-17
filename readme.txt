@@ -2,10 +2,10 @@
 Contributors: wbcomdesigns, vapvarun
 Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
-Requires at least: 5.9
+Requires at least: 6.5
 Tested up to: 7.0
 Stable tag: 1.7.4
-Requires PHP: 7.4
+Requires PHP: 8.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: buddypress-activity-link-preview
@@ -87,8 +87,8 @@ Our support team can help with setup, theme compatibility and troubleshooting. R
 
 = Compatibility =
 
-* WordPress 5.9 and higher
-* PHP 7.4 and higher (8.0+ recommended)
+* WordPress 6.5 and higher
+* PHP 8.0 and higher
 * BuddyPress 6.0+ or BuddyBoss Platform (required - the plugin deactivates itself if neither is active)
 * Tested with popular themes including BuddyX, Reign and Youzify
 
@@ -123,15 +123,15 @@ There is no settings page. The plugin works as soon as it is activated.
 
 = Requirements =
 
-* WordPress 5.9 or higher
-* PHP 7.4 or higher
+* WordPress 6.5 or higher
+* PHP 8.0 or higher
 * BuddyPress 6.0 or higher, or BuddyBoss Platform
 
 == Frequently Asked Questions ==
 
 = What are the plugin requirements? =
 
-WordPress 5.9 or higher, PHP 7.4 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
+WordPress 6.5 or higher, PHP 8.0 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
 
 = Why doesn't the preview show for some URLs? =
 
