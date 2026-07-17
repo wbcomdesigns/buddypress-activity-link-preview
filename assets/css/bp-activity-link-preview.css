@@ -14,6 +14,72 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 
 /*--------------------------------------------------------------
+0 - Color Tokens (light defaults + dark mode)
+----------------------------------------------------------------
+Previews are painted through the plugin's own --bpalp-* tokens, so
+you can retheme every preview from this one block. Each token reads
+the matching BuddyX / BuddyX Pro theme token (--bx-color-*) first,
+and falls back to the plugin's own light literal when the active
+theme does not define that token.
+
+Two rule sets assign the tokens:
+  1. Base rule (below)              - light defaults, applied always.
+  2. :root[data-bx-mode="dark"]     - BuddyX / Reign explicit dark mode.
+
+Dark values still read --bx-color-* first, and BuddyX / Reign only flip
+those vars under [data-bx-mode="dark"] (NOT under a bare body dark class),
+so keying the dark scope off data-bx-mode is what actually produces a
+dark card - a body.buddyx-dark-theme scope would resolve back to the
+light --bx-color-* values and render light. Verified in-browser.
+
+There is intentionally NO @media (prefers-color-scheme: dark) block.
+Dark is opt-in via the theme's explicit data-bx-mode attribute only; the
+plugin never maintains a duplicate OS-driven palette.
+--------------------------------------------------------------*/
+
+.activity-url-scrapper-container,
+.activity-comment-url-scrapper-container,
+.activity-link-preview-container,
+.activity-comment-link-preview-container,
+.comment-attachments {
+    --bpalp-surface: var(--bx-color-bg-elevated, #fff);
+    --bpalp-surface-alt: var(--bx-color-bg-muted, #f9f9f9);
+    --bpalp-border: #e5e5e5;
+    --bpalp-border-soft: #ddd;
+    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #32373c));
+    --bpalp-text: var(--bx-color-fg, #888);
+    --bpalp-text-strong: var(--bx-color-fg, #666);
+    --bpalp-muted: #7f7f7f;
+    --bpalp-close: rgba(0, 0, 0, 0.4);
+    --bpalp-btn-bg: var(--bx-color-button-bg, #f0f0f1);
+    --bpalp-btn-fg: var(--bx-color-button-fg, #2c3338);
+    --bpalp-btn-border: var(--bx-color-button-border, #c3c4c7);
+    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #dcdcde);
+    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #1d2327);
+}
+
+:root[data-bx-mode="dark"] .activity-url-scrapper-container,
+:root[data-bx-mode="dark"] .activity-comment-url-scrapper-container,
+:root[data-bx-mode="dark"] .activity-link-preview-container,
+:root[data-bx-mode="dark"] .activity-comment-link-preview-container,
+:root[data-bx-mode="dark"] .comment-attachments {
+    --bpalp-surface: var(--bx-color-bg-elevated, #1e2126);
+    --bpalp-surface-alt: var(--bx-color-bg-muted, #23262b);
+    --bpalp-border: rgba(255, 255, 255, 0.16);
+    --bpalp-border-soft: rgba(255, 255, 255, 0.12);
+    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #e9eaec));
+    --bpalp-text: var(--bx-color-fg, #b6bcc3);
+    --bpalp-text-strong: var(--bx-color-fg, #cfd3d8);
+    --bpalp-muted: #9aa0a6;
+    --bpalp-close: rgba(255, 255, 255, 0.6);
+    --bpalp-btn-bg: var(--bx-color-button-bg, #2c3138);
+    --bpalp-btn-fg: var(--bx-color-button-fg, #e9eaec);
+    --bpalp-btn-border: var(--bx-color-button-border, rgba(255, 255, 255, 0.24));
+    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #3a4048);
+    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
+}
+
+/*--------------------------------------------------------------
 1 - Activity Page (Main Posts) - Original Styles
 --------------------------------------------------------------*/
 
@@ -21,9 +87,9 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     margin: 15px 0 0;
     padding: 25px;
     line-height: 1.5;
-    color: #888;
-    background: #fff;
-    border: 1px solid #e5e5e5;
+    color: var(--bpalp-text, #888);
+    background: var(--bpalp-surface, #fff);
+    border: 1px solid var(--bpalp-border, #e5e5e5);
     border-radius: 3px !important;
     position: relative;
     overflow: auto;
@@ -50,7 +116,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 .activity-link-preview-image {
     float: left;
     max-width: 160px;
-    margin-right: 20px;
+    margin-inline-end: 20px;
     margin-bottom: 20px;
     position: relative;
 }
@@ -73,7 +139,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     font-weight: 500;
     font-size: 22px;
     line-height: 1.3;
-    color: #32373c;
+    color: var(--bpalp-title, #32373c);
 }
 
 .activity-list .activity-item .activity-content .activity-link-preview-title,
@@ -107,18 +173,32 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     text-align: center;
 }
 
-#buddypress .activity-url-thumb-nav button {
+#buddypress .activity-url-thumb-nav button,
+.activity-url-thumb-nav button {
     cursor: pointer;
     width: auto;
     padding: 3px 6px;
     margin: 0 3px;
     height: auto;
     min-height: 10px;
+    background: var(--bpalp-btn-bg, #f0f0f1);
+    color: var(--bpalp-btn-fg, #2c3338);
+    border: 1px solid var(--bpalp-btn-border, #c3c4c7);
+    border-radius: 3px;
+}
+
+#buddypress .activity-url-thumb-nav button:hover,
+#buddypress .activity-url-thumb-nav button:focus-visible,
+.activity-url-thumb-nav button:hover,
+.activity-url-thumb-nav button:focus-visible {
+    background: var(--bpalp-btn-bg-hover, #dcdcde);
+    color: var(--bpalp-btn-fg-hover, #1d2327);
+    border-color: var(--bpalp-btn-border, #c3c4c7);
 }
 
 #activity-url-scrapper-img-count {
     font-size: 12px;
-    color: #7f7f7f;
+    color: var(--bpalp-muted, #7f7f7f);
     margin-top: 5px;
 }
 
@@ -127,16 +207,16 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 }
 
 #activity-url-scrapper-url {
-    color: rgba(0, 0, 0, 0.6);
+    color: var(--bpalp-text-strong, rgba(0, 0, 0, 0.6));
     font-size: 14px;
 }
 
 #activity-close-link-suggestion {
     border: 0;
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--bpalp-close, rgba(0, 0, 0, 0.4));
     font-size: 16px;
     position: absolute;
-    left: 3px;
+    inset-inline-start: 3px;
     top: 8px;
     text-decoration: none;
 }
@@ -147,9 +227,9 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 .activity-post-form-link-wp-embed #activity-close-link-suggestion {
     top: 30px;
-    left: 8px;
-    right: auto;
-    background: #fff;
+    inset-inline-start: 8px;
+    inset-inline-end: auto;
+    background: var(--bpalp-surface, #fff);
     z-index: 11;
     width: 20px;
     height: 20px;
@@ -158,7 +238,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 @media screen and (max-width: 32em) {
     #activity-close-link-suggestion {
-        color: black;
+        color: var(--bpalp-title, #000);
     }
 }
 
@@ -166,7 +246,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     border: 0;
     color: #fff;
     font-size: 16px;
-    left: 3px;
+    inset-inline-start: 3px;
     position: absolute;
     top: 3px;
     text-decoration: none;
@@ -176,9 +256,11 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     font-size: 20px;
 }
 
-#activity-close-link-suggestion:focus,
-#activity-link-preview-close-image:focus {
-    outline: 0;
+#activity-close-link-suggestion:focus-visible,
+#activity-link-preview-close-image:focus-visible {
+    outline: 2px solid var(--bpalp-title, #1d2327);
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 .activity-list .activity-item .activity-content .activity-inner .twitter-post, 
@@ -201,9 +283,9 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     margin: 10px 0;
     padding: 15px;
     line-height: 1.4;
-    color: #666;
-    background: #f9f9f9;
-    border: 1px solid #ddd;
+    color: var(--bpalp-text-strong, #666);
+    background: var(--bpalp-surface-alt, #f9f9f9);
+    border: 1px solid var(--bpalp-border-soft, #ddd);
     border-radius: 3px;
     position: relative;
     overflow: auto;
@@ -216,14 +298,14 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     font-weight: 500;
     font-size: 16px;
     line-height: 1.3;
-    color: #32373c;
+    color: var(--bpalp-title, #32373c);
     margin: 0 0 10px;
 }
 
 .activity-comment-link-preview-container .activity-link-preview-image {
     float: left;
     max-width: 120px;
-    margin-right: 15px;
+    margin-inline-end: 15px;
     margin-bottom: 15px;
     position: relative;
 }
@@ -241,10 +323,10 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 /* Comment-specific close buttons */
 [id^="activity-close-comment-link-suggestion"] {
     border: 0;
-    color: rgba(0, 0, 0, 0.4);
+    color: var(--bpalp-close, rgba(0, 0, 0, 0.4));
     font-size: 14px;
     position: absolute;
-    right: 5px;
+    inset-inline-end: 5px;
     top: 5px;
     text-decoration: none;
     z-index: 10;
@@ -258,7 +340,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     border: 0;
     color: #fff;
     font-size: 14px;
-    left: 3px;
+    inset-inline-start: 3px;
     position: absolute;
     top: 3px;
     text-decoration: none;
@@ -288,7 +370,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 .activity-comment-link-preview-container [id^="activity-comment-url-scrapper-img-count"] {
     font-size: 11px;
-    color: #7f7f7f;
+    color: var(--bpalp-muted, #7f7f7f);
     margin-top: 3px;
 }
 
@@ -299,8 +381,8 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 /* Form styling for comment forms */
 .ac-form .comment-attachments {
-    background: #fff;
-    border: 1px solid #e5e5e5;
+    background: var(--bpalp-surface, #fff);
+    border: 1px solid var(--bpalp-border, #e5e5e5);
     border-radius: 3px;
     padding: 10px;
     margin-top: 10px;
@@ -308,8 +390,8 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 /* Comment form link preview in reply area */
 .ac-form .activity-comment-link-preview-container {
-    background: #fff;
-    border: 1px solid #e5e5e5;
+    background: var(--bpalp-surface, #fff);
+    border: 1px solid var(--bpalp-border, #e5e5e5);
     margin: 0;
     padding: 15px;
 }
@@ -321,10 +403,10 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 @media screen and (max-width: 32em) {
     /* Main activity previews */
     #activity-close-link-suggestion {
-        color: black;
-        right: 5px;
+        color: var(--bpalp-title, #000);
+        inset-inline-end: 5px;
         top: 5px;
-        left: auto;
+        inset-inline-start: auto;
     }
 
     .activity-link-preview-container {
@@ -334,7 +416,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
     .activity-link-preview-image {
         max-width: 100px;
-        margin-right: 10px;
+        margin-inline-end: 10px;
         margin-bottom: 10px;
     }
 
@@ -350,7 +432,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
     .activity-comment-link-preview-container .activity-link-preview-image {
         max-width: 80px;
-        margin-right: 10px;
+        margin-inline-end: 10px;
         margin-bottom: 10px;
     }
 
@@ -364,7 +446,7 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     }
 
     [id^="activity-close-comment-link-suggestion"] {
-        right: 3px;
+        inset-inline-end: 3px;
         top: 3px;
         font-size: 12px;
     }
@@ -396,30 +478,12 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
     max-width: 100%;
 }
 
-/* Loading state */
-.activity-comment-link-preview-container.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.activity-comment-link-preview-container.loading::after {
-    content: "Loading preview...";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(255, 255, 255, 0.9);
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 12px;
-    color: #666;
-}
-
-/* Focus states for accessibility */
-[id^="activity-close-comment-link-suggestion"]:focus,
-[id^="activity-comment-link-preview-close-image"]:focus {
-    outline: 2px solid #0073aa;
+/* Focus states for accessibility (keyboard-only ring, token-driven) */
+[id^="activity-close-comment-link-suggestion"]:focus-visible,
+[id^="activity-comment-link-preview-close-image"]:focus-visible {
+    outline: 2px solid var(--bpalp-title, #1d2327);
     outline-offset: 2px;
+    border-radius: 2px;
 }
 
 /* Hover effects */
@@ -429,4 +493,45 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 
 [id^="activity-comment-link-preview-close-image"]:hover {
     background: rgba(0, 0, 0, 0.8);
+}
+/*--------------------------------------------------------------
+4 - Preview error notice (parse endpoint rejected the URL)
+--------------------------------------------------------------*/
+
+.bpalp-preview-error {
+    --bpalp-error-fg: #8a1f2d;
+    --bpalp-error-bg: #fdeaea;
+    --bpalp-error-border: #f0b8b8;
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--bpalp-error-fg);
+    background: var(--bpalp-error-bg);
+    border: 1px solid var(--bpalp-error-border);
+}
+
+:root[data-bx-mode="dark"] .bpalp-preview-error {
+    --bpalp-error-fg: #f3b6bd;
+    --bpalp-error-bg: rgba(200, 60, 75, 0.16);
+    --bpalp-error-border: rgba(220, 95, 110, 0.45);
+}
+
+/*--------------------------------------------------------------
+5 - RTL
+----------------------------------------------------------------
+Spacing and single-side offsets use logical properties
+(margin-inline-*, inset-inline-*) so they mirror automatically.
+The preview image float is the one thing logical values cannot flip
+with the browser support this plugin targets, so the side is flipped
+explicitly for RTL. Gated above the 24em stacking breakpoint so it
+never fights the small-screen "float: none" stack rule.
+--------------------------------------------------------------*/
+
+@media screen and (min-width: 24.0625em) {
+    [dir="rtl"] .activity-link-preview-image,
+    [dir="rtl"] .activity-comment-link-preview-container .activity-link-preview-image {
+        float: right;
+    }
 }

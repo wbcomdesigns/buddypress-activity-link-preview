@@ -5,13 +5,15 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview displays as image title and description from the site when links are used in activity posts.
- * Version:           1.7.3
+ * Version:           1.7.4
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       buddypress-activity-link-preview
  * Domain Path:       /languages
+ * Requires at least: 5.9
+ * Requires PHP:      7.4
  *
  * @package           Buddypress-activity-link-preview
  * @link              https://wbcomdesigns.com/
@@ -23,9 +25,33 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.3' );
+define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.4' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
+
+/**
+ * Load the plugin text domain for translation.
+ *
+ * WordPress only auto-loads language packs that exist on
+ * translate.wordpress.org; it never reads a plugin's own languages/ folder.
+ * This plugin ships its own translations, so the domain must be registered
+ * here. load_plugin_textdomain() checks the WordPress.org pack first and falls
+ * back to the bundled file, so both paths work.
+ *
+ * Runs on init: loading a text domain earlier triggers
+ * _load_textdomain_just_in_time on WordPress 6.7+.
+ *
+ * @since 1.7.4
+ * @return void
+ */
+function bp_activity_link_preview_load_textdomain() {
+	load_plugin_textdomain(
+		'buddypress-activity-link-preview',
+		false,
+		basename( BP_ACTIVITY_LINK_PREVIEW_PATH ) . '/languages/'
+	);
+}
+add_action( 'init', 'bp_activity_link_preview_load_textdomain' );
 
 /**
  * Check if BuddyPress or BuddyBoss Platform is active.
@@ -54,8 +80,16 @@ function bp_activity_link_preview_admin_notice() {
 	?>
 	<div class="notice notice-error">
 		<p>
-			<strong><?php esc_html_e( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' ); ?></strong>
-			<?php esc_html_e( 'requires BuddyPress or BuddyBoss Platform to be installed and active.', 'buddypress-activity-link-preview' ); ?>
+			<?php
+			// One translatable sentence with a placeholder: translations must be
+			// free to move the plugin name, so the name and the rest of the
+			// sentence are never two concatenated __() fragments.
+			printf(
+				/* translators: %s: plugin name, wrapped in a <strong> tag. */
+				esc_html__( '%s requires BuddyPress or BuddyBoss Platform to be installed and active.', 'buddypress-activity-link-preview' ),
+				'<strong>' . esc_html__( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' ) . '</strong>'
+			);
+			?>
 		</p>
 	</div>
 	<?php
@@ -122,33 +156,74 @@ add_action(
 	20
 );
 
+/**
+ * Determine whether the current page renders a BuddyPress activity stream
+ * and therefore needs the link-preview assets (own CSS/JS + Twitter/Facebook SDKs).
+ *
+ * @since 1.7.4
+ * @return bool True when assets should be enqueued.
+ */
+function bp_activity_link_preview_should_load_assets() {
+	$should_load = function_exists( 'bp_is_activity_component' )
+		&& ( bp_is_activity_component() || bp_is_activity_directory() || bp_is_user_activity() || bp_is_group() );
+
+	/**
+	 * Filter whether the link-preview assets load on the current page.
+	 *
+	 * Lets site owners load assets on custom pages that embed an activity
+	 * stream (e.g. via shortcode/widget) or unload them from group screens.
+	 *
+	 * @since 1.7.4
+	 * @param bool $should_load Whether the current page is an activity context.
+	 */
+	return (bool) apply_filters( 'bp_activity_link_preview_load_assets', $should_load );
+}
+
 /** Bp_activity_link_preview_enqueue_scripts */
 function bp_activity_link_preview_enqueue_scripts() {
+	// Do not load plugin assets (or third-party SDKs) sitewide - activity contexts only.
+	if ( ! bp_activity_link_preview_should_load_assets() ) {
+		return;
+	}
+
+	// The composer JS renders dashicon markup (close/prev/next buttons); dashicons
+	// is not guaranteed on the frontend (only loads with the admin bar), so enqueue it.
+	wp_enqueue_style( 'dashicons' );
 	wp_enqueue_style( 'bp-activity-link-preview-css', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/css/bp-activity-link-preview.css', array(), BP_ACTIVITY_LINK_PREVIEW_VERSION, 'all' );
 	wp_enqueue_script( 'twitter-js', 'https://platform.twitter.com/widgets.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'facebook-js', 'https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 	wp_enqueue_script( 'bp-activity-link-preview-js', BP_ACTIVITY_LINK_PREVIEW_URL . 'assets/js/bp-activity-link-preview.js', array( 'jquery' ), BP_ACTIVITY_LINK_PREVIEW_VERSION, true );
 
-	// Detect if BuddyBoss is active with its own link preview.
+	// Detect if BuddyBoss is active with its own link preview (the JS stands
+	// down for BuddyBoss's native preview to avoid duplicate cards).
 	$buddyboss_active              = function_exists( 'buddyboss_theme' ) || class_exists( 'BuddyBoss_Platform' );
 	$buddyboss_link_preview_active = $buddyboss_active && function_exists( 'bp_is_activity_link_preview_active' ) && bp_is_activity_link_preview_active();
 
-	// Detect if Youzify is active with its URL preview feature.
-	$youzify_active              = defined( 'YOUZIFY_VERSION' ) || class_exists( 'Youzify' );
-	$youzify_url_preview_enabled = $youzify_active && function_exists( 'youzify_option' ) && 'on' === youzify_option( 'youzify_enable_wall_url_preview', 'on' );
-
-	// Add localized data for comment handling.
+	// Only the keys the frontend script actually reads are localized. Youzify
+	// stand-down is handled server-side in the render path, so no Youzify flags
+	// are passed to JS.
+	//
+	// The i18n array is the ONLY translatable home for the composer UI strings:
+	// the preview card is built entirely in JS, so any literal that lives only
+	// in bp-activity-link-preview.js is invisible to the POT scanner and can
+	// never be translated. Every key here has a matching bpalpText() read in
+	// the script; the English literal there is a fallback only. Keep the two
+	// in lockstep - a key read but not seeded renders English on all locales.
 	wp_localize_script(
 		'bp-activity-link-preview-js',
 		'bp_activity_link_preview',
 		array(
 			'ajaxurl'                       => admin_url( 'admin-ajax.php' ),
 			'nonce'                         => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
-			'enable_comments'               => apply_filters( 'bp_activity_link_preview_enable_comments', true ),
-			'buddyboss_active'              => $buddyboss_active,
 			'buddyboss_link_preview_active' => $buddyboss_link_preview_active,
-			'youzify_active'                => $youzify_active,
-			'youzify_url_preview_active'    => $youzify_url_preview_enabled,
+			'i18n'                          => array(
+				'cancelPreview'      => __( 'Cancel Preview', 'buddypress-activity-link-preview' ),
+				'cancelPreviewImage' => __( 'Cancel Preview Image', 'buddypress-activity-link-preview' ),
+				'previousImage'      => __( 'Previous image', 'buddypress-activity-link-preview' ),
+				'nextImage'          => __( 'Next image', 'buddypress-activity-link-preview' ),
+				/* translators: 1: current image number. 2: total number of images. */
+				'imageCount'         => __( 'Image %1$s of %2$s', 'buddypress-activity-link-preview' ),
+			),
 		)
 	);
 }
@@ -193,13 +268,7 @@ function bp_activity_parse_url_preview() {
 	$host       = isset( $parsed_url['host'] ) ? $parsed_url['host'] : '';
 
 	// Block requests to private/internal IP ranges and localhost.
-	if ( empty( $host ) ||
-		( filter_var( $host, FILTER_VALIDATE_IP ) &&
-		( false === filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) ) ||
-		'127.0.0.1' === $host ||
-		'localhost' === $host ||
-		preg_match( '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host )
-	) {
+	if ( bp_activity_link_preview_is_blocked_host( $host ) ) {
 		wp_send_json( array( 'error' => __( 'This URL cannot be previewed for security reasons.', 'buddypress-activity-link-preview' ) ) );
 	}
 
@@ -223,16 +292,54 @@ function bp_activity_parse_url_preview() {
 }
 
 /**
+ * Determine whether a host points at a private, loopback, or reserved address.
+ *
+ * Centralizes the SSRF host guard so it can be applied both to the original
+ * input URL in the AJAX handler and to any redirect-resolved URL during
+ * short-URL resolution. Returns true when the host should be BLOCKED.
+ *
+ * @since 1.7.4
+ * @param string $host The host portion of a URL (no scheme/path).
+ * @return bool True if the host must be blocked for security reasons.
+ */
+function bp_activity_link_preview_is_blocked_host( $host ) {
+	if ( empty( $host ) ) {
+		return true;
+	}
+
+	if ( filter_var( $host, FILTER_VALIDATE_IP ) &&
+		( false === filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) )
+	) {
+		return true;
+	}
+
+	if ( '127.0.0.1' === $host || 'localhost' === $host ) {
+		return true;
+	}
+
+	if ( preg_match( '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host ) ) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * Parse a URL and return preview data.
  *
- * @param string $url The URL to parse.
- * @return array Parsed URL data.
+ * @param string $url         The URL to parse.
+ * @param bool   $cached_only When true, never performs a remote HTTP request:
+ *                            only the transient cache and the internal-URL
+ *                            (local DB) fast path are consulted. Used by
+ *                            render-time code so page views never block on
+ *                            external fetches.
+ * @return array Parsed URL data (empty array when unavailable).
  */
-function bp_activity_link_parse_url( $url ) {
+function bp_activity_link_parse_url( $url, $cached_only = false ) {
 	$parse_url_data = wp_parse_url( $url, PHP_URL_HOST );
 	$original_url   = $url;
 
-	if ( in_array( $parse_url_data, apply_filters( 'bp_activity_link_parse_url_shorten_url_provider', array( 'bit.ly', 'snip.ly', 'rb.gy', 'tinyurl.com', 'tiny.one', 'rotf.lol', 'b.link', '4ubr.short.gy', '' ) ), true ) ) {
+	if ( ! $cached_only && in_array( $parse_url_data, apply_filters( 'bp_activity_link_parse_url_shorten_url_provider', array( 'bit.ly', 'snip.ly', 'rb.gy', 'tinyurl.com', 'tiny.one', 'rotf.lol', 'b.link', '4ubr.short.gy', '' ) ), true ) ) {
 		$response = wp_safe_remote_get(
 			$url,
 			array(
@@ -251,18 +358,32 @@ function bp_activity_link_parse_url( $url ) {
 		}
 
 		if ( $original_url === $url ) {
-			$context = array(
-				'http' => array(
-					'method'        => 'GET',
-					'max_redirects' => 1,
-				),
+			// Fallback: resolve the short URL through the WordPress HTTP API so the
+			// request honours WP_HTTP_BLOCK_EXTERNAL and the configured transports.
+			// Follow a single redirect and read the resolved Location.
+			$head_response = wp_safe_remote_head(
+				$url,
+				array(
+					'redirection' => 1,
+					'timeout'     => 5,
+					'headers'     => array(
+						'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+					),
+				)
 			);
 
-			@file_get_contents( $url, null, stream_context_create( $context ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- Fallback for short URL resolution when wp_safe_remote_get fails.
-			if ( isset( $http_response_header ) && isset( $http_response_header[6] ) ) {
-				$new_url = str_replace( 'Location: ', '', $http_response_header[6] );
-				if ( filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
-					$url = $new_url;
+			if ( ! is_wp_error( $head_response ) ) {
+				$new_url = wp_remote_retrieve_header( $head_response, 'location' );
+
+				if ( ! empty( $new_url ) && filter_var( $new_url, FILTER_VALIDATE_URL ) ) {
+					// Re-validate the redirect-resolved host against the same SSRF
+					// guard used on the original input URL. A malicious or compromised
+					// short-URL provider could redirect to a private/loopback address;
+					// if so, abort resolution and keep the original URL.
+					$resolved_host = wp_parse_url( $new_url, PHP_URL_HOST );
+					if ( ! bp_activity_link_preview_is_blocked_host( $resolved_host ) ) {
+						$url = $new_url;
+					}
 				}
 			}
 		}
@@ -270,6 +391,12 @@ function bp_activity_link_parse_url( $url ) {
 
 	$cache_key       = 'bp_oembed_' . md5( maybe_serialize( $url ) );
 	$parsed_url_data = get_transient( $cache_key );
+
+	// Negative cache hit: a recent parse failed - do not retry on every call.
+	if ( 'bpalp_failed' === $parsed_url_data ) {
+		return apply_filters( 'bp_activity_link_parse_url', array() );
+	}
+
 	if ( ! empty( $parsed_url_data ) ) {
 		return $parsed_url_data;
 	}
@@ -278,6 +405,20 @@ function bp_activity_link_parse_url( $url ) {
 
 	if ( strstr( $url, site_url() ) && ( strstr( $url, 'download_document_file' ) || strstr( $url, 'download_media_file' ) || strstr( $url, 'download_video_file' ) ) ) {
 		return array();
+	}
+
+	if ( $cached_only ) {
+		// Internal URLs resolve from the local database (no HTTP), so they are
+		// still allowed in cached-only mode; anything else returns empty rather
+		// than fetching a remote page synchronously during render.
+		if ( bp_is_same_site_url( $url ) ) {
+			$internal_data = bp_activity_link_parse_internal_url( $url );
+			if ( ! empty( $internal_data ) ) {
+				set_transient( $cache_key, $internal_data, DAY_IN_SECONDS );
+				return apply_filters( 'bp_activity_link_parse_url', $internal_data );
+			}
+		}
+		return apply_filters( 'bp_activity_link_parse_url', array() );
 	}
 
 	if ( ! function_exists( '_wp_oembed_get_object' ) ) {
@@ -301,7 +442,23 @@ function bp_activity_link_parse_url( $url ) {
 		$parsed_url_data['error']       = '';
 		$parsed_url_data['wp_embed']    = true;
 	} else {
-		$args = array( 'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0' );
+		// Try to parse internal URLs directly without HTTP request (avoids self-request performance issues).
+		if ( bp_is_same_site_url( $url ) ) {
+			$internal_data = bp_activity_link_parse_internal_url( $url );
+			if ( ! empty( $internal_data ) ) {
+				$parsed_url_data = $internal_data;
+				// Cache the result.
+				if ( ! empty( $parsed_url_data ) ) {
+					set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
+				}
+				return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
+			}
+		}
+
+		$args = array(
+			'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+			'timeout'    => 15,
+		);
 
 		if ( bp_is_same_site_url( $url ) ) {
 			// BuddyBoss Platform compatibility - add JWT token if available.
@@ -357,7 +514,9 @@ function bp_activity_link_parse_url( $url ) {
 							$title = $tag[1];
 						}
 						if ( 'og:description' === $tag[0] || 'description' === strtolower( $tag[0] ) ) {
-							$description = html_entity_decode( $tag[1], ENT_QUOTES, 'utf-8' );
+							// DOMDocument already decodes attribute entities once; decoding again
+							// would turn a double-encoded payload on a remote page into live markup.
+							$description = $tag[1];
 						}
 						if ( 'og:image' === $tag[0] ) {
 							$images[] = $tag[1];
@@ -424,6 +583,10 @@ function bp_activity_link_parse_url( $url ) {
 	if ( ! empty( $parsed_url_data ) ) {
 		// set the transient.
 		set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
+	} else {
+		// Negative cache: remember the failure for a short time so slow,
+		// blocked, or unreachable URLs are not re-fetched on every request.
+		set_transient( $cache_key, 'bpalp_failed', 15 * MINUTE_IN_SECONDS );
 	}
 
 	return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
@@ -447,6 +610,139 @@ function bp_is_same_site_url( $url ) {
 }
 
 /**
+ * Parse internal BuddyPress/BuddyBoss URLs directly without HTTP requests.
+ * This avoids self-requests that cause performance issues on live sites.
+ *
+ * @param string $url The internal URL to parse.
+ * @return array|false Preview data array or false if not an internal BP page.
+ */
+function bp_activity_link_parse_internal_url( $url ) {
+	if ( ! bp_is_same_site_url( $url ) ) {
+		return false;
+	}
+
+	$parsed_url = wp_parse_url( $url );
+	$path       = isset( $parsed_url['path'] ) ? trim( $parsed_url['path'], '/' ) : '';
+
+	if ( empty( $path ) ) {
+		return false;
+	}
+
+	// Remove the site path if it's in the URL (for subdirectory installs).
+	$site_path = trim( wp_parse_url( home_url( '/' ), PHP_URL_PATH ), '/' );
+	if ( ! empty( $site_path ) && 0 === strpos( $path, $site_path ) ) {
+		$path = trim( substr( $path, strlen( $site_path ) ), '/' );
+	}
+
+	$path_parts = explode( '/', $path );
+
+	// Check for BuddyPress member profile: /members/username/ or /user/username/.
+	if ( ( isset( $path_parts[0] ) && in_array( $path_parts[0], array( 'members', 'user' ), true ) ) && ! empty( $path_parts[1] ) ) {
+		$username = sanitize_user( $path_parts[1] );
+		$user     = get_user_by( 'slug', $username );
+
+		if ( ! $user && is_numeric( $username ) ) {
+			$user = get_user_by( 'id', $username );
+		}
+
+		if ( $user ) {
+			// Get user data.
+			$display_name = $user->display_name;
+
+			// Try to get BuddyPress/XProfile data.
+			if ( function_exists( 'bp_get_profile_field_data' ) ) {
+				$args  = array(
+					'field'   => 'About',
+					'user_id' => $user->ID,
+				);
+				$about = bp_get_profile_field_data( $args );
+				if ( empty( $about ) ) {
+					$args['field'] = 'Description';
+					$about         = bp_get_profile_field_data( $args );
+				}
+				if ( empty( $about ) ) {
+					$about = get_user_meta( $user->ID, 'description', true );
+				}
+			} else {
+				$about = get_user_meta( $user->ID, 'description', true );
+			}
+
+			// Get user avatar URL.
+			$avatar_url = '';
+			if ( function_exists( 'bp_core_fetch_avatar' ) ) {
+				$avatar_url = bp_core_fetch_avatar(
+					array(
+						'item_id' => $user->ID,
+						'object'  => 'user',
+						'type'    => 'full',
+						'html'    => false,
+					)
+				);
+			}
+			if ( empty( $avatar_url ) ) {
+				$avatar_url = get_avatar_url( $user->ID, array( 'size' => 150 ) );
+			}
+
+			return array(
+				'title'       => $display_name,
+				/* translators: %s: member display name. */
+				'description' => ! empty( $about ) ? wp_trim_words( $about, 30, '...' ) : sprintf( __( 'View %s\'s profile', 'buddypress-activity-link-preview' ), $display_name ),
+				'images'      => ! empty( $avatar_url ) ? array( $avatar_url ) : array(),
+				'error'       => '',
+			);
+		}
+	}
+
+	// Check for BuddyPress groups: /groups/group-name/.
+	if ( isset( $path_parts[0] ) && 'groups' === $path_parts[0] && ! empty( $path_parts[1] ) ) {
+		$group_slug = sanitize_text_field( $path_parts[1] );
+
+		if ( function_exists( 'groups_get_groups' ) ) {
+			$groups = groups_get_groups(
+				array(
+					'slug'     => $group_slug,
+					'per_page' => 1,
+				)
+			);
+
+			if ( ! empty( $groups['groups'] ) ) {
+				$group = $groups['groups'][0];
+
+				// Get group avatar.
+				$avatar_url = '';
+				if ( function_exists( 'bp_core_fetch_avatar' ) ) {
+					$avatar_url = bp_core_fetch_avatar(
+						array(
+							'item_id'    => $group->id,
+							'object'     => 'group',
+							'type'       => 'full',
+							'html'       => false,
+							'avatar_dir' => 'group-avatars',
+						)
+					);
+				}
+
+				// Get group description.
+				$description = '';
+				if ( ! empty( $group->description ) ) {
+					$description = wp_trim_words( $group->description, 30, '...' );
+				}
+
+				return array(
+					'title'       => $group->name,
+					/* translators: %s: group name. */
+					'description' => ! empty( $description ) ? $description : sprintf( __( 'View the %s group', 'buddypress-activity-link-preview' ), $group->name ),
+					'images'      => ! empty( $avatar_url ) ? array( $avatar_url ) : array(),
+					'error'       => '',
+				);
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
  * Save link preview data into activity meta
  *
  * @param BP_Activity_Activity $activity Activity object.
@@ -460,6 +756,7 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$link_title               = ! empty( $_POST['link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['link_title'] ) ) : '';
 		$link_description         = ! empty( $_POST['link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['link_description'] ) ) : '';
 		$link_image               = ! empty( $_POST['link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['link_image'] ) ) : '';
+		$link_wp_embed            = ! empty( $_POST['link_wp_embed'] );
 		$link_preview_data['url'] = $link_url;
 
 		if ( false !== strpos( $link_preview_data['url'], 'www.reddit.com' ) ) {
@@ -476,6 +773,18 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 			$link_preview_data['description'] = $link_description;
 		}
 
+		// Persist oEmbed videos (YouTube, Vimeo, etc.). The composer flags these
+		// with link_wp_embed; the embed HTML is regenerated server-side from the
+		// URL (wp_oembed_get, whitelisted providers only) so the saved activity
+		// renders the player without a live external fetch at render time.
+		if ( $link_wp_embed && ! empty( $link_url ) ) {
+			$embed_html = wp_oembed_get( $link_url );
+			if ( ! empty( $embed_html ) ) {
+				$link_preview_data['wp_embed']   = true;
+				$link_preview_data['embed_html'] = $embed_html;
+			}
+		}
+
 		bp_activity_update_meta( $activity->id, '_bp_activity_link_preview_data', $link_preview_data );
 	}
 
@@ -485,6 +794,7 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 		$comment_link_title       = ! empty( $_POST['comment_link_title'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_title'] ) ) : '';
 		$comment_link_description = ! empty( $_POST['comment_link_description'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_description'] ) ) : '';
 		$comment_link_image       = ! empty( $_POST['comment_link_image'] ) ? sanitize_text_field( wp_unslash( $_POST['comment_link_image'] ) ) : '';
+		$comment_link_wp_embed    = ! empty( $_POST['comment_link_wp_embed'] );
 
 		$comment_link_preview_data['url'] = $comment_link_url;
 
@@ -502,10 +812,18 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 			$comment_link_preview_data['description'] = $comment_link_description;
 		}
 
+		// Persist oEmbed videos in comments (see main-activity handling above).
+		if ( $comment_link_wp_embed && ! empty( $comment_link_url ) ) {
+			$comment_embed_html = wp_oembed_get( $comment_link_url );
+			if ( ! empty( $comment_embed_html ) ) {
+				$comment_link_preview_data['wp_embed']   = true;
+				$comment_link_preview_data['embed_html'] = $comment_embed_html;
+			}
+		}
+
 		bp_activity_update_meta( $activity->id, '_bp_activity_comment_link_preview_data', $comment_link_preview_data );
-	}
-	// Fallback: If comment doesn't have preview data but has URLs in content, try to extract and save (only if enabled)
-	elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && $activity->type === 'activity_comment' && ! empty( $activity->content ) ) {
+	} elseif ( apply_filters( 'bp_activity_link_preview_enable_comments', true ) && 'activity_comment' === $activity->type && ! empty( $activity->content ) ) {
+		// Fallback: comment has no saved preview data but its content has URLs, so extract and save (only if enabled).
 		$urls = bp_activity_link_preview_extract_urls_from_content( $activity->content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0]; // Use first URL found.
@@ -516,11 +834,12 @@ function bp_activity_link_preview_save_link_data( $activity ) {
 
 			// Save preview data if we have title/description OR if it's a social media URL.
 			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) || $is_social_media ) ) {
+				// Scraped remote content is untrusted - sanitize before storing in activity meta.
 				$comment_link_preview_data = array(
-					'url'         => $url,
-					'title'       => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
-					'description' => ! empty( $parsed_data['description'] ) ? $parsed_data['description'] : '',
-					'image_url'   => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : '',
+					'url'         => esc_url_raw( $url ),
+					'title'       => ! empty( $parsed_data['title'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['title'] ) ) : '',
+					'description' => ! empty( $parsed_data['description'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['description'] ) ) : '',
+					'image_url'   => ! empty( $parsed_data['images'] ) ? esc_url_raw( $parsed_data['images'][0] ) : '',
 				);
 
 				if ( false === strpos( $url, 'www.reddit.com' ) ) {
@@ -546,7 +865,6 @@ function bp_activity_link_preview_extract_urls_from_content( $content, $exclude_
 	$text_content = wp_strip_all_tags( $content );
 
 	$pattern = '/https?:\/\/[^\s<>"]{2,}/i';
-	// preg_match_all( $pattern, $text_content, $matches );
 	preg_match_all( $pattern, $text_content, $matches );
 	$urls = isset( $matches[0] ) ? $matches[0] : array();
 
@@ -685,24 +1003,26 @@ function bp_activity_link_preview_comment_content( $content ) {
 
 	if ( ! empty( $comment_preview_data ) ) {
 		$content = bp_activity_link_preview_render_preview( $content, $comment_preview_data, true );
-	}
-	// If no preview data but content has URLs, generate it.
-	elseif ( ! empty( $content ) ) {
+	} elseif ( ! empty( $content ) ) {
+		// No saved preview data but the content has URLs: generate from cache only.
+		// Render must never block on a live external fetch; save-time extraction
+		// (bp_activity_link_preview_save_link_data) is responsible for fetching.
 		$urls = bp_activity_link_preview_extract_urls_from_content( $content, false );
 		if ( ! empty( $urls ) ) {
 			$url         = $urls[0];
-			$parsed_data = bp_activity_link_parse_url( $url );
+			$parsed_data = bp_activity_link_parse_url( $url, true );
 
 			// Check if it's a social media URL that uses native embeds.
 			$is_social_media = bp_activity_link_preview_is_social_media_url( $url );
 
 			// Generate preview if we have title/description OR if it's a social media URL.
 			if ( ! empty( $parsed_data ) && ( ! empty( $parsed_data['title'] ) || ! empty( $parsed_data['description'] ) || $is_social_media ) ) {
+				// Scraped remote content is untrusted - sanitize before storing in activity meta.
 				$comment_link_preview_data = array(
-					'url'         => $url,
-					'title'       => ! empty( $parsed_data['title'] ) ? $parsed_data['title'] : '',
-					'description' => ! empty( $parsed_data['description'] ) ? $parsed_data['description'] : '',
-					'image_url'   => ! empty( $parsed_data['images'] ) ? $parsed_data['images'][0] : '',
+					'url'         => esc_url_raw( $url ),
+					'title'       => ! empty( $parsed_data['title'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['title'] ) ) : '',
+					'description' => ! empty( $parsed_data['description'] ) ? sanitize_text_field( wp_strip_all_tags( $parsed_data['description'] ) ) : '',
+					'image_url'   => ! empty( $parsed_data['images'] ) ? esc_url_raw( $parsed_data['images'][0] ) : '',
 				);
 
 				if ( false === strpos( $url, 'www.reddit.com' ) ) {
@@ -759,14 +1079,24 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
 		return $content;
 	}
 
+	// oEmbed videos (YouTube, Vimeo, etc.): output the embed HTML that was
+	// generated by wp_oembed_get() and persisted at save time. It is filtered
+	// through bp_activity_allowed_tags (which allows iframe) on display, so no
+	// live external fetch happens at render time.
+	if ( ! empty( $preview_data['wp_embed'] ) && ! empty( $preview_data['embed_html'] ) ) {
+		$content .= '<div class="' . esc_attr( $css_class ) . ' activity-video-preview">' . $preview_data['embed_html'] . '</div>';
+		return $content;
+	}
+
 	// For regular URLs, require title or description for the preview.
 	if ( empty( trim( $preview_data['title'] ) ) && empty( trim( $preview_data['description'] ) ) ) {
 		return $content;
 	}
 
-	// Regular link preview.
-	$description = $preview_data['description'];
-	$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . __( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
+	// Regular link preview. Escape the stored description before output; the
+	// "Read more" anchor is appended afterwards so it stays intact.
+	$description = esc_html( wp_strip_all_tags( $preview_data['description'] ) );
+	$read_more   = ' &hellip; <a class="activity-link-preview-more" href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html__( 'Read more', 'buddypress-activity-link-preview' ) . '</a>';
 	$description = wp_trim_words( $description, 40, $read_more );
 
 	$content = make_clickable( $content );
@@ -775,7 +1105,7 @@ function bp_activity_link_preview_render_preview( $content, $preview_data, $is_c
 	$content .= '<p class="activity-link-preview-title"><a href="' . esc_url( $preview_data['url'] ) . '" target="_blank" rel="nofollow">' . esc_html( $preview_data['title'] ) . '</a></p>';
 	if ( ! empty( $preview_data['image_url'] ) ) {
 		$content .= '<div class="activity-link-preview-image">';
-		$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" /></a>';
+		$content .= '<a href="' . esc_url( $preview_data['url'] ) . '" target="_blank"><img src="' . esc_url( $preview_data['image_url'] ) . '" alt="' . esc_attr( $preview_data['title'] ) . '" /></a>';
 		$content .= '</div>';
 	}
 	$content .= '<div class="activity-link-preview-excerpt"><p>' . $description . '</p></div>';
@@ -826,6 +1156,23 @@ function bp_activity_link_preview_allowed_tags( $tags ) {
 		'id'    => array(),
 	);
 
+	// Allow oEmbed video iframes (YouTube, Vimeo, etc.). The iframe markup is
+	// produced server-side by wp_oembed_get() for whitelisted providers only,
+	// so it is trusted; this allowlist scopes which attributes survive display.
+	$tags['iframe'] = array(
+		'src'             => array(),
+		'width'           => array(),
+		'height'          => array(),
+		'title'           => array(),
+		'class'           => array(),
+		'style'           => array(),
+		'frameborder'     => array(),
+		'allow'           => array(),
+		'allowfullscreen' => array(),
+		'loading'         => array(),
+		'referrerpolicy'  => array(),
+	);
+
 	return $tags;
 }
 
@@ -854,7 +1201,7 @@ function bp_activity_link_preview_data_embed_rest_api( $response, $request, $act
  * Outputs a Facebook root div element in specific BuddyPress contexts.
  */
 function bp_activity_link_preview_add_facebook_root_div() {
-	if ( bp_is_activity_directory() || bp_is_group() || bp_is_user_activity() ) {
+	if ( bp_activity_link_preview_should_load_assets() ) {
 		echo '<div id="fb-root"></div>';
 	}
 }

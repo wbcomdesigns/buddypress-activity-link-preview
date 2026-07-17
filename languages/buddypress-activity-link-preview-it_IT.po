@@ -1,0 +1,114 @@
+# Copyright (C) 2026 wbcomdesigns
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Activity Link Preview For BuddyPress 1.7.4\n"
+"Report-Msgid-Bugs-To: "
+"https://wordpress.org/support/plugin/buddypress-activity-link-preview\n"
+"POT-Creation-Date: 2026-07-16T13:55:50+00:00\n"
+"PO-Revision-Date: 2026-07-16T11:32:19+00:00\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: buddypress-activity-link-preview\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: bp-activity-link-preview.php bp-activity-link-preview.php:90
+#. Plugin Name of the plugin
+msgid "Activity Link Preview For BuddyPress"
+msgstr "Activity Link Preview Per BuddyPress"
+
+#: bp-activity-link-preview.php
+#. Plugin URI of the plugin
+msgid "https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/"
+msgstr "https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/"
+
+#: bp-activity-link-preview.php
+#. Description of the plugin
+msgid ""
+"BuddyPress activity link preview displays as image title and description "
+"from the site when links are used in activity posts."
+msgstr ""
+"BuddyPress activity link preview mostra l'immagine, il titolo e la "
+"descrizione dal sito quando i link vengono utilizzati nei post activity."
+
+#: bp-activity-link-preview.php
+#. Author of the plugin
+msgid "wbcomdesigns"
+msgstr "wbcomdesigns"
+
+#: bp-activity-link-preview.php
+#. Author URI of the plugin
+msgid "https://wbcomdesigns.com/"
+msgstr "https://wbcomdesigns.com/"
+
+#: bp-activity-link-preview.php:89
+#. translators: %s: plugin name, wrapped in a <strong> tag.
+#, php-format
+msgid "%s requires BuddyPress or BuddyBoss Platform to be installed and active."
+msgstr "%s richiede BuddyPress o BuddyBoss Platform per essere installato e attivo."
+
+#: bp-activity-link-preview.php:220
+msgid "Cancel Preview"
+msgstr "Annulla anteprima"
+
+#: bp-activity-link-preview.php:221
+msgid "Cancel Preview Image"
+msgstr "Annulla anteprima immagine"
+
+#: bp-activity-link-preview.php:222
+msgid "Previous image"
+msgstr "Immagine precedente"
+
+#: bp-activity-link-preview.php:223
+msgid "Next image"
+msgstr "Immagine successiva"
+
+#: bp-activity-link-preview.php:225
+#. translators: 1: current image number. 2: total number of images.
+#, php-format
+msgid "Image %1$s of %2$s"
+msgstr "Immagine %1$s di %2$s"
+
+#: bp-activity-link-preview.php:248
+msgid "You must be logged in to perform this action."
+msgstr "Devi accedere per eseguire questa azione."
+
+#: bp-activity-link-preview.php:254
+msgid "Security check failed."
+msgstr "Controllo di sicurezza non riuscito."
+
+#: bp-activity-link-preview.php:263
+msgid "The URL you entered is not valid."
+msgstr "L'URL che hai inserito non è valido."
+
+#: bp-activity-link-preview.php:272
+msgid "This URL cannot be previewed for security reasons."
+msgstr "Questo URL non può essere visualizzato in anteprima per motivi di sicurezza."
+
+#: bp-activity-link-preview.php:279
+msgid "Sorry! Preview is not available right now. Please try again later."
+msgstr "Mi dispiace! L'anteprima non è disponibile al momento. Riprova più tardi."
+
+#: bp-activity-link-preview.php:689
+#. translators: %s: member display name.
+#, php-format
+msgid "View %s's profile"
+msgstr "Visualizza il profilo di %s"
+
+#: bp-activity-link-preview.php:734
+#. translators: %s: group name.
+#, php-format
+msgid "View the %s group"
+msgstr "Visualizza il gruppo %s"
+
+#: bp-activity-link-preview.php:1099
+msgid "Read more"
+msgstr "Leggi di più"
+
+#~ msgid "requires BuddyPress or BuddyBoss Platform to be installed and active."
+#~ msgstr "richiede BuddyPress o BuddyBoss Platform installati e attivi."

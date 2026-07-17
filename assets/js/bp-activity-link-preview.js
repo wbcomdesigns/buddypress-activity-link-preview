@@ -4,6 +4,7 @@
 	var loadURLAjax = null;
 	var loadedURLs = [];
 	var currentCommentId = null;
+	var currentlyLoadingUrl = null; // Track URL currently being loaded to prevent duplicate requests
 
 	// Track initialized Twitter widgets to prevent duplicates
 	var initializedTwitterWidgets = new Set();
@@ -179,7 +180,57 @@
 			url_a.href = urlString;
 			var hostname = url_a.hostname;
 			loadLinkPreview(urlString, isComment, commentId);
+		} else {
+			// No URL left in the input: remove any stale preview so it does
+			// not stay attached after the user deletes the link text.
+			removeLinkPreview(isComment, commentId);
 		}
+	}
+
+	// Remove an existing link preview (and its hidden fields/storage) when
+	// the URL has been deleted from the input. Counterpart of loadLinkPreview.
+	var removeLinkPreview = function (isComment, commentId) {
+		var attachmentContainer = (isComment && commentId) ? '#comment-attachments-' + commentId : '#whats-new-attachments';
+		var containerClass = (isComment && commentId) ? 'activity-comment-url-scrapper-container' : 'activity-url-scrapper-container';
+		var storageKey = (isComment && commentId) ? 'bp-activity-comment-link-preview-' + commentId : 'bp-activity-link-preview';
+
+		if ($(attachmentContainer + ' .' + containerClass).length === 0) {
+			return;
+		}
+
+		// Abort any in-flight parse request for the removed URL.
+		if (loadURLAjax != null) {
+			loadURLAjax.abort();
+			loadURLAjax = null;
+		}
+		currentlyLoadingUrl = null;
+
+		$(attachmentContainer + ' .' + containerClass).remove();
+		setLinkPreviewStorage(storageKey, 'link-preview');
+	}
+
+	// Show a transient, dismiss-on-timeout error notice when the parse
+	// endpoint rejects a URL (invalid, blocked host, preview unavailable).
+	var showPreviewError = function (message, isComment, commentId) {
+		var attachmentContainer = (isComment && commentId) ? '#comment-attachments-' + commentId : '#whats-new-attachments';
+
+		// BP Nouveau markup has no #whats-new-attachments until a preview
+		// creates it — ensure it exists, same as setURLResponse does.
+		if (!(isComment && commentId) && $('#whats-new-attachments').length === 0) {
+			$('#whats-new-content').after('<div id="whats-new-attachments"></div>');
+		}
+
+		$(attachmentContainer + ' .bpalp-preview-error').remove();
+
+		// Use .text() so the server message is inserted as plain text.
+		var $error = $('<div class="bpalp-preview-error" role="alert"></div>').text(message);
+		$(attachmentContainer).append($error);
+
+		setTimeout(function () {
+			$error.fadeOut(200, function () {
+				$(this).remove();
+			});
+		}, 5000);
 	}
 
 	// Enhanced link preview loading function
@@ -198,9 +249,23 @@
 				});
 			}
 
+			// If URL is already in cache, use it directly
+			if (urlResponse) {
+				setURLResponse(urlResponse, url, isComment, commentId);
+				return;
+			}
+
+			// Prevent duplicate requests for the same URL that's already loading
+			if (currentlyLoadingUrl === url) {
+				return;
+			}
+
 			if (loadURLAjax != null) {
 				loadURLAjax.abort();
+				loadURLAjax = null;
 			}
+
+			currentlyLoadingUrl = url; // Mark this URL as being loaded
 
 			if (!urlResponse) {
 				var ajaxData = {
@@ -219,12 +284,24 @@
 				}
 
 				loadURLAjax = jQuery.post(ajaxurl, ajaxData, function (response) {
+					currentlyLoadingUrl = null; // Reset when request completes
 					// Handle both old and new response formats
-					if (response.success) {
+					if (response && response.success) {
 						setURLResponse(response.data, url, isComment, commentId);
-					} else if (response && !response.error) {
+					} else if (response && response.error) {
+						// Parse endpoint rejected the URL - surface the message.
+						showPreviewError(response.error, isComment, commentId);
+					} else if (response && response.success === false && response.data && response.data.message) {
+						// wp_send_json_error() shape (auth/nonce failures).
+						showPreviewError(response.data.message, isComment, commentId);
+					} else if (response) {
 						// Backward compatibility with old response format
 						setURLResponse(response, url, isComment, commentId);
+					}
+				}).fail(function (jqXHR, textStatus) {
+					// Only reset if this is still the current URL being loaded
+					if (currentlyLoadingUrl === url) {
+						currentlyLoadingUrl = null;
 					}
 				});
 			}
@@ -310,7 +387,40 @@
 		var nextButtonId = isComment ? 'activity-comment-url-nextPicButton-' + commentId : 'activity-url-nextPicButton';
 		var imageCountId = isComment ? 'activity-comment-url-scrapper-img-count-' + commentId : 'activity-url-scrapper-img-count';
 
-		var link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="' + imageCountId + '">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + url + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + title + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + image + '" /></div></div>';
+		// Escape all scraped/user-derived values before injecting into the DOM.
+		// escapeHtml() encodes & < > " ' so it is safe for both text nodes and
+		// double-quoted attributes. The HTML parser decodes the entities back to
+		// the raw value on submit, so the server still receives the original
+		// string to sanitize -- no double-encoding. See task #1 (XSS fix).
+		var eTitle       = escapeHtml(title);
+		var eDescription = escapeHtml(description);
+		var eImage       = escapeHtml(image);
+		var eUrl         = escapeHtml(url);
+
+		// Translated UI strings (seeded from PHP; see the i18n array in
+		// bp_activity_link_preview_enqueue_scripts). Escaped because they are
+		// injected into double-quoted attributes and text nodes below.
+		var tCancelPreview      = escapeHtml(bpalpText('cancelPreview', 'Cancel Preview'));
+		var tCancelPreviewImage = escapeHtml(bpalpText('cancelPreviewImage', 'Cancel Preview Image'));
+		var tPreviousImage      = escapeHtml(bpalpText('previousImage', 'Previous image'));
+		var tNextImage          = escapeHtml(bpalpText('nextImage', 'Next image'));
+		var tImageCount         = escapeHtml(bpalpSprintf(bpalpText('imageCount', 'Image %1$s of %2$s'), [1, image_count]));
+
+		// oEmbed videos (YouTube, Vimeo, etc.): response.description is the trusted
+		// WP-oEmbed iframe (whitelisted providers, generated server-side), so it is
+		// rendered raw to show the player. The hidden wp_embed flag tells the save
+		// handler to regenerate + persist the embed so it survives to the feed.
+		// Every scraped value (title/description/image/url) stays escaped above.
+		var isEmbed = !!response.wp_embed;
+		var link_preview;
+		if (isEmbed) {
+			// Emit all four hidden fields the save handler requires (url/title/
+			// description/image) plus the wp_embed flag; the server regenerates the
+			// embed from the URL, so the escaped title/description here are harmless.
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
+		} else {
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+		}
 
 		$(attachmentContainer + ' .' + containerClass).remove();
 		$(attachmentContainer).append(link_preview);
@@ -322,7 +432,7 @@
 			if (tweetIdMatch && tweetIdMatch[1]) {
 				tweetId = tweetIdMatch[1];
 			}
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a>');
 			if (tweetId) {
 				twttr.widgets.createTweet(
 					tweetId,
@@ -333,7 +443,7 @@
 		}
 		
 		if (url.includes('facebook.com')) {
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + url + '" data-width="500" data-height="500"></div>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + eUrl + '" data-width="500" data-height="500"></div>');
 			if (typeof FB !== 'undefined') {
 				FB.XFBML.parse();
 			} else {
@@ -341,6 +451,34 @@
 			}
 		}
 	}
+
+	// i18n: read a translated string injected by wp_localize_script() in
+	// bp_activity_link_preview_enqueue_scripts(). The English literal passed as
+	// `fallback` is a safety net only (asset load order / stale cache) and is
+	// never the translatable source - every key MUST exist in the PHP i18n
+	// array, which is what the POT scanner reads.
+	//
+	// Defined at module scope on purpose: several functions declare a local
+	// `var bp_activity_link_preview` (the sessionStorage payload) that shadows
+	// the localized global, so the lookup must not happen inside them.
+	var bpalpText = function (key, fallback) {
+		if (typeof bp_activity_link_preview !== 'undefined' &&
+			bp_activity_link_preview.i18n &&
+			bp_activity_link_preview.i18n[key]) {
+			return bp_activity_link_preview.i18n[key];
+		}
+		return fallback;
+	};
+
+	// Minimal sprintf for the %1$s-style placeholders used by the i18n strings.
+	// Translations must be free to reorder the arguments, so the whole phrase
+	// stays one string rather than concatenated fragments.
+	var bpalpSprintf = function (format, args) {
+		return String(format).replace(/%(\d+)\$s/g, function (match, position) {
+			var value = args[parseInt(position, 10) - 1];
+			return (typeof value === 'undefined') ? match : String(value);
+		});
+	};
 
 	// Helper functions (unchanged)
 	var escapeHtml = function (text) {
@@ -357,17 +495,43 @@
 
 	var getURL = function (prefix, urlText) {
 		var urlString = '';
-		var startIndex = urlText.indexOf(prefix);
 		var responseUrl = '';
 
-		if (typeof $($.parseHTML(urlText)).attr('href') !== 'undefined') {
-			urlString = $(urlText).attr('href');
-		} else {
-			for (var i = startIndex; i < urlText.length; i++) {
-				if (urlText[i] === ' ' || urlText[i] === '\n') {
+		// Prefer an anchor href anywhere in the markup. Contenteditable
+		// editors (BuddyBoss) auto-link typed URLs, and the anchor's href
+		// attribute is the authoritative URL even when plain text precedes
+		// or follows the anchor. The previous check only looked at the
+		// first top-level parsed node, so "text before <a href=...>" fell
+		// through to the fragile character loop below.
+		var parsedNodes = $.parseHTML(urlText);
+		if (parsedNodes && parsedNodes.length) {
+			var $anchor = $('<div></div>').append(parsedNodes).find('a[href]').filter(function () {
+				return String($(this).attr('href')).indexOf(prefix) !== -1;
+			}).first();
+			if ($anchor.length) {
+				urlString = $anchor.attr('href');
+			}
+		}
+
+		if (urlString === '') {
+			// Plain-text fallback. Normalize element boundaries (<br>, <p>,
+			// block wrappers) and non-breaking spaces to whitespace first so
+			// text on the following line never gets concatenated into the
+			// detected URL (e.g. "https://example.com/<br>Test").
+			var plainText = urlText
+				.replace(/<[^>]*>/g, ' ')
+				.replace(/&nbsp;/gi, ' ');
+			var startIndex = plainText.indexOf(prefix);
+
+			if (startIndex === -1) {
+				return '';
+			}
+
+			for (var i = startIndex; i < plainText.length; i++) {
+				if (plainText[i] === ' ' || plainText[i] === '\n' || plainText[i] === '\r' || plainText[i] === '\t') {
 					break;
 				} else {
-					urlString += urlText[i];
+					urlString += plainText[i];
 				}
 			}
 			if (prefix === 'www') {
@@ -423,7 +587,21 @@
 		var nextButtonId = isComment ? 'activity-comment-url-nextPicButton-' + commentId : 'activity-url-nextPicButton';
 		var imageCountId = isComment ? 'activity-comment-url-scrapper-img-count-' + commentId : 'activity-url-scrapper-img-count';
 
-		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + title + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + image + '"><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2"></span></button><button type="button" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2"></span></button><div id="' + imageCountId + '">Image ' + (link_image_index + 1) + '&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + description + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + url + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + title + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + escapeHtml(description) + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + image + '" /></div></div>';
+		// Escape all scraped/user-derived values before injecting into the DOM
+		// (same rationale as setURLResponse -- task #1 XSS fix).
+		var eTitle       = escapeHtml(title);
+		var eDescription = escapeHtml(description);
+		var eImage       = escapeHtml(image);
+		var eUrl         = escapeHtml(url);
+
+		// Translated UI strings (seeded from PHP; see setURLResponse).
+		var tCancelPreview      = escapeHtml(bpalpText('cancelPreview', 'Cancel Preview'));
+		var tCancelPreviewImage = escapeHtml(bpalpText('cancelPreviewImage', 'Cancel Preview Image'));
+		var tPreviousImage      = escapeHtml(bpalpText('previousImage', 'Previous image'));
+		var tNextImage          = escapeHtml(bpalpText('nextImage', 'Next image'));
+		var tImageCount         = escapeHtml(bpalpSprintf(bpalpText('imageCount', 'Image %1$s of %2$s'), [link_image_index + 1, image_count]));
+
+		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 
 		$(attachmentContainer + ' .' + containerClass).remove();
 		$(attachmentContainer).append(link_preview);
@@ -434,8 +612,11 @@
 		if ($element.is('textarea')) {
 			return $element.val();
 		} else if ($element.attr('contenteditable') === 'true') {
-			// BuddyBoss uses contenteditable div instead of textarea
-			return $element.text();
+			// BuddyBoss uses a contenteditable div instead of a textarea.
+			// Return HTML (not text) so auto-generated anchor tags keep
+			// their href attribute and element boundaries (<br>, <p>)
+			// survive for URL boundary detection in getURL().
+			return $element.html();
 		}
 		return $element.val() || $element.text();
 	};
