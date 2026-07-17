@@ -189,8 +189,11 @@ It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX
 
 = 1.7.4 - July 2026 =
 
+* New      - Added German, Spanish, French, Italian and Portuguese (Brazil) translations.
 * Improve  - Plugin assets and the Twitter/Facebook SDKs now load only in BuddyPress activity contexts (the activity directory, member activity and group screens) instead of every page. Use the bp_activity_link_preview_load_assets filter to load them on custom pages that embed an activity stream.
 * Improve  - Failed link lookups are cached for 15 minutes and comment rendering never fetches remote URLs, so slow or unreachable links no longer delay page loads.
+* Fix      - The composer preview controls (Cancel Preview, previous/next image and the image counter) were built in JavaScript with no translatable source, so they always rendered in English. They are now translatable.
+* Fix      - The plugin never registered its text domain, so bundled translations could never load.
 * Fix      - Invalid or blocked URLs now show an error message in the composer instead of failing silently.
 * Fix      - Preview close and image navigation icons render correctly when the admin toolbar is hidden.
 * Security - Scraped link titles and descriptions are sanitized before saving and escaped on output.

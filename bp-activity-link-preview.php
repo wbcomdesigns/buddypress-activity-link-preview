@@ -80,8 +80,16 @@ function bp_activity_link_preview_admin_notice() {
 	?>
 	<div class="notice notice-error">
 		<p>
-			<strong><?php esc_html_e( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' ); ?></strong>
-			<?php esc_html_e( 'requires BuddyPress or BuddyBoss Platform to be installed and active.', 'buddypress-activity-link-preview' ); ?>
+			<?php
+			// One translatable sentence with a placeholder: translations must be
+			// free to move the plugin name, so the name and the rest of the
+			// sentence are never two concatenated __() fragments.
+			printf(
+				/* translators: %s: plugin name, wrapped in a <strong> tag. */
+				esc_html__( '%s requires BuddyPress or BuddyBoss Platform to be installed and active.', 'buddypress-activity-link-preview' ),
+				'<strong>' . esc_html__( 'Activity Link Preview For BuddyPress', 'buddypress-activity-link-preview' ) . '</strong>'
+			);
+			?>
 		</p>
 	</div>
 	<?php
@@ -194,6 +202,13 @@ function bp_activity_link_preview_enqueue_scripts() {
 	// Only the keys the frontend script actually reads are localized. Youzify
 	// stand-down is handled server-side in the render path, so no Youzify flags
 	// are passed to JS.
+	//
+	// The i18n array is the ONLY translatable home for the composer UI strings:
+	// the preview card is built entirely in JS, so any literal that lives only
+	// in bp-activity-link-preview.js is invisible to the POT scanner and can
+	// never be translated. Every key here has a matching bpalpText() read in
+	// the script; the English literal there is a fallback only. Keep the two
+	// in lockstep - a key read but not seeded renders English on all locales.
 	wp_localize_script(
 		'bp-activity-link-preview-js',
 		'bp_activity_link_preview',
@@ -201,6 +216,14 @@ function bp_activity_link_preview_enqueue_scripts() {
 			'ajaxurl'                       => admin_url( 'admin-ajax.php' ),
 			'nonce'                         => wp_create_nonce( 'bp_activity_link_preview_nonce' ),
 			'buddyboss_link_preview_active' => $buddyboss_link_preview_active,
+			'i18n'                          => array(
+				'cancelPreview'      => __( 'Cancel Preview', 'buddypress-activity-link-preview' ),
+				'cancelPreviewImage' => __( 'Cancel Preview Image', 'buddypress-activity-link-preview' ),
+				'previousImage'      => __( 'Previous image', 'buddypress-activity-link-preview' ),
+				'nextImage'          => __( 'Next image', 'buddypress-activity-link-preview' ),
+				/* translators: 1: current image number. 2: total number of images. */
+				'imageCount'         => __( 'Image %1$s of %2$s', 'buddypress-activity-link-preview' ),
+			),
 		)
 	);
 }

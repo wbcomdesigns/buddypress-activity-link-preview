@@ -1,0 +1,38 @@
+{
+  "domain": "buddypress-activity-link-preview",
+  "potFile": "languages/buddypress-activity-link-preview.pot",
+  "languagesDir": "languages",
+  "engine": "claude",
+  "model": "haiku",
+  "batch": 400,
+  "makeJson": true,
+  "protect": [
+    "Wbcom",
+    "BuddyPress",
+    "BuddyBoss",
+    "WordPress",
+    "Youzify",
+    "Open Graph",
+    "oEmbed",
+    "REST",
+    "API",
+    "URL",
+    "HTML",
+    "Twitter",
+    "Facebook",
+    "YouTube",
+    "Vimeo",
+    "Pro"
+  ],
+  "glossary": {
+    "activity": "",
+    "link preview": ""
+  },
+  "locales": [
+    { "locale": "de_DE", "name": "German", "register": "informal (du)" },
+    { "locale": "fr_FR", "name": "French", "register": "informal (tu)" },
+    { "locale": "es_ES", "name": "Spanish", "register": "informal (tú)" },
+    { "locale": "pt_BR", "name": "Portuguese (Brazil)", "register": "informal (você)" },
+    { "locale": "it_IT", "name": "Italian", "register": "informal (tu)" }
+  ]
+}

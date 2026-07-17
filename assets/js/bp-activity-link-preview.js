@@ -397,6 +397,15 @@
 		var eImage       = escapeHtml(image);
 		var eUrl         = escapeHtml(url);
 
+		// Translated UI strings (seeded from PHP; see the i18n array in
+		// bp_activity_link_preview_enqueue_scripts). Escaped because they are
+		// injected into double-quoted attributes and text nodes below.
+		var tCancelPreview      = escapeHtml(bpalpText('cancelPreview', 'Cancel Preview'));
+		var tCancelPreviewImage = escapeHtml(bpalpText('cancelPreviewImage', 'Cancel Preview Image'));
+		var tPreviousImage      = escapeHtml(bpalpText('previousImage', 'Previous image'));
+		var tNextImage          = escapeHtml(bpalpText('nextImage', 'Next image'));
+		var tImageCount         = escapeHtml(bpalpSprintf(bpalpText('imageCount', 'Image %1$s of %2$s'), [1, image_count]));
+
 		// oEmbed videos (YouTube, Vimeo, etc.): response.description is the trusted
 		// WP-oEmbed iframe (whitelisted providers, generated server-side), so it is
 		// rendered raw to show the player. The hidden wp_embed flag tells the save
@@ -408,9 +417,9 @@
 			// Emit all four hidden fields the save handler requires (url/title/
 			// description/image) plus the wp_embed flag; the server regenerates the
 			// embed from the URL, so the escaped title/description here are harmless.
-			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
 		} else {
-			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="Previous image" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="Next image" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">Image 1&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 		}
 
 		$(attachmentContainer + ' .' + containerClass).remove();
@@ -423,7 +432,7 @@
 			if (tweetIdMatch && tweetIdMatch[1]) {
 				tweetId = tweetIdMatch[1];
 			}
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a>');
 			if (tweetId) {
 				twttr.widgets.createTweet(
 					tweetId,
@@ -434,7 +443,7 @@
 		}
 		
 		if (url.includes('facebook.com')) {
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + eUrl + '" data-width="500" data-height="500"></div>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + eUrl + '" data-width="500" data-height="500"></div>');
 			if (typeof FB !== 'undefined') {
 				FB.XFBML.parse();
 			} else {
@@ -442,6 +451,34 @@
 			}
 		}
 	}
+
+	// i18n: read a translated string injected by wp_localize_script() in
+	// bp_activity_link_preview_enqueue_scripts(). The English literal passed as
+	// `fallback` is a safety net only (asset load order / stale cache) and is
+	// never the translatable source - every key MUST exist in the PHP i18n
+	// array, which is what the POT scanner reads.
+	//
+	// Defined at module scope on purpose: several functions declare a local
+	// `var bp_activity_link_preview` (the sessionStorage payload) that shadows
+	// the localized global, so the lookup must not happen inside them.
+	var bpalpText = function (key, fallback) {
+		if (typeof bp_activity_link_preview !== 'undefined' &&
+			bp_activity_link_preview.i18n &&
+			bp_activity_link_preview.i18n[key]) {
+			return bp_activity_link_preview.i18n[key];
+		}
+		return fallback;
+	};
+
+	// Minimal sprintf for the %1$s-style placeholders used by the i18n strings.
+	// Translations must be free to reorder the arguments, so the whole phrase
+	// stays one string rather than concatenated fragments.
+	var bpalpSprintf = function (format, args) {
+		return String(format).replace(/%(\d+)\$s/g, function (match, position) {
+			var value = args[parseInt(position, 10) - 1];
+			return (typeof value === 'undefined') ? match : String(value);
+		});
+	};
 
 	// Helper functions (unchanged)
 	var escapeHtml = function (text) {
@@ -557,7 +594,14 @@
 		var eImage       = escapeHtml(image);
 		var eUrl         = escapeHtml(url);
 
-		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="Cancel Preview Image" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="Previous image" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="Next image" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">Image ' + (link_image_index + 1) + '&nbsp;of&nbsp;' + image_count + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="Cancel Preview" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+		// Translated UI strings (seeded from PHP; see setURLResponse).
+		var tCancelPreview      = escapeHtml(bpalpText('cancelPreview', 'Cancel Preview'));
+		var tCancelPreviewImage = escapeHtml(bpalpText('cancelPreviewImage', 'Cancel Preview Image'));
+		var tPreviousImage      = escapeHtml(bpalpText('previousImage', 'Previous image'));
+		var tNextImage          = escapeHtml(bpalpText('nextImage', 'Next image'));
+		var tImageCount         = escapeHtml(bpalpSprintf(bpalpText('imageCount', 'Image %1$s of %2$s'), [link_image_index + 1, image_count]));
+
+		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 
 		$(attachmentContainer + ' .' + containerClass).remove();
 		$(attachmentContainer).append(link_preview);
