@@ -137,11 +137,16 @@ module.exports = function ( grunt ) {
 	} );
 
 	// Build distribution zip
+	// NOTE: build does NOT run makepot. The shipped POT is produced by
+	// `wp i18n make-pot` (the whole free series does this). grunt-wp-i18n
+	// regenerates it with degraded headers (Report-Msgid-Bugs-To lost,
+	// X-Generator changed) and a fresh timestamp, so letting it run here bakes a
+	// worse POT into the zip than the one committed. Run `grunt makepot` by hand
+	// only if you deliberately want to regenerate the template.
 	grunt.registerTask( 'build', [
 		'clean:build',
 		'clean:dist',
 		'checktextdomain',
-		'makepot',
 		'copy:build',
 		'compress:build',
 		'clean:build'
