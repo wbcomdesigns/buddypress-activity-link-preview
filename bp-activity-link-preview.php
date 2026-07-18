@@ -425,6 +425,13 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 		require ABSPATH . WPINC . '/class-oembed.php';
 	}
 
+	// Distinguishes a transient fetch failure (timeout, blocked, provider
+	// momentarily down) from a genuine empty result (a real page with nothing
+	// to preview). Only genuine empties are negative-cached; a transient
+	// failure must be retried on the next request rather than blackholing a
+	// good URL for the whole negative-cache window. See the write below.
+	$transient_failure = false;
+
 	$embed_code = '';
 	$oembed_obj = _wp_oembed_get_object();
 	$discover   = apply_filters( 'bp_oembed_discover_support', false, $url );
@@ -432,6 +439,17 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 
 	if ( $is_oembed ) {
 		$embed_code = wp_oembed_get( $url, array( 'discover' => $discover ) );
+
+		// The URL IS a known oEmbed provider (YouTube, Vimeo, Twitter...) but
+		// the embed came back empty. That is the provider being slow or
+		// unreachable this once, not a URL with nothing to show - so it must
+		// not be negative-cached. This is the exact YouTube case: one hiccup
+		// would otherwise fall through to a server-side scrape of youtube.com,
+		// which many hosts get a consent wall for, cache that as "empty", and
+		// leave YouTube previews dead for 15 minutes even though a retry works.
+		if ( empty( $embed_code ) ) {
+			$transient_failure = true;
+		}
 	}
 
 	// Fetch the oembed code for URL.
@@ -482,6 +500,14 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 		// safely get URL and response body.
 		$response = wp_safe_remote_get( $url, $args );
 		$body     = wp_remote_retrieve_body( $response );
+
+		// A WP_Error means the request itself never completed - timeout, DNS
+		// failure, connection refused, or WP_HTTP_BLOCK_EXTERNAL. That is
+		// transient (or config), not a page with nothing to preview, so it must
+		// be retried rather than negative-cached.
+		if ( is_wp_error( $response ) ) {
+			$transient_failure = true;
+		}
 
 		// if response is not empty.
 		if ( ! is_wp_error( $body ) && ! empty( $body ) ) {
@@ -583,10 +609,21 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 	if ( ! empty( $parsed_url_data ) ) {
 		// set the transient.
 		set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
-	} else {
-		// Negative cache: remember the failure for a short time so slow,
-		// blocked, or unreachable URLs are not re-fetched on every request.
-		set_transient( $cache_key, 'bpalp_failed', 15 * MINUTE_IN_SECONDS );
+	} elseif ( ! $transient_failure ) {
+		// Negative cache a GENUINE empty result - a page that was fetched
+		// successfully but has nothing to preview - so it is not re-scraped on
+		// every request. A transient_failure (timeout, blocked, or an oEmbed
+		// provider that came back empty this once) is deliberately NOT cached:
+		// caching it would leave a good URL dead for the whole window with no
+		// feedback and no way to clear it, which is exactly the "YouTube
+		// previews stopped working" report. Those retry on the next view.
+		//
+		// The window is filterable so a site hitting genuinely slow pages can
+		// tune it without editing the plugin.
+		$negative_ttl = (int) apply_filters( 'bp_activity_link_preview_negative_cache_ttl', 15 * MINUTE_IN_SECONDS, $url );
+		if ( $negative_ttl > 0 ) {
+			set_transient( $cache_key, 'bpalp_failed', $negative_ttl );
+		}
 	}
 
 	return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
