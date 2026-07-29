@@ -3,7 +3,7 @@
   "plugin": {
     "slug": "buddypress-activity-link-preview",
     "name": "Activity Link Preview For BuddyPress",
-    "version": "1.7.4",
+    "version": "1.7.5",
     "namespace": null,
     "main_file": "bp-activity-link-preview.php",
     "text_domain": "buddypress-activity-link-preview",
@@ -11,9 +11,9 @@
     "extension_hook_consumed": null,
     "extension_hook_fired": null,
     "architecture": "single-file procedural; no classes, no namespace (1185 lines, 22 functions)",
-    "requires": "BuddyPress OR BuddyBoss Platform (auto-deactivates if neither active). Plugin header: Requires at least WP 5.9, Requires PHP 7.4.",
-    "branch": "v1.7.4",
-    "header_version_vs_branch_note": "Plugin header (:8) + BP_ACTIVITY_LINK_PREVIEW_VERSION (:28) + readme Stable tag + package.json all say 1.7.4, matching the v1.7.4 dev branch."
+    "requires": "BuddyPress OR BuddyBoss Platform (auto-deactivates if neither active). Plugin header: Requires at least WP 6.5, Requires PHP 8.0.",
+    "branch": "v1.7.5",
+    "header_version_vs_branch_note": "Plugin header (:8) + BP_ACTIVITY_LINK_PREVIEW_VERSION (:28) + readme Stable tag + package.json all say 1.7.5, matching the v1.7.5 dev branch."
   },
   "rest": {
     "namespace": "consumes BuddyPress REST (buddypress/v1) — registers no routes of its own",
@@ -142,12 +142,12 @@
   "generated": {
     "at": "2026-07-16T10:29:00+00:00",
     "from": "structural re-scan of shipped code (grep/glob), manual refresh",
-    "branch": "v1.7.4",
+    "branch": "v1.7.5",
     "schema_version": "v2.2",
     "scan_scope": "full_rescan",
     "scan_path": ".",
     "php_file_count": 1,
     "size_class": "tiny-single-file",
-    "notes": "Single-file procedural plugin (1 PHP file, 1185 lines, 22 functions). No classes, namespaces, admin pages, settings, CPTs, taxonomies, DB tables, cron, WP-CLI, blocks, or shortcodes (re-verified: zero add_shortcode, zero register_block_type, zero block.json, zero register_rest_route). All line numbers re-derived from the 1.7.4 tree on 2026-07-16; the 2026-06-05 generation was 40-60 lines stale throughout. Corrections this pass: localized keys 7 -> 3; hooks_fired 5 -> 6 (bp_activity_link_preview_load_assets was missing); security.remote_fetch no longer claims a raw file_get_contents fallback (removed in 1.7.4, replaced by wp_safe_remote_head); caching now records the 15-minute 'bpalp_failed' negative cache and the $cached_only render path; plugin header Requires at least is 5.9."
+    "notes": "Single-file procedural plugin (1 PHP file, 1185 lines, 22 functions). No classes, namespaces, admin pages, settings, CPTs, taxonomies, DB tables, cron, WP-CLI, blocks, or shortcodes (re-verified: zero add_shortcode, zero register_block_type, zero block.json, zero register_rest_route). All line numbers re-derived from the 1.7.4 tree on 2026-07-16; the 2026-06-05 generation was 40-60 lines stale throughout. Corrections this pass: localized keys 7 -> 3; hooks_fired 5 -> 6 (bp_activity_link_preview_load_assets was missing); security.remote_fetch no longer claims a raw file_get_contents fallback (removed in 1.7.4, replaced by wp_safe_remote_head); caching now records the 15-minute 'bpalp_failed' negative cache and the $cached_only render path; plugin header Requires at least is 6.5."
   }
 }
