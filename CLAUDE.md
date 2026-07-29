@@ -6,8 +6,8 @@
 
 ## Quick reference
 - **Main file**: `bp-activity-link-preview.php` (single-file, procedural; 1033 lines, 20 functions)
-- **Version**: `1.7.4` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag` + package.json)
-- **Dev branch**: `v1.7.4`
+- **Version**: `1.7.5` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag` + package.json)
+- **Dev branch**: `v1.7.5`
 - **Namespace**: none (no classes)
 - **Text domain**: `buddypress-activity-link-preview`
 - **Extends**: none (standalone free plugin)
@@ -51,6 +51,7 @@ This onboarding pass was **artefacts-only** (manifest + audit reports + graph + 
 ## Recent changes
 | Date | Type | Description | Files |
 |---|---|---|---|
+| 2026-07-29 | release | Bumped 1.7.4 -> 1.7.5 as a corrective release: the 1.7.4 package published to the wp.org slug `activity-link-preview-for-buddypress` contained BuddyPress Post from Anywhere files (trunk + tags/1.7.4). No functional code change. Also corrected two stale "Requires at least 5.9" claims (readme upgrade notice, manifest) - the header has said 6.5 since 1.7.4. | `bp-activity-link-preview.php`, `readme.txt`, `package.json`, `audit/manifest.json`, `CLAUDE.md` |
 | 2026-07-10 | a11y+rtl | Added aria-label (Previous/Next image) + aria-hidden icons to the icon-only composer nav buttons; upgraded comment close-button focus from `:focus`+`#0073aa` to token-driven `:focus-visible`; converted physical margins/insets to logical props (margin-inline/inset-inline) with a `[dir=rtl]` float flip for RTL. Browser-verified live preview + dark flip (data-bx-mode). NOTE: investigated adding `body.buddyx-dark-theme`/`body.dark` dark scopes but reverted - dark values defer to `--bx-color-*` which BuddyX/Reign only flip under `[data-bx-mode=dark]`, so a body-class scope renders LIGHT (verified). data-bx-mode-only scoping is correct. | `assets/css/*.css`, `assets/js/*.js` |
 | 2026-07-09 | security | DOM-XSS fix: escape scraped title/description/image/url at every JS injection site (both render fns + FB data-href) via the existing escapeHtml(); trusted WP-oEmbed rendered raw. Live-verified payload neutralized. | `assets/js/bp-activity-link-preview.js` |
 | 2026-07-09 | bug-fix | YouTube/oEmbed videos now persist to the saved feed: JS sends wp_embed flag, save regenerates embed via wp_oembed_get() + stores wp_embed/embed_html, render outputs it, iframe added to bp_activity_allowed_tags. Was saving as a bare URL. | `bp-activity-link-preview.php`, `assets/js/bp-activity-link-preview.js` |

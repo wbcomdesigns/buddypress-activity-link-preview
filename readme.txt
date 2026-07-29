@@ -4,7 +4,7 @@ Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 6.5
 Tested up to: 7.0
-Stable tag: 1.7.4
+Stable tag: 1.7.5
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -202,6 +202,12 @@ It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX
 
 == Changelog ==
 
+= 1.7.5 - July 2026 =
+
+Corrective release. There are no functional changes since 1.7.4.
+
+* Fix      - Restored the correct plugin files. The 1.7.4 package published on WordPress.org contained the files of a different plugin.
+
 = 1.7.4 - July 2026 =
 
 * New      - Added German, Spanish, French, Italian and Portuguese (Brazil) translations.
@@ -306,8 +312,11 @@ It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX
 
 == Upgrade Notice ==
 
+= 1.7.5 =
+Corrective release. The 1.7.4 package published on WordPress.org contained the files of a different plugin. Update immediately if you installed or updated to 1.7.4 from WordPress.org. There are no functional changes since 1.7.4.
+
 = 1.7.4 =
-Performance and security update. Assets load only in activity contexts, failed lookups are cached, and short-URL resolution is hardened against SSRF. Note the minimum WordPress version is now stated correctly as 5.9.
+Performance and security update. Assets load only in activity contexts, failed lookups are cached, and short-URL resolution is hardened against SSRF. Note the minimum supported WordPress version is now stated correctly as 6.5.
 
 = 1.7.2 =
 Bug fix release. Fixes Twitter/Facebook previews in comments, @mention link preview issue, hash symbol in URL, and undefined image count. Recommended for all users.
