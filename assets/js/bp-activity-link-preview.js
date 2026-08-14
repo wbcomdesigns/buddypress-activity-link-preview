@@ -72,77 +72,108 @@
 		}
 	});
 
+	// Tweets render inside Twitter's own iframe, so the plugin's CSS tokens cannot
+	// reach them. Read the host theme's explicit dark-mode attribute instead, the
+	// same signal the stylesheet keys its dark scope off.
+	var getEmbedTheme = function () {
+		return 'dark' === document.documentElement.getAttribute('data-bx-mode') ? 'dark' : 'light';
+	};
+
+	// Fill the empty <div data-url> containers that PHP renders for Twitter/X and
+	// Facebook links.
+	//
+	// This MUST run on page load as well as after the activity AJAX calls. Saved
+	// previews are server-rendered, so on an activity permalink - or any theme that
+	// paints the stream without BuddyPress Nouveau's AJAX bootstrap - nothing else
+	// would ever trigger it and the embed stays a blank box.
+	var initSocialEmbeds = function () {
+		// Handle both original and comment containers
+		$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
+			var $container = $(element);
+			var url = $container.data("url");
+
+			if (!url) return;
+
+			// Skip if already has rendered content (iframe or widget)
+			if ($container.find('iframe, .twitter-tweet-rendered').length > 0) {
+				return;
+			}
+
+			// Check if this is a Twitter URL
+			const tweetIdMatch = url.match(/status\/(\d+)/);
+			if (!tweetIdMatch || !tweetIdMatch[1]) return;
+
+			const tweetId = tweetIdMatch[1];
+
+			// Get activity ID for unique widget tracking (fixes re-post issue)
+			var activityId = $container.closest('.activity-item, [data-bp-activity-id]').data('bp-activity-id') ||
+				$container.closest('.activity').attr('id') ||
+				'container-' + index;
+
+			const widgetId = 'twitter-widget-' + activityId + '-' + tweetId;
+
+			// Skip if already initialized
+			if (initializedTwitterWidgets.has(widgetId)) return;
+
+			// Bail before claiming the id when the SDK is not ready yet: marking it
+			// first would permanently retire this container, so a slow widgets.js
+			// would leave the tweet blank for the rest of the page's life. Leaving
+			// it unclaimed lets the twttr.ready() pass below pick it up.
+			if (typeof twttr === 'undefined' || !twttr.widgets) {
+				return;
+			}
+
+			// Mark as initialized
+			initializedTwitterWidgets.add(widgetId);
+
+			twttr.widgets.createTweet(
+				tweetId,
+				element,
+				{ theme: getEmbedTheme() }
+			).then(function () {
+				// Widget created successfully
+			}).catch(function () {
+				// Allow a later pass to retry this container.
+				initializedTwitterWidgets.delete(widgetId);
+			});
+		});
+
+		// Facebook: the SDK is loaded with #xfbml=1 so it parses server-rendered
+		// markup itself, but AJAX-injected .fb-post nodes arrive after that pass.
+		if (typeof FB !== 'undefined' && FB.XFBML) {
+			try {
+				FB.XFBML.parse();
+			} catch (e) {
+				// A failed parse must not break the rest of the composer.
+			}
+		}
+	};
+
+	$(function () {
+		initSocialEmbeds();
+
+		// widgets.js may still be fetching its widget bundle at DOM ready; twttr.ready
+		// fires once twttr.widgets exists, which is when the pass above can succeed.
+		if (typeof twttr !== 'undefined' && 'function' === typeof twttr.ready) {
+			twttr.ready(function () {
+				initSocialEmbeds();
+			});
+		}
+	});
+
 	// Enhanced AJAX complete handler with backward compatibility
 	jQuery(document).ajaxComplete(function (event, xhr, settings) {
 		const params = new URLSearchParams(settings.data);
 		const parsedData = Object.fromEntries(params.entries());
-		
+
 		// Only proceed for relevant actions
-		if (!parsedData.action || !(parsedData.action.includes('activity_filter') || 
-			parsedData.action.includes('post_update') || 
+		if (!parsedData.action || !(parsedData.action.includes('activity_filter') ||
+			parsedData.action.includes('post_update') ||
 			parsedData.action.includes('new_activity_comment'))) {
 			return;
 		}
 
-		setTimeout(() => {
-			// Handle both original and comment containers
-			$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
-				var $container = $(element);
-				var url = $container.data("url");
-
-				if (!url) return;
-
-				// Skip if already has rendered content (iframe or widget)
-				if ($container.find('iframe, .twitter-tweet-rendered').length > 0) {
-					return;
-				}
-
-				// Check if this is a Twitter URL
-				const tweetIdMatch = url.match(/status\/(\d+)/);
-				if (!tweetIdMatch || !tweetIdMatch[1]) return;
-
-				const tweetId = tweetIdMatch[1];
-
-				// Get activity ID for unique widget tracking (fixes re-post issue)
-				var activityId = $container.closest('.activity-item, [data-bp-activity-id]').data('bp-activity-id') ||
-					$container.closest('.activity').attr('id') ||
-					'container-' + index;
-
-				const widgetId = 'twitter-widget-' + activityId + '-' + tweetId;
-
-				// Skip if already initialized
-				if (initializedTwitterWidgets.has(widgetId)) return;
-
-				// Mark as initialized
-				initializedTwitterWidgets.add(widgetId);
-
-				// Initialize Twitter widget
-				if (typeof twttr !== 'undefined' && twttr.widgets) {
-					twttr.widgets.createTweet(
-						tweetId,
-						element,
-						{ theme: 'light' }
-					).then(function() {
-						// Widget created successfully
-					}).catch(function(error) {
-						console.error('Error creating Twitter widget:', error);
-						// Remove from initialized set to allow retry
-						initializedTwitterWidgets.delete(widgetId);
-					});
-				}
-			});
-
-			// Handle Facebook embeds
-			if (typeof FB !== 'undefined') {
-				try {
-					FB.XFBML.parse();
-				} catch (e) {
-					console.error('Error initializing Facebook widgets:', e);
-				}
-			} else {
-				console.warn('Facebook SDK not loaded.');
-			}
-		}, 200);
+		setTimeout(initSocialEmbeds, 200);
 	});
 
 	// Enhanced URL scraping function with backward compatibility
@@ -153,16 +184,6 @@
 			return;
 		}
 
-		var urlTwitter = inputurlText.indexOf("x.com");
-		var urlFacebook = inputurlText.indexOf("facebook.com");
-		var urlInsta = inputurlText.indexOf("instagram.com");
-		var urlYoutube = inputurlText.indexOf("youtube.com");
-
-		// Original comment (keeping for backward compatibility)
-		// if (urlTwitter >= 0 || urlFacebook >= 0 || urlInsta >= 0 || urlYoutube >= 0) {
-		// 	return;
-		// }
-		
 		if (inputurlText.indexOf('<img') >= 0) {
 			inputurlText = inputurlText.replace(/<img .*?>/g, '');
 		}
@@ -437,7 +458,7 @@
 				twttr.widgets.createTweet(
 					tweetId,
 					$(attachmentContainer).find("." + previewClass)[0],
-					{ theme: 'light' }
+					{ theme: getEmbedTheme() }
 				);
 			}
 		}

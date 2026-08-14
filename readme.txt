@@ -4,7 +4,7 @@ Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 6.5
 Tested up to: 7.0
-Stable tag: 1.7.5
+Stable tag: 1.7.6
 Requires PHP: 8.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -201,6 +201,20 @@ It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX
 1. Link preview in an activity post - title, description and image pulled from the shared link.
 
 == Changelog ==
+
+= 1.7.6 - August 2026 =
+
+Fixes Twitter/X and Facebook previews that never appeared outside the activity directory, plus a round of composer layout and accessibility corrections.
+
+* Fix      - Twitter/X and Facebook embeds stayed blank on activity permalinks and on themes that do not load the stream over AJAX. They were only ever initialised after an activity AJAX call, so a normal page view left an empty box.
+* Fix      - Tweet embeds now follow the site's dark mode instead of always rendering the light Twitter card.
+* Fix      - The preview image's previous and next buttons now sit directly under the thumbnail. On wide screens they were centred across the whole card, far from the image they change.
+* Fix      - The preview close button now sits top right at every screen width. It previously appeared top left on desktop and top right on mobile.
+* Fix      - The image remove button is legible over light images; it was white on a transparent background.
+* Fix      - Removed the empty space that every saved preview carried below its description in the activity stream.
+* Improve  - Preview close and image navigation controls now meet the 40px minimum touch target (32px for the control that overlays the thumbnail), up from 20x24 and 34x31.
+* Dev      - Cleared all 11 PHPStan level 5 findings, including two undefined-method calls on DOM nodes returned by XPath.
+* Dev      - Removed dead CSS rules and unused JavaScript variables left behind by earlier renames.
 
 = 1.7.5 - July 2026 =
 

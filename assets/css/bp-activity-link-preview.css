@@ -127,7 +127,7 @@ plugin never maintains a duplicate OS-driven palette.
     border: none;
 }
 
-.activity-url-scrapper-container .activity-link-preview-image {
+.activity-url-scrapper-container #activity-url-scrapper-img-holder {
     margin-bottom: 30px;
 }
 
@@ -151,7 +151,15 @@ plugin never maintains a duplicate OS-driven palette.
     text-decoration: underline !important;
 }
 
+/* The 40px well exists to clear the composer's image nav. Saved previews in the
+   feed have no nav, so scope it to the composer instead of dragging empty space
+   under every posted card. */
 .activity-link-preview-excerpt {
+    padding: 0;
+}
+
+.activity-url-scrapper-container .activity-link-preview-excerpt,
+.activity-comment-url-scrapper-container .activity-link-preview-excerpt {
     padding: 0 0 40px;
 }
 
@@ -164,23 +172,52 @@ plugin never maintains a duplicate OS-driven palette.
     text-decoration: underline !important;
 }
 
+/* The composer wraps the thumbnail and its nav in #activity-url-scrapper-img-holder.
+   The holder carries the float and the positioning context so the prev/next controls
+   sit directly under the image they change. Previously the nav was absolutely
+   positioned but the holder was static, so the nav escaped to
+   .activity-link-preview-container and centred itself across the whole card - on a
+   wide screen that put the arrows several hundred pixels from the thumbnail. */
+#activity-url-scrapper-img-holder {
+    float: left;
+    max-width: 160px;
+    margin-inline-end: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#activity-url-scrapper-img-holder .activity-link-preview-image {
+    float: none;
+    max-width: 100%;
+    margin-inline-end: 0;
+    margin-bottom: 0;
+}
+
 .activity-url-thumb-nav {
-    position: absolute;
-    bottom: 3px;
-    left: 0;
-    right: 0;
-    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
     text-align: center;
 }
 
 #buddypress .activity-url-thumb-nav button,
 .activity-url-thumb-nav button {
     cursor: pointer;
+    /* 40px minimum touch target (WCAG 2.2 SC 2.5.8 asks for 24px; the Wbcom
+       responsive contract asks for 40px). Two of these plus the gap still fit
+       inside the 160px thumbnail column. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: auto;
+    min-width: 40px;
     padding: 3px 6px;
-    margin: 0 3px;
+    margin: 0;
     height: auto;
-    min-height: 10px;
+    min-height: 40px;
     background: var(--bpalp-btn-bg, #f0f0f1);
     color: var(--bpalp-btn-fg, #2c3338);
     border: 1px solid var(--bpalp-btn-border, #c3c4c7);
@@ -202,22 +239,32 @@ plugin never maintains a duplicate OS-driven palette.
     margin-top: 5px;
 }
 
-.activity-url-error {
-    color: #d33;
-}
-
+/* Targets BuddyBoss Platform's own composer markup, not ours - nothing in this
+   plugin emits #activity-url-scrapper-url. Kept because it only costs a selector
+   and removing it silently changes BuddyBoss-paired sites; do not assume it is
+   dead without testing against an active BuddyBoss install. */
 #activity-url-scrapper-url {
     color: var(--bpalp-text-strong, rgba(0, 0, 0, 0.6));
     font-size: 14px;
 }
 
+/* Dismiss sits top-right, the corner every other close control in the stream uses.
+   It was previously pinned inset-inline-start, which put it top-left on desktop
+   while a narrow-screen rule moved it right - two different corners for the same
+   control. The 40px box is the touch-target minimum; the icon stays 20px. */
 #activity-close-link-suggestion {
     border: 0;
     color: var(--bpalp-close, rgba(0, 0, 0, 0.4));
     font-size: 16px;
     position: absolute;
-    inset-inline-start: 3px;
-    top: 8px;
+    inset-inline-end: 4px;
+    inset-inline-start: auto;
+    top: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
     text-decoration: none;
 }
 
@@ -225,31 +272,47 @@ plugin never maintains a duplicate OS-driven palette.
     font-size: 20px;
 }
 
+/* BuddyBoss Platform's own composer wrapper - it renders the oEmbed card edge to
+   edge, so the dismiss needs a filled chip to stay legible over it. Same corner as
+   the default case above. */
 .activity-post-form-link-wp-embed #activity-close-link-suggestion {
-    top: 30px;
-    inset-inline-start: 8px;
-    inset-inline-end: auto;
+    top: 8px;
+    inset-inline-end: 8px;
+    inset-inline-start: auto;
     background: var(--bpalp-surface, #fff);
     z-index: 11;
-    width: 20px;
-    height: 20px;
+    min-width: 40px;
+    min-height: 40px;
     border-radius: 50%;
 }
 
-@media screen and (max-width: 32em) {
-    #activity-close-link-suggestion {
-        color: var(--bpalp-title, #000);
-    }
-}
-
+/* Overlays the thumbnail, so it stays smaller than the 40px card control - 32px
+   still clears the WCAG 2.2 SC 2.5.8 minimum of 24px without covering a quarter of
+   a 160px image. */
 #activity-link-preview-close-image {
     border: 0;
+    /* Sits on top of an arbitrary remote image, so the glyph cannot rely on the
+       image behind it. A fixed scrim keeps it legible over a white screenshot as
+       well as a dark photo - white-on-transparent disappeared on light images. */
     color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
     font-size: 16px;
     inset-inline-start: 3px;
     position: absolute;
     top: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
     text-decoration: none;
+}
+
+#activity-link-preview-close-image:hover,
+#activity-link-preview-close-image:focus {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.75);
 }
 
 #activity-link-preview-close-image .dashicons.dashicons-no-alt {
@@ -263,7 +326,6 @@ plugin never maintains a duplicate OS-driven palette.
     border-radius: 2px;
 }
 
-.activity-list .activity-item .activity-content .activity-inner .twitter-post, 
 .activity-list .activity-item .activity-content .activity-inner .fb-post {
     margin: 0 15px 15px;
 }
@@ -457,13 +519,25 @@ plugin never maintains a duplicate OS-driven palette.
 }
 
 @media screen and (max-width: 24em) {
-    /* Stack images on very small screens */
+    /* Stack images on very small screens. In the composer the float and the width
+       cap sit on the holder (it also carries the image nav), so it has to unstack
+       alongside the plain image wrapper used by saved previews. */
+    #activity-url-scrapper-img-holder,
     .activity-link-preview-image,
     .activity-comment-link-preview-container .activity-link-preview-image {
         float: none;
         max-width: 100%;
+        margin-inline-end: 0;
         margin-bottom: 10px;
         text-align: center;
+    }
+
+    /* Stacked, the wrapper spans the card while the image centres inside it, which
+       would strand the image's own close control off to the left. Shrink the
+       wrapper to the image so the control stays on the thumbnail corner. */
+    #activity-url-scrapper-img-holder .activity-link-preview-image {
+        display: inline-block;
+        max-width: 100%;
     }
 
     .activity-comment-link-preview-container {
@@ -471,8 +545,9 @@ plugin never maintains a duplicate OS-driven palette.
     }
 }
 
-/* Social media embeds in comments */
-.activity-comment-link-preview-container .twitter-post,
+/* Social media embeds in comments. Tweets are injected by widgets.js as a
+   .twitter-tweet-rendered iframe, not a .twitter-post element, so only .fb-post
+   needs a rule here. */
 .activity-comment-link-preview-container .fb-post {
     margin: 0;
     max-width: 100%;

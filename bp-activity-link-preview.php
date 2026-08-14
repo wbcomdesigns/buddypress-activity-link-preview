@@ -5,7 +5,7 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview displays as image title and description from the site when links are used in activity posts.
- * Version:           1.7.5
+ * Version:           1.7.6
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.5' );
+define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.6' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
@@ -465,10 +465,9 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 			$internal_data = bp_activity_link_parse_internal_url( $url );
 			if ( ! empty( $internal_data ) ) {
 				$parsed_url_data = $internal_data;
-				// Cache the result.
-				if ( ! empty( $parsed_url_data ) ) {
-					set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
-				}
+				// Cache the result. $internal_data was already checked above, so no
+				// second emptiness test is needed here.
+				set_transient( $cache_key, $parsed_url_data, DAY_IN_SECONDS );
 				return apply_filters( 'bp_activity_link_parse_url', $parsed_url_data );
 			}
 		}
@@ -528,33 +527,38 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 			$query       = '//*/meta[starts-with(@property, \'og:\')]';
 			$metas_query = $xpath->query( $query );
 			foreach ( $metas_query as $meta ) {
+				// DOMXPath::query() is typed as returning DOMNode, which has no
+				// getAttribute(). The expression selects meta elements, so this is
+				// always a DOMElement in practice - guard so a malformed document
+				// can never reach an undefined method.
+				if ( ! $meta instanceof DOMElement ) {
+					continue;
+				}
 				$property    = $meta->getAttribute( 'property' );
 				$content     = $meta->getAttribute( 'content' );
 				$meta_tags[] = array( $property, $content );
 			}
 
-			if ( is_array( $meta_tags ) && ! empty( $meta_tags ) ) {
-				foreach ( $meta_tags as $tag ) {
-					if ( is_array( $tag ) && ! empty( $tag ) ) {
-						if ( 'og:title' === $tag[0] ) {
-							$title = $tag[1];
-						}
-						if ( 'og:description' === $tag[0] || 'description' === strtolower( $tag[0] ) ) {
-							// DOMDocument already decodes attribute entities once; decoding again
-							// would turn a double-encoded payload on a remote page into live markup.
-							$description = $tag[1];
-						}
-						if ( 'og:image' === $tag[0] ) {
-							$images[] = $tag[1];
-						}
-					}
+			foreach ( $meta_tags as $tag ) {
+				if ( 'og:title' === $tag[0] ) {
+					$title = $tag[1];
+				}
+				if ( 'og:description' === $tag[0] || 'description' === strtolower( $tag[0] ) ) {
+					// DOMDocument already decodes attribute entities once; decoding again
+					// would turn a double-encoded payload on a remote page into live markup.
+					$description = $tag[1];
+				}
+				if ( 'og:image' === $tag[0] ) {
+					$images[] = $tag[1];
 				}
 			}
 
 			// Parse DOM to get Title.
 			if ( empty( $title ) ) {
+				// getElementsByTagName() always returns a DOMNodeList, so only its
+				// length is worth testing.
 				$nodes = $dom->getElementsByTagName( 'title' );
-				$title = $nodes && $nodes->length > 0 ? $nodes->item( 0 )->nodeValue : '';
+				$title = $nodes->length > 0 ? $nodes->item( 0 )->nodeValue : '';
 			}
 
 			// Parse DOM to get Meta Description.
@@ -674,7 +678,8 @@ function bp_activity_link_parse_internal_url( $url ) {
 	$path_parts = explode( '/', $path );
 
 	// Check for BuddyPress member profile: /members/username/ or /user/username/.
-	if ( ( isset( $path_parts[0] ) && in_array( $path_parts[0], array( 'members', 'user' ), true ) ) && ! empty( $path_parts[1] ) ) {
+	// explode() always yields at least one element, so $path_parts[0] is guaranteed.
+	if ( in_array( $path_parts[0], array( 'members', 'user' ), true ) && ! empty( $path_parts[1] ) ) {
 		$username = sanitize_user( $path_parts[1] );
 		$user     = get_user_by( 'slug', $username );
 
@@ -731,7 +736,7 @@ function bp_activity_link_parse_internal_url( $url ) {
 	}
 
 	// Check for BuddyPress groups: /groups/group-name/.
-	if ( isset( $path_parts[0] ) && 'groups' === $path_parts[0] && ! empty( $path_parts[1] ) ) {
+	if ( 'groups' === $path_parts[0] && ! empty( $path_parts[1] ) ) {
 		$group_slug = sanitize_text_field( $path_parts[1] );
 
 		if ( function_exists( 'groups_get_groups' ) ) {
@@ -902,8 +907,9 @@ function bp_activity_link_preview_extract_urls_from_content( $content, $exclude_
 	$text_content = wp_strip_all_tags( $content );
 
 	$pattern = '/https?:\/\/[^\s<>"]{2,}/i';
+	// preg_match_all() always populates $matches[0], empty when there are no hits.
 	preg_match_all( $pattern, $text_content, $matches );
-	$urls = isset( $matches[0] ) ? $matches[0] : array();
+	$urls = $matches[0];
 
 	// Filter out same-site URLs (like @mention profile links) if requested.
 	if ( $exclude_internal && ! empty( $urls ) ) {
