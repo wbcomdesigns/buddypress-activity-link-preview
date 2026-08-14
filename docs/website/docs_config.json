@@ -1,0 +1,22 @@
+{
+  "product": "Activity Link Preview For BuddyPress",
+  "type": "plugin",
+  "short_id": "alpbp",
+  "repo_slug": "buddypress-activity-link-preview",
+  "wporg_slug": "activity-link-preview-for-buddypress",
+  "text_domain": "buddypress-activity-link-preview",
+  "version": "1.7.6",
+  "requires": {
+    "wordpress": "6.5",
+    "php": "8.0",
+    "platform": "BuddyPress 6.0+ or BuddyBoss Platform"
+  },
+  "has_settings_page": false,
+  "structure": [
+    "getting-started",
+    "developer-guide"
+  ],
+  "notes": "No settings/ section: this plugin has no admin UI. All configuration is via filters, documented in developer-guide/filters.md.",
+  "source": "Migrated 2026-08-14 from docs.wbcomdesigns.com/docs/buddypress-activity-link-preview/ (last updated there 2025-04-24). Every claim re-verified against the 1.7.6 source before migrating.",
+  "sync_to_live": false
+}

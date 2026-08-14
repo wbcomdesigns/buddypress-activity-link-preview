@@ -5,9 +5,10 @@
 > **Development conventions:** Follow the [`wp-plugin-development`](https://example/skills/wp-plugin-development) skill for ALL changes — the 16 critical admin rules, Part 6 Admin UI patterns, design tokens (3-layer model), escaping/security rules, and dev hygiene (no em-dash in i18n, Lucide icons over inline SVG, WPCS). This plugin currently has **no admin UI** (see Admin-UI wrapper below); if one is ever added, it MUST use the NEW card-based shell pattern from `wp-plugin-development` Part 6 — not the legacy `admin/wbcom/` wrapper.
 
 ## Quick reference
-- **Main file**: `bp-activity-link-preview.php` (single-file, procedural; 1033 lines, 20 functions)
-- **Version**: `1.7.5` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag` + package.json)
-- **Dev branch**: `v1.7.5`
+- **Main file**: `bp-activity-link-preview.php` (single-file, procedural; 1275 lines, 23 functions)
+- **Version**: `1.7.6` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag` + package.json)
+- **Dev branch**: `v1.7.6`
+- **Customer docs**: `docs/website/` (migrated 2026-08-14; the filters page is the config reference)
 - **Namespace**: none (no classes)
 - **Text domain**: `buddypress-activity-link-preview`
 - **Extends**: none (standalone free plugin)
@@ -28,12 +29,14 @@ This plugin has **no settings page and no admin UI of any kind.**
 Behavior toggles are code-level filters only (notably `bp_activity_link_preview_enable_comments`, default `true`). If a settings UI is added later, classify it NEW and follow `wp-plugin-development` Part 6.
 
 ## Key entry points
-- AJAX: `bp_activity_parse_url_preview()` (`:170`) — URL parse endpoint (`is_user_logged_in()` + nonce + SSRF guard)
-- Parse engine: `bp_activity_link_parse_url()` (`:231`); internal-URL fast path `bp_activity_link_parse_internal_url()` (`:472`)
-- Save: `bp_activity_link_preview_save_link_data()` (`:601`) on `bp_activity_after_save`
-- Render: `bp_activity_link_preview_render_preview()` (`:885`); content filters at `:744` / `:809`
-- REST embed: `bp_activity_link_preview_data_embed_rest_api()` (`:987`) on `bp_rest_activity_prepare_value`
+(line numbers verified against 1.7.6)
+- AJAX: `bp_activity_parse_url_preview()` (`:245`) — URL parse endpoint (`is_user_logged_in()` + nonce + SSRF guard)
+- Parse engine: `bp_activity_link_parse_url()` (`:338`); internal-URL fast path `bp_activity_link_parse_internal_url()` (`:660`)
+- Save: `bp_activity_link_preview_save_link_data()` (`:792`) on `bp_activity_after_save`
+- Render: `bp_activity_link_preview_render_preview()` (`:1101`)
+- REST embed: `bp_activity_link_preview_data_embed_rest_api()` (`:1230`) on `bp_rest_activity_prepare_value`
 - Frontend JS: `assets/js/bp-activity-link-preview.js`
+  - `initSocialEmbeds()` fills the empty `<div data-url>` containers PHP renders for Twitter/X and Facebook. **Called on `$(document).ready()`, on `twttr.ready()`, and from `ajaxComplete`.** Before 1.7.6 it ran only from `ajaxComplete`, so embeds were blank on every server-rendered view.
 
 ## Important patterns
 - **Multi-platform compat is load-bearing.** Stands down for BuddyBoss native preview and Youzify wall preview to avoid duplicate cards; removes BuddyBoss's own filter at `bp_init@999`. Touching the render/save paths requires re-checking all three integration branches.
@@ -48,20 +51,8 @@ Behavior toggles are code-level filters only (notably `bp_activity_link_preview_
 ## Onboarding scope note
 This onboarding pass was **artefacts-only** (manifest + audit reports + graph + CLAUDE.md + wppqa baseline). The Phase 4.5/4.7/4.8 scaffolds (paired-plugin contract, local-CI pipeline, journeys, scale benchmark, cleanup framework) were intentionally NOT created — no functional code, no CI scaffolding, no commit. Run those companion phases separately if/when desired.
 
-## Recent changes
-| Date | Type | Description | Files |
-|---|---|---|---|
-| 2026-07-29 | release | Bumped 1.7.4 -> 1.7.5 as a corrective release: the 1.7.4 package published to the wp.org slug `activity-link-preview-for-buddypress` contained BuddyPress Post from Anywhere files (trunk + tags/1.7.4). No functional code change. Also corrected two stale "Requires at least 5.9" claims (readme upgrade notice, manifest) - the header has said 6.5 since 1.7.4. | `bp-activity-link-preview.php`, `readme.txt`, `package.json`, `audit/manifest.json`, `CLAUDE.md` |
-| 2026-07-10 | a11y+rtl | Added aria-label (Previous/Next image) + aria-hidden icons to the icon-only composer nav buttons; upgraded comment close-button focus from `:focus`+`#0073aa` to token-driven `:focus-visible`; converted physical margins/insets to logical props (margin-inline/inset-inline) with a `[dir=rtl]` float flip for RTL. Browser-verified live preview + dark flip (data-bx-mode). NOTE: investigated adding `body.buddyx-dark-theme`/`body.dark` dark scopes but reverted - dark values defer to `--bx-color-*` which BuddyX/Reign only flip under `[data-bx-mode=dark]`, so a body-class scope renders LIGHT (verified). data-bx-mode-only scoping is correct. | `assets/css/*.css`, `assets/js/*.js` |
-| 2026-07-09 | security | DOM-XSS fix: escape scraped title/description/image/url at every JS injection site (both render fns + FB data-href) via the existing escapeHtml(); trusted WP-oEmbed rendered raw. Live-verified payload neutralized. | `assets/js/bp-activity-link-preview.js` |
-| 2026-07-09 | bug-fix | YouTube/oEmbed videos now persist to the saved feed: JS sends wp_embed flag, save regenerates embed via wp_oembed_get() + stores wp_embed/embed_html, render outputs it, iframe added to bp_activity_allowed_tags. Was saving as a bare URL. | `bp-activity-link-preview.php`, `assets/js/bp-activity-link-preview.js` |
-| 2026-07-09 | a11y | img alt on composer + server-render previews; replaced `outline:0` focus suppression with token-driven `:focus-visible` ring | `bp-activity-link-preview.php`, `assets/js/*.js`, `assets/css/*.css` |
-| 2026-07-09 | chore | Removed 4 orphaned wp_localize_script keys + dead Youzify vars; WPCS clean; readme Tested-up-to 7.0; readme platform claims corrected (dropped Reddit/LinkedIn/Instagram); Gruntfile excludes .github/ + audit/ from dist zip | `bp-activity-link-preview.php`, `readme.txt`, `Gruntfile.js`, `assets/css/*.css` |
-| 2026-07-03 | security | Sanitize scraped title/description in both comment auto-extraction fallbacks; remove double html_entity_decode on og:description; esc_html description in shared renderer | `bp-activity-link-preview.php` |
-| 2026-07-03 | perf | Assets (own CSS/JS + Twitter/FB SDKs + dashicons) load only in activity contexts via bp_activity_link_preview_should_load_assets(); new bp_activity_link_preview_load_assets filter | `bp-activity-link-preview.php` |
-| 2026-07-03 | perf | bp_activity_link_parse_url gains negative caching (15-min bpalp_failed sentinel) and $cached_only mode; comment render fallback is cached-only (no live external fetch during render) | `bp-activity-link-preview.php` |
-| 2026-07-03 | bug-fix | AJAX response.error now surfaced via showPreviewError() role=alert notice; dashicons enqueued; dead .loading CSS removed; version strings bumped to 1.7.4 | `assets/js/bp-activity-link-preview.js`, `assets/css/bp-activity-link-preview.css`, `package.json`, `audit/manifest.json`, `readme.txt` |
-| 2026-07-03 | bug-fix | URL detection no longer extends into following text (contenteditable: getInputValue returns .html(), getURL anchor-first + boundary-normalized fallback) | `assets/js/bp-activity-link-preview.js` |
-| 2026-07-03 | bug-fix | Live preview auto-removed when URL deleted from input (new removeLinkPreview counterpart in scrap_URL) | `assets/js/bp-activity-link-preview.js` |
-| 2026-07-03 | bug-fix | Dark mode contrast: --bpalp-* tokens consuming BuddyX --bx-color-* with light fallbacks; data-bx-mode dark/auto overrides; token-driven prev/next button hover | `assets/css/bp-activity-link-preview.css` |
-| 2026-06-05 | onboard | Generated audit/ manifest + reports + graph + wppqa baseline; wrote READ-FIRST CLAUDE.md | `audit/*`, `CLAUDE.md` |
+## Change history
+
+Not tracked here. `readme.txt` owns the customer-facing changelog; Basecamp project 37595370 owns bugs and their status. A Recent-changes table in this file goes stale and actively misleads mid-task, so it was removed on 2026-08-14.
+
+For the current state of the code, read `audit/manifest.json` (canonical inventory) and the entry points above.
