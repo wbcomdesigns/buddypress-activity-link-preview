@@ -1,0 +1,63 @@
+{
+  "product": "BuddyPress Activity Link Preview",
+  "productType": "plugin",
+  "shortId": "bplinkpreview",
+  "sections": [
+    {
+      "slug": "getting-started",
+      "title": "Getting Started",
+      "order": 1,
+      "pages": [
+        { "file": "getting-started/introduction.md", "title": "Introduction" },
+        { "file": "getting-started/requirements.md", "title": "Requirements" },
+        { "file": "getting-started/installation.md", "title": "Installation" }
+      ]
+    },
+    {
+      "slug": "features",
+      "title": "Features",
+      "order": 2,
+      "pages": [
+        { "file": "features/rich-link-previews.md", "title": "Rich Link Previews" },
+        { "file": "features/internal-member-and-group-cards.md", "title": "Internal Member and Group Cards" },
+        { "file": "features/comments-and-embeds.md", "title": "Comments, Videos and Native Embeds" },
+        { "file": "features/performance-and-security.md", "title": "Performance and Security" }
+      ]
+    },
+    {
+      "slug": "usage",
+      "title": "Usage",
+      "order": 3,
+      "pages": [
+        { "file": "usage/sharing-a-link.md", "title": "Sharing a Link" },
+        { "file": "usage/platform-and-theme-compatibility.md", "title": "Platform and Theme Compatibility" }
+      ]
+    },
+    {
+      "slug": "developer-guide",
+      "title": "Developer Guide",
+      "order": 4,
+      "pages": [
+        { "file": "developer-guide/filters.md", "title": "Filters" },
+        { "file": "developer-guide/ajax-and-rest.md", "title": "AJAX Endpoint and REST API" },
+        { "file": "developer-guide/data-storage-and-caching.md", "title": "Data Storage and Caching" }
+      ]
+    },
+    {
+      "slug": "faq",
+      "title": "FAQ",
+      "order": 5,
+      "pages": [
+        { "file": "faq/faq.md", "title": "Frequently Asked Questions" }
+      ]
+    },
+    {
+      "slug": "troubleshooting",
+      "title": "Troubleshooting",
+      "order": 6,
+      "pages": [
+        { "file": "troubleshooting/troubleshooting.md", "title": "Troubleshooting" }
+      ]
+    }
+  ]
+}
