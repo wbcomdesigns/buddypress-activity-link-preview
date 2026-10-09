@@ -17,10 +17,21 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 0 - Color Tokens (light defaults + dark mode)
 ----------------------------------------------------------------
 Previews are painted through the plugin's own --bpalp-* tokens, so
-you can retheme every preview from this one block. Each token reads
-the matching BuddyX / BuddyX Pro theme token (--bx-color-*) first,
-and falls back to the plugin's own light literal when the active
-theme does not define that token.
+you can retheme every preview from this one block.
+
+THEME BRIDGE - the fallback order is deliberate (same chain as Member
+Reviews, bupr-front.css), do not shorten it:
+  1. --bx-color-*             BuddyX.
+  2. --reign-*                Reign 8+ (8.0.8 measured; Reign emits no --bx-color-*).
+  3. --wp--preset--color--*   BuddyX Pro and any other theme.json theme (light only).
+  4. a literal                Themes that expose none of the above. Every
+                              text literal passes WCAG AA 4.5:1 on its surface.
+
+Only tokens a tier really names get that tier. theme.json presets name no
+button pair (BuddyX Pro primary + base = 3.46:1), so buttons read only the
+BuddyX / Reign button tokens. "Muted" has no Reign or preset equivalent,
+so it keeps its literal. The dark block never reads presets: a theme that
+does not redefine them in dark would paint a light card.
 
 Two rule sets assign the tokens:
   1. Base rule (below)              - light defaults, applied always.
@@ -42,20 +53,20 @@ plugin never maintains a duplicate OS-driven palette.
 .activity-link-preview-container,
 .activity-comment-link-preview-container,
 .comment-attachments {
-    --bpalp-surface: var(--bx-color-bg-elevated, #fff);
-    --bpalp-surface-alt: var(--bx-color-bg-muted, #f9f9f9);
-    --bpalp-border: #e5e5e5;
+    --bpalp-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, var(--wp--preset--color--base, #fff)));
+    --bpalp-surface-alt: var(--bx-color-bg-muted, var(--reign-site-body-bg-color, #f9f9f9));
+    --bpalp-border: var(--bx-color-border, var(--reign-site-border-color, #e5e5e5));
     --bpalp-border-soft: #ddd;
-    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #32373c));
-    --bpalp-text: var(--bx-color-fg, #888);
-    --bpalp-text-strong: var(--bx-color-fg, #666);
-    --bpalp-muted: #7f7f7f;
+    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, var(--reign-site-headings-color, var(--wp--preset--color--contrast, #32373c))));
+    --bpalp-text: var(--bx-color-fg, var(--reign-site-body-text-color, var(--wp--preset--color--contrast, #50575e)));
+    --bpalp-text-strong: var(--bx-color-fg, var(--reign-site-body-text-color, var(--wp--preset--color--contrast, #3c434a)));
+    --bpalp-muted: var(--bx-color-fg-muted, #646970);
     --bpalp-close: rgba(0, 0, 0, 0.4);
-    --bpalp-btn-bg: var(--bx-color-button-bg, #f0f0f1);
-    --bpalp-btn-fg: var(--bx-color-button-fg, #2c3338);
-    --bpalp-btn-border: var(--bx-color-button-border, #c3c4c7);
-    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #dcdcde);
-    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #1d2327);
+    --bpalp-btn-bg: var(--bx-color-button-bg, var(--reign-site-button-bg-color, #f0f0f1));
+    --bpalp-btn-fg: var(--bx-color-button-fg, var(--reign-site-button-text-color, #2c3338));
+    --bpalp-btn-border: var(--bx-color-button-border, var(--reign-site-button-bg-color, #c3c4c7));
+    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, var(--reign-site-button-bg-hover-color, #dcdcde));
+    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, var(--reign-site-button-text-hover-color, #1d2327));
 }
 
 :root[data-bx-mode="dark"] .activity-url-scrapper-container,
@@ -63,20 +74,20 @@ plugin never maintains a duplicate OS-driven palette.
 :root[data-bx-mode="dark"] .activity-link-preview-container,
 :root[data-bx-mode="dark"] .activity-comment-link-preview-container,
 :root[data-bx-mode="dark"] .comment-attachments {
-    --bpalp-surface: var(--bx-color-bg-elevated, #1e2126);
-    --bpalp-surface-alt: var(--bx-color-bg-muted, #23262b);
-    --bpalp-border: rgba(255, 255, 255, 0.16);
+    --bpalp-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #1e2126));
+    --bpalp-surface-alt: var(--bx-color-bg-muted, var(--reign-site-body-bg-color, #23262b));
+    --bpalp-border: var(--bx-color-border, var(--reign-site-border-color, rgba(255, 255, 255, 0.16)));
     --bpalp-border-soft: rgba(255, 255, 255, 0.12);
-    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #e9eaec));
-    --bpalp-text: var(--bx-color-fg, #b6bcc3);
-    --bpalp-text-strong: var(--bx-color-fg, #cfd3d8);
-    --bpalp-muted: #9aa0a6;
+    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, var(--reign-site-headings-color, #e9eaec)));
+    --bpalp-text: var(--bx-color-fg, var(--reign-site-body-text-color, #b6bcc3));
+    --bpalp-text-strong: var(--bx-color-fg, var(--reign-site-body-text-color, #cfd3d8));
+    --bpalp-muted: var(--bx-color-fg-muted, #9aa0a6);
     --bpalp-close: rgba(255, 255, 255, 0.6);
-    --bpalp-btn-bg: var(--bx-color-button-bg, #2c3138);
-    --bpalp-btn-fg: var(--bx-color-button-fg, #e9eaec);
-    --bpalp-btn-border: var(--bx-color-button-border, rgba(255, 255, 255, 0.24));
-    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #3a4048);
-    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
+    --bpalp-btn-bg: var(--bx-color-button-bg, var(--reign-site-button-bg-color, #2c3138));
+    --bpalp-btn-fg: var(--bx-color-button-fg, var(--reign-site-button-text-color, #e9eaec));
+    --bpalp-btn-border: var(--bx-color-button-border, var(--reign-site-button-bg-color, rgba(255, 255, 255, 0.24)));
+    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, var(--reign-site-button-bg-hover-color, #3a4048));
+    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, var(--reign-site-button-text-hover-color, #fff));
 }
 
 /*--------------------------------------------------------------
@@ -87,7 +98,7 @@ plugin never maintains a duplicate OS-driven palette.
     margin: 15px 0 0;
     padding: 25px;
     line-height: 1.5;
-    color: var(--bpalp-text, #888);
+    color: var(--bpalp-text, #50575e);
     background: var(--bpalp-surface, #fff);
     border: 1px solid var(--bpalp-border, #e5e5e5);
     border-radius: 3px !important;
@@ -235,7 +246,7 @@ plugin never maintains a duplicate OS-driven palette.
 
 #activity-url-scrapper-img-count {
     font-size: 12px;
-    color: var(--bpalp-muted, #7f7f7f);
+    color: var(--bpalp-muted, #646970);
     margin-top: 5px;
 }
 
@@ -432,7 +443,7 @@ plugin never maintains a duplicate OS-driven palette.
 
 .activity-comment-link-preview-container [id^="activity-comment-url-scrapper-img-count"] {
     font-size: 11px;
-    color: var(--bpalp-muted, #7f7f7f);
+    color: var(--bpalp-muted, #646970);
     margin-top: 3px;
 }
 

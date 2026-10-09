@@ -317,6 +317,11 @@ function bp_activity_link_preview_is_blocked_host( $host ) {
 		return true;
 	}
 
+	// Single-label hosts ("https://www/", intranet names) are never a public site.
+	if ( false === strpos( $host, '.' ) && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+		return true;
+	}
+
 	if ( preg_match( '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/', $host ) ) {
 		return true;
 	}

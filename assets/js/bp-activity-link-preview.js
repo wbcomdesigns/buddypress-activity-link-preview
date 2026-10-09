@@ -6,9 +6,6 @@
 	var currentCommentId = null;
 	var currentlyLoadingUrl = null; // Track URL currently being loaded to prevent duplicate requests
 
-	// Track initialized Twitter widgets to prevent duplicates
-	var initializedTwitterWidgets = new Set();
-
 	// BuddyBoss AJAX interceptor - inject link preview data into post_update requests
 	// BuddyBoss constructs its own AJAX data and doesn't serialize form hidden fields
 	jQuery(document).ajaxSend(function (event, jqXHR, settings) {
@@ -94,47 +91,39 @@
 
 			if (!url) return;
 
-			// Skip if already has rendered content (iframe or widget)
-			if ($container.find('iframe, .twitter-tweet-rendered').length > 0) {
-				return;
-			}
-
 			// Check if this is a Twitter URL
 			const tweetIdMatch = url.match(/status\/(\d+)/);
 			if (!tweetIdMatch || !tweetIdMatch[1]) return;
 
-			const tweetId = tweetIdMatch[1];
+			// Each container remembers the theme it was rendered in. A container that
+			// AJAX just put on the page (filter change) has none, so it renders; a
+			// light/dark switch makes the remembered theme stale, so it re-renders.
+			var theme = getEmbedTheme();
+			if (element.bpalpTweetTheme === theme) return;
 
-			// Get activity ID for unique widget tracking (fixes re-post issue)
-			var activityId = $container.closest('.activity-item, [data-bp-activity-id]').data('bp-activity-id') ||
-				$container.closest('.activity').attr('id') ||
-				'container-' + index;
-
-			const widgetId = 'twitter-widget-' + activityId + '-' + tweetId;
-
-			// Skip if already initialized
-			if (initializedTwitterWidgets.has(widgetId)) return;
-
-			// Bail before claiming the id when the SDK is not ready yet: marking it
-			// first would permanently retire this container, so a slow widgets.js
-			// would leave the tweet blank for the rest of the page's life. Leaving
-			// it unclaimed lets the twttr.ready() pass below pick it up.
+			// Bail before claiming the container when the SDK is not ready yet, so the
+			// twttr.ready() pass below can still pick it up.
 			if (typeof twttr === 'undefined' || !twttr.widgets) {
 				return;
 			}
 
-			// Mark as initialized
-			initializedTwitterWidgets.add(widgetId);
+			element.bpalpTweetTheme = theme;
+			$container.empty();
 
 			twttr.widgets.createTweet(
-				tweetId,
+				tweetIdMatch[1],
 				element,
-				{ theme: getEmbedTheme() }
-			).then(function () {
-				// Widget created successfully
+				{ theme: theme }
+			).then(function (widget) {
+				// The theme changed while this one was loading: drop the stale widget.
+				if (element.bpalpTweetTheme !== theme && widget) {
+					$(widget).remove();
+				}
 			}).catch(function () {
 				// Allow a later pass to retry this container.
-				initializedTwitterWidgets.delete(widgetId);
+				if (element.bpalpTweetTheme === theme) {
+					element.bpalpTweetTheme = null;
+				}
 			});
 		});
 
@@ -151,6 +140,12 @@
 
 	$(function () {
 		initSocialEmbeds();
+
+		// Tweets render inside X's iframe with a fixed theme, so follow the theme's
+		// light/dark switch by re-rendering them.
+		if ('function' === typeof window.MutationObserver) {
+			new MutationObserver(initSocialEmbeds).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bx-mode'] });
+		}
 
 		// widgets.js may still be fetching its widget bundle at DOM ready; twttr.ready
 		// fires once twttr.widgets exists, which is when the pass above can succeed.
@@ -179,6 +174,7 @@
 	// Enhanced URL scraping function with backward compatibility
 	var scrap_URL = function (inputurlText, isComment, commentId) {
 		var urlString = '';
+		var guessed = false;
 
 		if (inputurlText === null) {
 			return;
@@ -194,13 +190,22 @@
 			urlString = getURL('https://', inputurlText);
 		} else if (inputurlText.indexOf('www.') >= 0) {
 			urlString = getURL('www', inputurlText);
+		} else {
+			// Bare domain with a path or a subdomain ("en.wikipedia.org/wiki/X"), previewed over
+			// https. Needing one of the two keeps words like "Node.js" from being taken for links;
+			// a guess the server cannot preview fails silently instead of showing an error.
+			var bare = inputurlText.replace(/<[^>]*>/g, ' ').match(/(?:^|\s)((?:[a-z0-9-]+\.)+[a-z]{2,24}\/\S*|(?:[a-z0-9-]+\.){2,}[a-z]{2,24})(?=\s|$)/i);
+			if (bare) {
+				urlString = 'https://' + bare[1];
+				guessed = true;
+			}
 		}
 
 		if (urlString !== '') {
 			var url_a = document.createElement('a');
 			url_a.href = urlString;
 			var hostname = url_a.hostname;
-			loadLinkPreview(urlString, isComment, commentId);
+			loadLinkPreview(urlString, isComment, commentId, guessed);
 		} else {
 			// No URL left in the input: remove any stale preview so it does
 			// not stay attached after the user deletes the link text.
@@ -255,7 +260,7 @@
 	}
 
 	// Enhanced link preview loading function
-	var loadLinkPreview = function (url, isComment, commentId) {
+	var loadLinkPreview = function (url, isComment, commentId, quiet) {
 		var regexp = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?$/;
 		url = $.trim(url);
 		
@@ -310,8 +315,10 @@
 					if (response && response.success) {
 						setURLResponse(response.data, url, isComment, commentId);
 					} else if (response && response.error) {
-						// Parse endpoint rejected the URL - surface the message.
-						showPreviewError(response.error, isComment, commentId);
+						// Parse endpoint rejected the URL - surface the message (not for a guessed bare domain).
+						if (!quiet) {
+							showPreviewError(response.error, isComment, commentId);
+						}
 					} else if (response && response.success === false && response.data && response.data.message) {
 						// wp_send_json_error() shape (auth/nonce failures).
 						showPreviewError(response.data.message, isComment, commentId);

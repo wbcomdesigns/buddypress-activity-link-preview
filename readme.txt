@@ -206,13 +206,18 @@ It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX
 
 Fixes Twitter/X and Facebook previews that never appeared outside the activity directory, plus a round of composer layout and accessibility corrections.
 
+* New      - Links typed without http:// (for example en.wikipedia.org/wiki/Singapore_Airlines) now get a preview, opened over https.
+* Improve  - Preview cards take their colours from Reign, BuddyX Pro and any block theme, not only BuddyX, in light and dark mode.
 * Fix      - Twitter/X and Facebook embeds stayed blank on activity permalinks and on themes that do not load the stream over AJAX. They were only ever initialised after an activity AJAX call, so a normal page view left an empty box.
-* Fix      - Tweet embeds now follow the site's dark mode instead of always rendering the light Twitter card.
+* Fix      - Tweet embeds now follow the site's dark mode, including when a member switches between light and dark while the page is open.
+* Fix      - Tweets no longer go blank after changing the activity filter; they render again without a page reload.
+* Fix      - Preview description and image-count text now meet WCAG AA contrast (4.5:1) in light mode.
 * Fix      - The preview image's previous and next buttons now sit directly under the thumbnail. On wide screens they were centred across the whole card, far from the image they change.
 * Fix      - The preview close button now sits top right at every screen width. It previously appeared top left on desktop and top right on mobile.
 * Fix      - The image remove button is legible over light images; it was white on a transparent background.
 * Fix      - Removed the empty space that every saved preview carried below its description in the activity stream.
 * Improve  - Preview close and image navigation controls now meet the 40px minimum touch target (32px for the control that overlays the thumbnail), up from 20x24 and 34x31.
+* Security - Preview requests for single-label hosts (such as https://www/ or an intranet name) are refused.
 * Dev      - Cleared all 11 PHPStan level 5 findings, including two undefined-method calls on DOM nodes returned by XPath.
 * Dev      - Removed dead CSS rules and unused JavaScript variables left behind by earlier renames.
 
