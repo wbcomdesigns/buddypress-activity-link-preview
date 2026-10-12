@@ -179,6 +179,11 @@ plugin never maintains a duplicate OS-driven palette.
     font-weight: 400;
 }
 
+/* Themes pad every stream paragraph (BuddyX Pro: .buddypress-wrap .activity-inner p); the excerpt aligns with the card instead. */
+.activity-inner .activity-link-preview-container .activity-link-preview-excerpt p {
+    padding: 0;
+}
+
 .activity-link-preview-excerpt a.activity-link-preview-more:hover {
     text-decoration: underline !important;
 }

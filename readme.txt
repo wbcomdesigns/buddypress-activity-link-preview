@@ -212,6 +212,7 @@ Fixes Twitter/X and Facebook previews that never appeared outside the activity d
 * Fix      - Tweet embeds now follow the site's dark mode, including when a member switches between light and dark while the page is open.
 * Fix      - Tweets no longer go blank after changing the activity filter; they render again without a page reload.
 * Fix      - A deleted or private Twitter/X post no longer leaves an empty box in the activity stream.
+* Fix      - Preview descriptions line up with the card edge on themes that pad every activity paragraph, such as BuddyX Pro on phones.
 * Fix      - Preview description and image-count text now meet WCAG AA contrast (4.5:1) in light mode.
 * Fix      - The preview image's previous and next buttons now sit directly under the thumbnail. On wide screens they were centred across the whole card, far from the image they change.
 * Fix      - The preview close button now sits top right at every screen width. It previously appeared top left on desktop and top right on mobile.
