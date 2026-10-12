@@ -119,6 +119,10 @@
 				if (element.bpalpTweetTheme !== theme && widget) {
 					$(widget).remove();
 				}
+				// A deleted or private post gives no widget: hide the empty box (the link stays in the post text).
+				if (!widget && element.bpalpTweetTheme === theme) {
+					$container.hide();
+				}
 			}).catch(function () {
 				// Allow a later pass to retry this container.
 				if (element.bpalpTweetTheme === theme) {
