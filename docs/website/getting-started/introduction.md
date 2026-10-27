@@ -1,39 +1,21 @@
 # Introduction
 
-Activity Link Preview For BuddyPress turns a plain URL into a rich card. When a member pastes a link into the activity composer or into a comment, the plugin reads the linked page, pulls out a title, description and image, and shows a preview card before they post.
+Activity Link Preview For BuddyPress turns a plain URL into a rich card. When a member pastes a link into the activity composer or a comment, the plugin reads the linked page, pulls a title, description and image, and shows a preview card before the member posts. Once the activity is saved, the card is rendered on the server, so it still displays when JavaScript is disabled.
 
-Saved previews are rendered server-side, so they still display for visitors browsing with JavaScript disabled.
+## What it does
 
-## What you need
+- Detects a URL as it is typed or pasted into the activity form and builds a preview card in the composer.
+- Lets the member pick between multiple images when the page offers more than one, with an "Image X of Y" counter and previous/next buttons.
+- Builds cards for internal member profile and group links straight from your own database, with no external request.
+- Renders link previews in activity comments and replies, not just top-level posts.
+- Shows native embeds for Twitter/X and Facebook, and inline video and rich embeds through WordPress oEmbed (YouTube, Vimeo and other providers WordPress supports).
+- Resolves short URLs (bit.ly, tinyurl and similar) to their real destination before building the card.
+- Includes the saved preview data in the BuddyPress REST API activity response.
 
-- WordPress 6.5 or higher
-- PHP 8.0 or higher
-- BuddyPress 6.0+ **or** BuddyBoss Platform
+## No settings page
 
-The plugin deactivates itself with an admin notice if neither BuddyPress nor BuddyBoss Platform is active.
+The plugin has no settings screen. Previews start working as soon as you activate the plugin. Behaviour is changed through developer filters, which are covered in the Developer Guide.
 
-## There is no settings page
+## Requirements at a glance
 
-This is deliberate. Previews work the moment you activate the plugin, with no configuration step. Everything that can be changed is changed in code, through filters - see [Filters](../developer-guide/filters.md).
-
-## Which platforms get special handling
-
-Two platforms are rendered as native embeds using the platform's own widget script rather than as a scraped card:
-
-- **Twitter / X** (`twitter.com`, `x.com`)
-- **Facebook** (`facebook.com`)
-
-Video and other rich media - YouTube, Vimeo and any other provider WordPress supports - are embedded through the WordPress oEmbed system.
-
-Every other URL is previewed by reading the page's Open Graph tags, falling back to the standard `<title>` and `<meta name="description">` tags, so most sites preview without doing anything special.
-
-> **Note:** earlier versions of this documentation listed LinkedIn as a specially supported platform. That was never accurate and the claim has been removed. LinkedIn links are previewed the same way as any other website, and LinkedIn blocks automated requests, so a LinkedIn link will often produce no preview at all.
-
-Reddit links are deliberately skipped.
-
-## Related
-
-- [How it works](how-it-works.md)
-- [Supported platforms and limits](supported-platforms.md)
-- [Filters](../developer-guide/filters.md)
-- [REST API](../developer-guide/rest-api.md)
+The plugin needs BuddyPress or BuddyBoss Platform to be active. If neither is active, the plugin deactivates itself and shows an admin notice explaining why. See the Requirements page for the full list.
