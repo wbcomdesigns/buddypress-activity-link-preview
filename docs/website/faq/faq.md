@@ -2,7 +2,7 @@
 
 ## What are the plugin requirements?
 
-WordPress 6.5 or higher, PHP 8.0 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
+WordPress 6.5 or higher, PHP 8.1 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
 
 ## Is there a settings page?
 

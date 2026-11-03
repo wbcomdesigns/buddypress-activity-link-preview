@@ -5,7 +5,7 @@ The plugin declares these minimums in its plugin header and readme.
 | Requirement | Minimum |
 |---|---|
 | WordPress | 6.5 or higher |
-| PHP | 8.0 or higher |
+| PHP | 8.1 or higher |
 | Community platform | BuddyPress 6.0 or higher, or BuddyBoss Platform |
 
 ## Community platform dependency
@@ -19,7 +19,7 @@ The dependency is detected through the `BuddyPress` class, the `BP_PLATFORM_VERS
 
 ## Tested environment
 
-- Tested up to WordPress 7.0.
+- Tested up to WordPress 7.1.
 - Tested with the BuddyX and Reign themes, and with Youzify.
 
 ## Translations

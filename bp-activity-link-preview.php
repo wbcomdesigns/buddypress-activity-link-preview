@@ -13,7 +13,7 @@
  * Text Domain:       buddypress-activity-link-preview
  * Domain Path:       /languages
  * Requires at least: 6.5
- * Requires PHP:      8.0
+ * Requires PHP:      8.1
  *
  * @package           Buddypress-activity-link-preview
  * @link              https://wbcomdesigns.com/
