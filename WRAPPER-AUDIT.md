@@ -3,7 +3,6 @@
 **Branch:** v1.7.4  
 **Audit date:** 2026-06-05  
 **Wrapper type:** NONE (intentionally not migrated — single-file procedural, no settings page)  
-**Auditor:** AutoVAP READ-ONLY pass
 
 ---
 

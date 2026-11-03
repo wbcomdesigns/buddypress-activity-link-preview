@@ -40,6 +40,8 @@ module.exports = function ( grunt ) {
 							'!.stylelintrc',
 							'!.editorconfig',
 							'!*.zip',
+							'!screenshot-*.*',
+							'!.wordpress-org/**',
 							'!**/*.map',
 							'!tests/**',
 							'!docs/**',

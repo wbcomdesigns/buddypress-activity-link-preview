@@ -1,13 +1,12 @@
 === Activity Link Preview For BuddyPress ===
 Contributors: wbcomdesigns, vapvarun
-Donate link: https://wbcomdesigns.com/donate/
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 6.5
-Tested up to: 7.0
-Stable tag: 1.7.5
-Requires PHP: 8.0
+Tested up to: 7.1
+Stable tag: 1.7.6
+Requires PHP: 8.1
 License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: buddypress-activity-link-preview
 Domain Path: /languages
 
@@ -70,7 +69,7 @@ Our support team can help with setup, theme compatibility and troubleshooting. R
 
 = Documentation =
 
-* **[Documentation and Support](https://docs.wbcomdesigns.com/)** - Setup walkthrough and usage guides for every Wbcom plugin
+* **[Activity Link Preview documentation](https://docs.wbcomdesigns.com/bp-family/buddypress-activity-link-preview/)** - Setup, FAQ and the developer filter reference
 
 = Translations =
 
@@ -81,26 +80,26 @@ Our support team can help with setup, theme compatibility and troubleshooting. R
 = Links =
 
 * [Plugin Homepage](https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/)
-* [Documentation](https://docs.wbcomdesigns.com/)
+* [Documentation](https://docs.wbcomdesigns.com/bp-family/buddypress-activity-link-preview/)
 * [Support](https://wbcomdesigns.com/support/)
 * [Request Features](https://wbcomdesigns.com/contact/)
 
 = Compatibility =
 
 * WordPress 6.5 and higher
-* PHP 8.0 and higher
+* PHP 8.1 and higher
 * BuddyPress 6.0+ or BuddyBoss Platform (required - the plugin deactivates itself if neither is active)
 * Tested with popular themes including BuddyX, Reign and Youzify
 
-= What's New in 1.7.4 =
+= What's New in 1.7.6 =
 
-A performance and security pass. Plugin assets and the Twitter and Facebook SDKs now load only in activity contexts instead of on every page. Failed link lookups are cached for 15 minutes and comment rendering never fetches remote URLs, so slow links no longer hold up a page. Blocked or invalid URLs now report the problem in the composer, scraped titles and descriptions are sanitized before saving, and short-URL resolution re-validates its redirect target against the SSRF guard.
+Twitter/X and Facebook embeds now appear on every activity view, including single activity pages, and tweets follow your site's dark mode. Links typed without http:// get a preview, cards take their colours from Reign, BuddyX Pro and block themes, and the composer controls are easier to tap. See the changelog for the full list.
 
 == Third-Party Services ==
 
 This plugin renders native Twitter/X and Facebook embeds. Those embeds can only be rendered by each network's own script, so the plugin loads that script directly from the network:
 
-* Twitter/X widgets.js, loaded from platform.twitter.com. Terms of service: https://twitter.com/en/tos - Privacy policy: https://twitter.com/en/privacy
+* Twitter/X widgets.js, loaded from platform.twitter.com. Terms of service: https://x.com/en/tos - Privacy policy: https://x.com/en/privacy
 * Facebook SDK, loaded from connect.facebook.net. Terms of service: https://www.facebook.com/terms.php - Privacy policy: https://www.facebook.com/privacy/policy/
 
 These scripts load only on BuddyPress activity screens (the activity directory, member activity and group screens), never site-wide. On those screens they load whether or not a Twitter or Facebook link is actually present, so the visitor's browser contacts Twitter and Facebook on every activity page view. Those services can therefore see the visitor's IP address, user agent and referring page, and may set their own cookies.
@@ -111,19 +110,12 @@ If your site needs to avoid that (for example to satisfy a consent requirement),
 
 No data is sent to Wbcom Designs, and the plugin itself collects nothing.
 
-== More Free Tools from Wbcom Designs ==
+== More from Wbcom Designs ==
 
-Rich link previews make your activity stream worth reading, but a stream is only one part of a community. These other free tools from Wbcom Designs fill in the rest of the space your members spend time in, from the theme and social network itself to forums, media, events, gamification, directories, jobs, and courses.
-
-* **[BuddyX](https://wbcomdesigns.com/downloads/buddyx-theme/)** - A free, fast community theme for BuddyPress, BuddyBoss and PeepSo with a modern layout and dark mode.
-* **[BuddyNext](https://wbcomdesigns.com/downloads/buddynext/)** - Stand up a complete WordPress community with activity streams, member spaces, profiles, direct messaging, and built-in moderation.
-* **[Jetonomy](https://wbcomdesigns.com/downloads/jetonomy/)** - Add forums, question-and-answer boards, and idea spaces that stay tidy through trust-based auto-moderation even past 100,000 topics.
-* **[Mediaverse](https://wbcomdesigns.com/downloads/mediaverse/)** - Let members build photo and video albums, react, follow each other, and message privately while AI moderation keeps things clean.
-* **[Eventonomy](https://wbcomdesigns.com/downloads/eventonomy/)** - Run community events with RSVPs, calendars, and front-end submissions.
-* **[WB Gamification](https://wbcomdesigns.com/downloads/wordpress-gamification-plugin/)** - Reward members with points, badges, and leaderboards to keep engagement high.
-* **[Listora](https://wbcomdesigns.com/downloads/listora/)** - Publish searchable directories across ten listing types with reviews, maps, and member-submitted entries from the front end.
-* **[WP Career Board](https://wbcomdesigns.com/downloads/wp-career-board/)** - Add a job board with front-end listings, applications, and employer profiles.
-* **[Learnomy](https://wbcomdesigns.com/downloads/learnomy/)** - Build and sell online courses, auto-grade quizzes, collect payments, and award certificates when learners finish.
+* **[BuddyNext](https://buddynext.com/features/)** - Our standalone community plugin with a feed, spaces, profiles, messaging and moderation. Link previews are built in, for new sites that do not need BuddyPress.
+* **[MediaVerse](https://wpmediaverse.com/features/)** - Photo and video albums, reactions and private messaging for your members.
+* **[BuddyX](https://buddyxtheme.com/features/)** - A free community theme on WordPress.org. Preview cards take their colours from BuddyX, in light and dark mode.
+* **[Jetonomy](https://jetonomy.org/features/)** - Forums, question-and-answer boards and idea spaces for your community.
 
 == Installation ==
 
@@ -139,14 +131,14 @@ There is no settings page. The plugin works as soon as it is activated.
 = Requirements =
 
 * WordPress 6.5 or higher
-* PHP 8.0 or higher
+* PHP 8.1 or higher
 * BuddyPress 6.0 or higher, or BuddyBoss Platform
 
 == Frequently Asked Questions ==
 
 = What are the plugin requirements? =
 
-WordPress 6.5 or higher, PHP 8.0 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
+WordPress 6.5 or higher, PHP 8.1 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
 
 = Why doesn't the preview show for some URLs? =
 
@@ -178,6 +170,10 @@ It runs on BuddyBoss Platform, but it deliberately gets out of the way of BuddyB
 
 Same idea. If Youzify is active and its wall URL preview is enabled, this plugin leaves the content alone so Youzify's preview is the only one shown. Turn the Youzify wall URL preview off and this plugin handles the card instead.
 
+= Does it work with BuddyNext? =
+
+It is not needed there. BuddyNext has its own feed with link previews built in, which you switch on or off in its Social settings. This plugin is for BuddyPress and BuddyBoss Platform activity streams.
+
 = What happens when someone shares a link to a profile or a group on my own site? =
 
 The plugin recognises it as an internal URL and builds the card straight from your database, with no external HTTP request. A member link shows the display name, the XProfile About text and the member's avatar. A group link shows the group name, description and avatar.
@@ -188,11 +184,11 @@ Yes. The plugin has no settings screen, but it exposes filters for the parts sit
 
 = Will this work with my theme? =
 
-It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX, Reign and Youzify. It hooks the standard BuddyPress activity filters, so it should work with any properly coded BuddyPress-compatible theme.
+It has been tested with BuddyX, BuddyX Pro and Reign, in light and dark mode, and with block themes. It hooks the standard BuddyPress activity filters, so it should work with any properly coded BuddyPress-compatible theme.
 
 = Where can I get support? =
 
-* [Documentation](https://docs.wbcomdesigns.com/) - Free guides for every Wbcom plugin
+* [Documentation](https://docs.wbcomdesigns.com/bp-family/buddypress-activity-link-preview/) - Setup, FAQ and developer filters
 * [Support](https://wbcomdesigns.com/support/) - Get help from our team
 * [Contact us](https://wbcomdesigns.com/contact/) - Report bugs and request features
 
@@ -201,6 +197,29 @@ It has been tested with popular BuddyPress and BuddyBoss themes including BuddyX
 1. Link preview in an activity post - title, description and image pulled from the shared link.
 
 == Changelog ==
+
+= 1.7.6 - November 2026 =
+
+Fixes Twitter/X and Facebook previews that never appeared outside the activity directory, plus a round of composer layout and accessibility corrections.
+
+* New      - Links typed without http:// (for example en.wikipedia.org/wiki/Singapore_Airlines) now get a preview, opened over https.
+* Improve  - Preview cards take their colours from Reign, BuddyX Pro and any block theme, not only BuddyX, in light and dark mode.
+* Improve  - Preview close and image navigation controls now meet the 40px minimum touch target (32px for the control that overlays the thumbnail), up from 20x24 and 34x31.
+* Fix      - Saved previews now keep the link description shown while composing. It was dropped on save for posts and comments unless the image was changed first.
+* Fix      - Twitter/X and Facebook embeds stayed blank on activity permalinks and on themes that do not load the stream over AJAX. They were only ever initialised after an activity AJAX call, so a normal page view left an empty box.
+* Fix      - Tweet embeds now follow the site's dark mode, including when a member switches between light and dark while the page is open.
+* Fix      - Tweets no longer go blank after changing the activity filter; they render again without a page reload.
+* Fix      - A deleted or private Twitter/X post no longer leaves an empty box in the activity stream.
+* Fix      - Preview descriptions line up with the card edge on themes that pad every activity paragraph, such as BuddyX Pro on phones.
+* Fix      - Preview description and image-count text now meet WCAG AA contrast (4.5:1) in light mode.
+* Fix      - The preview image's previous and next buttons now sit directly under the thumbnail. On wide screens they were centred across the whole card, far from the image they change.
+* Fix      - The preview close button now sits top right at every screen width. It previously appeared top left on desktop and top right on mobile.
+* Fix      - The image remove button is legible over light images; it was white on a transparent background.
+* Fix      - Removed the empty space that every saved preview carried below its description in the activity stream.
+* Security - Preview requests for single-label hosts (such as https://www/ or an intranet name) are refused.
+* Dev      - Cleared all 11 PHPStan level 5 findings, including two undefined-method calls on DOM nodes returned by XPath.
+* Dev      - Removed dead CSS rules and unused JavaScript variables left behind by earlier renames.
+* Dev      - Raised the minimum PHP version to 8.1.
 
 = 1.7.5 - July 2026 =
 

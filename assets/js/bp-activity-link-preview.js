@@ -6,9 +6,6 @@
 	var currentCommentId = null;
 	var currentlyLoadingUrl = null; // Track URL currently being loaded to prevent duplicate requests
 
-	// Track initialized Twitter widgets to prevent duplicates
-	var initializedTwitterWidgets = new Set();
-
 	// BuddyBoss AJAX interceptor - inject link preview data into post_update requests
 	// BuddyBoss constructs its own AJAX data and doesn't serialize form hidden fields
 	jQuery(document).ajaxSend(function (event, jqXHR, settings) {
@@ -72,97 +69,121 @@
 		}
 	});
 
+	// Tweets render inside Twitter's own iframe, so the plugin's CSS tokens cannot
+	// reach them. Read the host theme's explicit dark-mode attribute instead, the
+	// same signal the stylesheet keys its dark scope off.
+	var getEmbedTheme = function () {
+		return 'dark' === document.documentElement.getAttribute('data-bx-mode') ? 'dark' : 'light';
+	};
+
+	// Fill the empty <div data-url> containers that PHP renders for Twitter/X and
+	// Facebook links.
+	//
+	// This MUST run on page load as well as after the activity AJAX calls. Saved
+	// previews are server-rendered, so on an activity permalink - or any theme that
+	// paints the stream without BuddyPress Nouveau's AJAX bootstrap - nothing else
+	// would ever trigger it and the embed stays a blank box.
+	var initSocialEmbeds = function () {
+		// Handle both original and comment containers
+		$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
+			var $container = $(element);
+			var url = $container.data("url");
+
+			if (!url) return;
+
+			// Check if this is a Twitter URL
+			const tweetIdMatch = url.match(/status\/(\d+)/);
+			if (!tweetIdMatch || !tweetIdMatch[1]) return;
+
+			// Each container remembers the theme it was rendered in. A container that
+			// AJAX just put on the page (filter change) has none, so it renders; a
+			// light/dark switch makes the remembered theme stale, so it re-renders.
+			var theme = getEmbedTheme();
+			if (element.bpalpTweetTheme === theme) return;
+
+			// Bail before claiming the container when the SDK is not ready yet, so the
+			// twttr.ready() pass below can still pick it up.
+			if (typeof twttr === 'undefined' || !twttr.widgets) {
+				return;
+			}
+
+			element.bpalpTweetTheme = theme;
+			$container.empty();
+
+			twttr.widgets.createTweet(
+				tweetIdMatch[1],
+				element,
+				{ theme: theme }
+			).then(function (widget) {
+				// The theme changed while this one was loading: drop the stale widget.
+				if (element.bpalpTweetTheme !== theme && widget) {
+					$(widget).remove();
+				}
+				// A deleted or private post gives no widget: hide the empty box (the link stays in the post text).
+				if (!widget && element.bpalpTweetTheme === theme) {
+					$container.hide();
+				}
+			}).catch(function () {
+				// Allow a later pass to retry this container.
+				if (element.bpalpTweetTheme === theme) {
+					element.bpalpTweetTheme = null;
+				}
+			});
+		});
+
+		// Facebook: the SDK is loaded with #xfbml=1 so it parses server-rendered
+		// markup itself, but AJAX-injected .fb-post nodes arrive after that pass.
+		if (typeof FB !== 'undefined' && FB.XFBML) {
+			try {
+				FB.XFBML.parse();
+			} catch (e) {
+				// A failed parse must not break the rest of the composer.
+			}
+		}
+	};
+
+	$(function () {
+		initSocialEmbeds();
+
+		// Tweets render inside X's iframe with a fixed theme, so follow the theme's
+		// light/dark switch by re-rendering them.
+		if ('function' === typeof window.MutationObserver) {
+			new MutationObserver(initSocialEmbeds).observe(document.documentElement, { attributes: true, attributeFilter: ['data-bx-mode'] });
+		}
+
+		// widgets.js may still be fetching its widget bundle at DOM ready; twttr.ready
+		// fires once twttr.widgets exists, which is when the pass above can succeed.
+		if (typeof twttr !== 'undefined' && 'function' === typeof twttr.ready) {
+			twttr.ready(function () {
+				initSocialEmbeds();
+			});
+		}
+	});
+
 	// Enhanced AJAX complete handler with backward compatibility
 	jQuery(document).ajaxComplete(function (event, xhr, settings) {
 		const params = new URLSearchParams(settings.data);
 		const parsedData = Object.fromEntries(params.entries());
-		
+
 		// Only proceed for relevant actions
-		if (!parsedData.action || !(parsedData.action.includes('activity_filter') || 
-			parsedData.action.includes('post_update') || 
+		if (!parsedData.action || !(parsedData.action.includes('activity_filter') ||
+			parsedData.action.includes('post_update') ||
 			parsedData.action.includes('new_activity_comment'))) {
 			return;
 		}
 
-		setTimeout(() => {
-			// Handle both original and comment containers
-			$(document).find(".activity-link-preview-container, .activity-comment-link-preview-container").each(function (index, element) {
-				var $container = $(element);
-				var url = $container.data("url");
-
-				if (!url) return;
-
-				// Skip if already has rendered content (iframe or widget)
-				if ($container.find('iframe, .twitter-tweet-rendered').length > 0) {
-					return;
-				}
-
-				// Check if this is a Twitter URL
-				const tweetIdMatch = url.match(/status\/(\d+)/);
-				if (!tweetIdMatch || !tweetIdMatch[1]) return;
-
-				const tweetId = tweetIdMatch[1];
-
-				// Get activity ID for unique widget tracking (fixes re-post issue)
-				var activityId = $container.closest('.activity-item, [data-bp-activity-id]').data('bp-activity-id') ||
-					$container.closest('.activity').attr('id') ||
-					'container-' + index;
-
-				const widgetId = 'twitter-widget-' + activityId + '-' + tweetId;
-
-				// Skip if already initialized
-				if (initializedTwitterWidgets.has(widgetId)) return;
-
-				// Mark as initialized
-				initializedTwitterWidgets.add(widgetId);
-
-				// Initialize Twitter widget
-				if (typeof twttr !== 'undefined' && twttr.widgets) {
-					twttr.widgets.createTweet(
-						tweetId,
-						element,
-						{ theme: 'light' }
-					).then(function() {
-						// Widget created successfully
-					}).catch(function(error) {
-						console.error('Error creating Twitter widget:', error);
-						// Remove from initialized set to allow retry
-						initializedTwitterWidgets.delete(widgetId);
-					});
-				}
-			});
-
-			// Handle Facebook embeds
-			if (typeof FB !== 'undefined') {
-				try {
-					FB.XFBML.parse();
-				} catch (e) {
-					console.error('Error initializing Facebook widgets:', e);
-				}
-			} else {
-				console.warn('Facebook SDK not loaded.');
-			}
-		}, 200);
+		setTimeout(initSocialEmbeds, 200);
 	});
 
 	// Enhanced URL scraping function with backward compatibility
 	var scrap_URL = function (inputurlText, isComment, commentId) {
 		var urlString = '';
+		var guessed = false;
 
 		if (inputurlText === null) {
 			return;
 		}
 
-		var urlTwitter = inputurlText.indexOf("x.com");
-		var urlFacebook = inputurlText.indexOf("facebook.com");
-		var urlInsta = inputurlText.indexOf("instagram.com");
-		var urlYoutube = inputurlText.indexOf("youtube.com");
-
-		// Original comment (keeping for backward compatibility)
-		// if (urlTwitter >= 0 || urlFacebook >= 0 || urlInsta >= 0 || urlYoutube >= 0) {
-		// 	return;
-		// }
-		
 		if (inputurlText.indexOf('<img') >= 0) {
 			inputurlText = inputurlText.replace(/<img .*?>/g, '');
 		}
@@ -173,13 +194,22 @@
 			urlString = getURL('https://', inputurlText);
 		} else if (inputurlText.indexOf('www.') >= 0) {
 			urlString = getURL('www', inputurlText);
+		} else {
+			// Bare domain with a path or a subdomain ("en.wikipedia.org/wiki/X"), previewed over
+			// https. Needing one of the two keeps words like "Node.js" from being taken for links;
+			// a guess the server cannot preview fails silently instead of showing an error.
+			var bare = inputurlText.replace(/<[^>]*>/g, ' ').match(/(?:^|\s)((?:[a-z0-9-]+\.)+[a-z]{2,24}\/\S*|(?:[a-z0-9-]+\.){2,}[a-z]{2,24})(?=\s|$)/i);
+			if (bare) {
+				urlString = 'https://' + bare[1];
+				guessed = true;
+			}
 		}
 
 		if (urlString !== '') {
 			var url_a = document.createElement('a');
 			url_a.href = urlString;
 			var hostname = url_a.hostname;
-			loadLinkPreview(urlString, isComment, commentId);
+			loadLinkPreview(urlString, isComment, commentId, guessed);
 		} else {
 			// No URL left in the input: remove any stale preview so it does
 			// not stay attached after the user deletes the link text.
@@ -234,7 +264,7 @@
 	}
 
 	// Enhanced link preview loading function
-	var loadLinkPreview = function (url, isComment, commentId) {
+	var loadLinkPreview = function (url, isComment, commentId, quiet) {
 		var regexp = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,24}(:[0-9]{1,5})?(\/.*)?$/;
 		url = $.trim(url);
 		
@@ -289,8 +319,10 @@
 					if (response && response.success) {
 						setURLResponse(response.data, url, isComment, commentId);
 					} else if (response && response.error) {
-						// Parse endpoint rejected the URL - surface the message.
-						showPreviewError(response.error, isComment, commentId);
+						// Parse endpoint rejected the URL - surface the message (not for a guessed bare domain).
+						if (!quiet) {
+							showPreviewError(response.error, isComment, commentId);
+						}
 					} else if (response && response.success === false && response.data && response.data.message) {
 						// wp_send_json_error() shape (auth/nonce failures).
 						showPreviewError(response.data.message, isComment, commentId);
@@ -419,7 +451,7 @@
 			// embed from the URL, so the escaped title/description here are harmless.
 			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
 		} else {
-			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 		}
 
 		$(attachmentContainer + ' .' + containerClass).remove();
@@ -437,7 +469,7 @@
 				twttr.widgets.createTweet(
 					tweetId,
 					$(attachmentContainer).find("." + previewClass)[0],
-					{ theme: 'light' }
+					{ theme: getEmbedTheme() }
 				);
 			}
 		}

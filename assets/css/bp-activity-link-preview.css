@@ -17,10 +17,21 @@ Hello, this is the BuddyPress Activity Link Preview stylesheet.
 0 - Color Tokens (light defaults + dark mode)
 ----------------------------------------------------------------
 Previews are painted through the plugin's own --bpalp-* tokens, so
-you can retheme every preview from this one block. Each token reads
-the matching BuddyX / BuddyX Pro theme token (--bx-color-*) first,
-and falls back to the plugin's own light literal when the active
-theme does not define that token.
+you can retheme every preview from this one block.
+
+THEME BRIDGE - the fallback order is deliberate (same chain as Member
+Reviews, bupr-front.css), do not shorten it:
+  1. --bx-color-*             BuddyX.
+  2. --reign-*                Reign 8+ (8.0.8 measured; Reign emits no --bx-color-*).
+  3. --wp--preset--color--*   BuddyX Pro and any other theme.json theme (light only).
+  4. a literal                Themes that expose none of the above. Every
+                              text literal passes WCAG AA 4.5:1 on its surface.
+
+Only tokens a tier really names get that tier. theme.json presets name no
+button pair (BuddyX Pro primary + base = 3.46:1), so buttons read only the
+BuddyX / Reign button tokens. "Muted" has no Reign or preset equivalent,
+so it keeps its literal. The dark block never reads presets: a theme that
+does not redefine them in dark would paint a light card.
 
 Two rule sets assign the tokens:
   1. Base rule (below)              - light defaults, applied always.
@@ -42,20 +53,20 @@ plugin never maintains a duplicate OS-driven palette.
 .activity-link-preview-container,
 .activity-comment-link-preview-container,
 .comment-attachments {
-    --bpalp-surface: var(--bx-color-bg-elevated, #fff);
-    --bpalp-surface-alt: var(--bx-color-bg-muted, #f9f9f9);
-    --bpalp-border: #e5e5e5;
+    --bpalp-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, var(--wp--preset--color--base, #fff)));
+    --bpalp-surface-alt: var(--bx-color-bg-muted, var(--reign-site-body-bg-color, #f9f9f9));
+    --bpalp-border: var(--bx-color-border, var(--reign-site-border-color, #e5e5e5));
     --bpalp-border-soft: #ddd;
-    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #32373c));
-    --bpalp-text: var(--bx-color-fg, #888);
-    --bpalp-text-strong: var(--bx-color-fg, #666);
-    --bpalp-muted: #7f7f7f;
+    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, var(--reign-site-headings-color, var(--wp--preset--color--contrast, #32373c))));
+    --bpalp-text: var(--bx-color-fg, var(--reign-site-body-text-color, var(--wp--preset--color--contrast, #50575e)));
+    --bpalp-text-strong: var(--bx-color-fg, var(--reign-site-body-text-color, var(--wp--preset--color--contrast, #3c434a)));
+    --bpalp-muted: var(--bx-color-fg-muted, #646970);
     --bpalp-close: rgba(0, 0, 0, 0.4);
-    --bpalp-btn-bg: var(--bx-color-button-bg, #f0f0f1);
-    --bpalp-btn-fg: var(--bx-color-button-fg, #2c3338);
-    --bpalp-btn-border: var(--bx-color-button-border, #c3c4c7);
-    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #dcdcde);
-    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #1d2327);
+    --bpalp-btn-bg: var(--bx-color-button-bg, var(--reign-site-button-bg-color, #f0f0f1));
+    --bpalp-btn-fg: var(--bx-color-button-fg, var(--reign-site-button-text-color, #2c3338));
+    --bpalp-btn-border: var(--bx-color-button-border, var(--reign-site-button-bg-color, #c3c4c7));
+    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, var(--reign-site-button-bg-hover-color, #dcdcde));
+    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, var(--reign-site-button-text-hover-color, #1d2327));
 }
 
 :root[data-bx-mode="dark"] .activity-url-scrapper-container,
@@ -63,20 +74,20 @@ plugin never maintains a duplicate OS-driven palette.
 :root[data-bx-mode="dark"] .activity-link-preview-container,
 :root[data-bx-mode="dark"] .activity-comment-link-preview-container,
 :root[data-bx-mode="dark"] .comment-attachments {
-    --bpalp-surface: var(--bx-color-bg-elevated, #1e2126);
-    --bpalp-surface-alt: var(--bx-color-bg-muted, #23262b);
-    --bpalp-border: rgba(255, 255, 255, 0.16);
+    --bpalp-surface: var(--bx-color-bg-elevated, var(--reign-site-sections-bg-color, #1e2126));
+    --bpalp-surface-alt: var(--bx-color-bg-muted, var(--reign-site-body-bg-color, #23262b));
+    --bpalp-border: var(--bx-color-border, var(--reign-site-border-color, rgba(255, 255, 255, 0.16)));
     --bpalp-border-soft: rgba(255, 255, 255, 0.12);
-    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, #e9eaec));
-    --bpalp-text: var(--bx-color-fg, #b6bcc3);
-    --bpalp-text-strong: var(--bx-color-fg, #cfd3d8);
-    --bpalp-muted: #9aa0a6;
+    --bpalp-title: var(--bx-color-h4, var(--bx-color-fg, var(--reign-site-headings-color, #e9eaec)));
+    --bpalp-text: var(--bx-color-fg, var(--reign-site-body-text-color, #b6bcc3));
+    --bpalp-text-strong: var(--bx-color-fg, var(--reign-site-body-text-color, #cfd3d8));
+    --bpalp-muted: var(--bx-color-fg-muted, #9aa0a6);
     --bpalp-close: rgba(255, 255, 255, 0.6);
-    --bpalp-btn-bg: var(--bx-color-button-bg, #2c3138);
-    --bpalp-btn-fg: var(--bx-color-button-fg, #e9eaec);
-    --bpalp-btn-border: var(--bx-color-button-border, rgba(255, 255, 255, 0.24));
-    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, #3a4048);
-    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, #fff);
+    --bpalp-btn-bg: var(--bx-color-button-bg, var(--reign-site-button-bg-color, #2c3138));
+    --bpalp-btn-fg: var(--bx-color-button-fg, var(--reign-site-button-text-color, #e9eaec));
+    --bpalp-btn-border: var(--bx-color-button-border, var(--reign-site-button-bg-color, rgba(255, 255, 255, 0.24)));
+    --bpalp-btn-bg-hover: var(--bx-color-button-bg-hover, var(--reign-site-button-bg-hover-color, #3a4048));
+    --bpalp-btn-fg-hover: var(--bx-color-button-fg-hover, var(--reign-site-button-text-hover-color, #fff));
 }
 
 /*--------------------------------------------------------------
@@ -87,7 +98,7 @@ plugin never maintains a duplicate OS-driven palette.
     margin: 15px 0 0;
     padding: 25px;
     line-height: 1.5;
-    color: var(--bpalp-text, #888);
+    color: var(--bpalp-text, #50575e);
     background: var(--bpalp-surface, #fff);
     border: 1px solid var(--bpalp-border, #e5e5e5);
     border-radius: 3px !important;
@@ -127,7 +138,7 @@ plugin never maintains a duplicate OS-driven palette.
     border: none;
 }
 
-.activity-url-scrapper-container .activity-link-preview-image {
+.activity-url-scrapper-container #activity-url-scrapper-img-holder {
     margin-bottom: 30px;
 }
 
@@ -151,7 +162,15 @@ plugin never maintains a duplicate OS-driven palette.
     text-decoration: underline !important;
 }
 
+/* The 40px well exists to clear the composer's image nav. Saved previews in the
+   feed have no nav, so scope it to the composer instead of dragging empty space
+   under every posted card. */
 .activity-link-preview-excerpt {
+    padding: 0;
+}
+
+.activity-url-scrapper-container .activity-link-preview-excerpt,
+.activity-comment-url-scrapper-container .activity-link-preview-excerpt {
     padding: 0 0 40px;
 }
 
@@ -160,27 +179,61 @@ plugin never maintains a duplicate OS-driven palette.
     font-weight: 400;
 }
 
+/* Themes pad every stream paragraph (BuddyX Pro: .buddypress-wrap .activity-inner p); the excerpt aligns with the card instead. */
+.activity-inner .activity-link-preview-container .activity-link-preview-excerpt p {
+    padding: 0;
+}
+
 .activity-link-preview-excerpt a.activity-link-preview-more:hover {
     text-decoration: underline !important;
 }
 
+/* The composer wraps the thumbnail and its nav in #activity-url-scrapper-img-holder.
+   The holder carries the float and the positioning context so the prev/next controls
+   sit directly under the image they change. Previously the nav was absolutely
+   positioned but the holder was static, so the nav escaped to
+   .activity-link-preview-container and centred itself across the whole card - on a
+   wide screen that put the arrows several hundred pixels from the thumbnail. */
+#activity-url-scrapper-img-holder {
+    float: left;
+    max-width: 160px;
+    margin-inline-end: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+#activity-url-scrapper-img-holder .activity-link-preview-image {
+    float: none;
+    max-width: 100%;
+    margin-inline-end: 0;
+    margin-bottom: 0;
+}
+
 .activity-url-thumb-nav {
-    position: absolute;
-    bottom: 3px;
-    left: 0;
-    right: 0;
-    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
     text-align: center;
 }
 
 #buddypress .activity-url-thumb-nav button,
 .activity-url-thumb-nav button {
     cursor: pointer;
+    /* 40px minimum touch target (WCAG 2.2 SC 2.5.8 asks for 24px; the Wbcom
+       responsive contract asks for 40px). Two of these plus the gap still fit
+       inside the 160px thumbnail column. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: auto;
+    min-width: 40px;
     padding: 3px 6px;
-    margin: 0 3px;
+    margin: 0;
     height: auto;
-    min-height: 10px;
+    min-height: 40px;
     background: var(--bpalp-btn-bg, #f0f0f1);
     color: var(--bpalp-btn-fg, #2c3338);
     border: 1px solid var(--bpalp-btn-border, #c3c4c7);
@@ -198,26 +251,36 @@ plugin never maintains a duplicate OS-driven palette.
 
 #activity-url-scrapper-img-count {
     font-size: 12px;
-    color: var(--bpalp-muted, #7f7f7f);
+    color: var(--bpalp-muted, #646970);
     margin-top: 5px;
 }
 
-.activity-url-error {
-    color: #d33;
-}
-
+/* Targets BuddyBoss Platform's own composer markup, not ours - nothing in this
+   plugin emits #activity-url-scrapper-url. Kept because it only costs a selector
+   and removing it silently changes BuddyBoss-paired sites; do not assume it is
+   dead without testing against an active BuddyBoss install. */
 #activity-url-scrapper-url {
     color: var(--bpalp-text-strong, rgba(0, 0, 0, 0.6));
     font-size: 14px;
 }
 
+/* Dismiss sits top-right, the corner every other close control in the stream uses.
+   It was previously pinned inset-inline-start, which put it top-left on desktop
+   while a narrow-screen rule moved it right - two different corners for the same
+   control. The 40px box is the touch-target minimum; the icon stays 20px. */
 #activity-close-link-suggestion {
     border: 0;
     color: var(--bpalp-close, rgba(0, 0, 0, 0.4));
     font-size: 16px;
     position: absolute;
-    inset-inline-start: 3px;
-    top: 8px;
+    inset-inline-end: 4px;
+    inset-inline-start: auto;
+    top: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
     text-decoration: none;
 }
 
@@ -225,31 +288,47 @@ plugin never maintains a duplicate OS-driven palette.
     font-size: 20px;
 }
 
+/* BuddyBoss Platform's own composer wrapper - it renders the oEmbed card edge to
+   edge, so the dismiss needs a filled chip to stay legible over it. Same corner as
+   the default case above. */
 .activity-post-form-link-wp-embed #activity-close-link-suggestion {
-    top: 30px;
-    inset-inline-start: 8px;
-    inset-inline-end: auto;
+    top: 8px;
+    inset-inline-end: 8px;
+    inset-inline-start: auto;
     background: var(--bpalp-surface, #fff);
     z-index: 11;
-    width: 20px;
-    height: 20px;
+    min-width: 40px;
+    min-height: 40px;
     border-radius: 50%;
 }
 
-@media screen and (max-width: 32em) {
-    #activity-close-link-suggestion {
-        color: var(--bpalp-title, #000);
-    }
-}
-
+/* Overlays the thumbnail, so it stays smaller than the 40px card control - 32px
+   still clears the WCAG 2.2 SC 2.5.8 minimum of 24px without covering a quarter of
+   a 160px image. */
 #activity-link-preview-close-image {
     border: 0;
+    /* Sits on top of an arbitrary remote image, so the glyph cannot rely on the
+       image behind it. A fixed scrim keeps it legible over a white screenshot as
+       well as a dark photo - white-on-transparent disappeared on light images. */
     color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
     font-size: 16px;
     inset-inline-start: 3px;
     position: absolute;
     top: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
     text-decoration: none;
+}
+
+#activity-link-preview-close-image:hover,
+#activity-link-preview-close-image:focus {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.75);
 }
 
 #activity-link-preview-close-image .dashicons.dashicons-no-alt {
@@ -263,7 +342,6 @@ plugin never maintains a duplicate OS-driven palette.
     border-radius: 2px;
 }
 
-.activity-list .activity-item .activity-content .activity-inner .twitter-post, 
 .activity-list .activity-item .activity-content .activity-inner .fb-post {
     margin: 0 15px 15px;
 }
@@ -370,7 +448,7 @@ plugin never maintains a duplicate OS-driven palette.
 
 .activity-comment-link-preview-container [id^="activity-comment-url-scrapper-img-count"] {
     font-size: 11px;
-    color: var(--bpalp-muted, #7f7f7f);
+    color: var(--bpalp-muted, #646970);
     margin-top: 3px;
 }
 
@@ -457,13 +535,25 @@ plugin never maintains a duplicate OS-driven palette.
 }
 
 @media screen and (max-width: 24em) {
-    /* Stack images on very small screens */
+    /* Stack images on very small screens. In the composer the float and the width
+       cap sit on the holder (it also carries the image nav), so it has to unstack
+       alongside the plain image wrapper used by saved previews. */
+    #activity-url-scrapper-img-holder,
     .activity-link-preview-image,
     .activity-comment-link-preview-container .activity-link-preview-image {
         float: none;
         max-width: 100%;
+        margin-inline-end: 0;
         margin-bottom: 10px;
         text-align: center;
+    }
+
+    /* Stacked, the wrapper spans the card while the image centres inside it, which
+       would strand the image's own close control off to the left. Shrink the
+       wrapper to the image so the control stays on the thumbnail corner. */
+    #activity-url-scrapper-img-holder .activity-link-preview-image {
+        display: inline-block;
+        max-width: 100%;
     }
 
     .activity-comment-link-preview-container {
@@ -471,8 +561,9 @@ plugin never maintains a duplicate OS-driven palette.
     }
 }
 
-/* Social media embeds in comments */
-.activity-comment-link-preview-container .twitter-post,
+/* Social media embeds in comments. Tweets are injected by widgets.js as a
+   .twitter-tweet-rendered iframe, not a .twitter-post element, so only .fb-post
+   needs a rule here. */
 .activity-comment-link-preview-container .fb-post {
     margin: 0;
     max-width: 100%;
