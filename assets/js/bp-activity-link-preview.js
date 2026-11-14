@@ -313,7 +313,7 @@
 					ajaxData.comment_id = commentId;
 				}
 
-				loadURLAjax = jQuery.post(ajaxurl, ajaxData, function (response) {
+				loadURLAjax = jQuery.post(bp_activity_link_preview.ajaxurl, ajaxData, function (response) {
 					currentlyLoadingUrl = null; // Reset when request completes
 					// Handle both old and new response formats
 					if (response && response.success) {
