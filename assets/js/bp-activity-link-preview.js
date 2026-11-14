@@ -791,8 +791,9 @@
 			}
 		});
 
-		// Original submit handler
-		$(document).on('click', '#buddypress #aw-whats-new-submit', function () {
+		// Clear the composer preview after posting. Not scoped to #buddypress:
+		// post forms embedded elsewhere (Post From Anywhere) use the same ids.
+		$(document).on('click', '#aw-whats-new-submit', function () {
 			setTimeout(function () {
 				$('.activity-url-scrapper-container').remove();
 			}, 500);
