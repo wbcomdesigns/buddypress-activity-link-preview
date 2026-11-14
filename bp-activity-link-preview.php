@@ -117,6 +117,7 @@ add_action( 'admin_init', 'bp_activity_link_preview_requires_buddypress' );
 function bp_activity_link_preview_bootstrap() {
 	// Enqueue scripts and styles.
 	add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
+	add_action( 'bp_before_activity_post_form', 'bp_activity_link_preview_enqueue_for_post_form' );
 
 	// Remove BuddyBoss duplicate preview.
 	add_action( 'bp_init', 'bp_activity_link_preview_disable_buddyboss_preview', 999 );
@@ -194,6 +195,35 @@ function bp_activity_link_preview_enqueue_scripts() {
 		return;
 	}
 
+	bp_activity_link_preview_enqueue_assets();
+}
+
+/**
+ * Load the composer assets wherever a BuddyPress activity post form renders.
+ *
+ * Forms embedded outside BuddyPress screens (BuddyPress Post From Anywhere's
+ * shortcode, block or widget, page builders) fire BuddyPress's own
+ * bp_before_activity_post_form hook, so the preview follows the form instead
+ * of a list of page types. The scripts print in the footer, so enqueueing
+ * while the page body renders is in time.
+ *
+ * @since 1.7.7
+ */
+function bp_activity_link_preview_enqueue_for_post_form() {
+	/** This filter is documented in bp_activity_link_preview_should_load_assets(). */
+	if ( wp_script_is( 'bp-activity-link-preview-js' ) || ! apply_filters( 'bp_activity_link_preview_load_assets', true ) ) {
+		return;
+	}
+
+	bp_activity_link_preview_enqueue_assets();
+}
+
+/**
+ * Enqueue the composer styles and scripts and their localized data.
+ *
+ * @since 1.7.7
+ */
+function bp_activity_link_preview_enqueue_assets() {
 	// The composer JS renders dashicon markup (close/prev/next buttons); dashicons
 	// is not guaranteed on the frontend (only loads with the admin bar), so enqueue it.
 	wp_enqueue_style( 'dashicons' );
