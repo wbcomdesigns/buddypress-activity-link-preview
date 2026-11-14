@@ -200,9 +200,11 @@ It has been tested with BuddyX, BuddyX Pro and Reign, in light and dark mode, an
 
 = 1.7.7 - November 2026 =
 
-Link previews now work in the Shortcodes for BuddyPress posting form, and half-typed links no longer flash an error.
+Link previews now work in the Shortcodes for BuddyPress and Post From Anywhere posting forms, and half-typed links no longer flash an error.
 
 * Fix      - Pasting a link into the posting form of the [activity-listing] shortcode now shows a preview. The plugin's scripts only loaded on BuddyPress activity screens, so pages using the shortcode never got one.
+* Fix      - Link previews now work in the BuddyPress Post From Anywhere form, wherever the form is placed (shortcode, block or widget).
+* Fix      - After posting from a form outside BuddyPress pages, such as Post From Anywhere, the link preview now clears instead of staying in the form.
 * Fix      - Typing a link no longer shows a "Preview is not available" notice next to the finished preview. Each keystroke used to fetch the half-typed address.
 * Fix      - Previews no longer depend on another plugin or theme defining the WordPress AJAX address on the page.
 * Dev      - Added a release build script and a local CI script, and moved the zip exclusions into .distignore.
