@@ -392,6 +392,9 @@
 			}
 		}
 
+		// A preview rendered: an earlier failure notice no longer applies.
+		$(attachmentContainer + ' .bpalp-preview-error').remove();
+
 		var title = response.title || '';
 		var description = response.description || '';
 		var image = (response.images && Array.isArray(response.images) && response.images.length > 0) ? response.images[0] : '';
@@ -655,11 +658,20 @@
 
 	$(document).ready(function () {
 		// Main activity form handler (works with both BuddyPress textarea and BuddyBoss contenteditable div)
+		// Debounced: parse only once typing pauses. A timer per keystroke
+		// previewed every half-typed URL ("https://wordpress.or") and its
+		// error notice then sat next to the real preview.
+		var scrapTimers = {};
+		var scheduleScrap = function (key, fn) {
+			clearTimeout(scrapTimers[key]);
+			scrapTimers[key] = setTimeout(fn, 500);
+		};
+
 		$(document).on('keyup input', '#whats-new', function () {
 			var $whatsNew = $(this);
-			setTimeout(function () {
+			scheduleScrap('post', function () {
 				scrap_URL(getInputValue($whatsNew), false, null);
-			}, 500);
+			});
 		});
 
 		// Comment form handlers (works with both textarea and contenteditable)
@@ -670,9 +682,9 @@
 				commentId = commentId.replace('ac-form-', '');
 				currentCommentId = commentId;
 
-				setTimeout(function () {
+				scheduleScrap('comment-' + commentId, function () {
 					scrap_URL(getInputValue($this), true, commentId);
-				}, 500);
+				});
 			}
 		});
 
