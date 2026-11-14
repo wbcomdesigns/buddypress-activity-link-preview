@@ -12,7 +12,7 @@ When previews are shown on the activity stream, comment rendering uses cached da
 
 ## Asset loading
 
-The plugin's CSS and JavaScript, the Twitter and Facebook SDK scripts, and dashicons load only on BuddyPress activity contexts (the activity directory, member activity, and group screens), not site-wide. Which pages load the assets can be changed with the `bp_activity_link_preview_load_assets` filter.
+The plugin's CSS and JavaScript, the Twitter and Facebook SDK scripts, and dashicons load only on BuddyPress activity contexts (the activity directory, member activity, and group screens) and on pages whose content holds the `[activity-listing]` shortcode, not site-wide. Which pages load the assets can be changed with the `bp_activity_link_preview_load_assets` filter.
 
 ## Third-party scripts and privacy
 

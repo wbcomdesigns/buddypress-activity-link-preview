@@ -35,5 +35,5 @@ A genuine timeout is treated differently from "this page has nothing to preview"
 
 ## Performance notes
 
-- Plugin assets and the Twitter and Facebook scripts load only on BuddyPress activity screens - the activity directory, member activity and group screens - never site-wide. Use `bp_activity_link_preview_load_assets` to change that.
+- Plugin assets and the Twitter and Facebook scripts load only on BuddyPress activity screens - the activity directory, member activity and group screens - and on pages that hold the `[activity-listing]` shortcode, never site-wide. Use `bp_activity_link_preview_load_assets` to change that.
 - Comment rendering never fetches a remote URL, so a slow external site can never delay a page load.
