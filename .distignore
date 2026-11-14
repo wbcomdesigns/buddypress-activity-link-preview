@@ -1,0 +1,57 @@
+# Files and folders that never ship in the customer zip.
+# Read by bin/build-release.sh (rsync --exclude-from). Mirrors gruntfile.js copy:build;
+# change both together.
+
+# VCS / CI / editor
+/.git
+/.github
+.gitignore
+.gitattributes
+.distignore
+.editorconfig
+.DS_Store
+Thumbs.db
+/.vscode
+/.idea
+/.playwright-mcp
+
+# Dependencies and build output
+/node_modules
+/vendor
+/build
+/dist
+*.zip
+*.map
+*.log
+
+# Build / lint / test config
+/gruntfile.js
+/Gruntfile.js
+/package.json
+/package-lock.json
+/composer.json
+/composer.lock
+/phpcs.xml
+/phpcs.xml.dist
+/phpstan.neon
+/phpstan.neon.dist
+/phpunit.xml
+.eslintrc*
+.stylelintrc*
+/.wbcom-i18n.json
+
+# WordPress.org listing assets (uploaded to SVN assets/, never inside the plugin)
+/.wordpress-org
+/screenshot-*
+
+# Dev-only folders
+/tests
+/bin
+/docs
+/marketing
+/audit
+/plan
+/plans
+
+# All markdown (CLAUDE.md, AUDIT-VERDICT.md, BUILD-LOG.md, ...)
+*.md
