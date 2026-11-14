@@ -167,11 +167,19 @@ function bp_activity_link_preview_should_load_assets() {
 	$should_load = function_exists( 'bp_is_activity_component' )
 		&& ( bp_is_activity_component() || bp_is_activity_directory() || bp_is_user_activity() || bp_is_group() );
 
+	// A page that embeds the activity posting form through Shortcodes for
+	// BuddyPress ([activity-listing allow_posting=true]) is not a BP screen.
+	if ( ! $should_load && is_singular() ) {
+		$post        = get_post();
+		$should_load = $post instanceof WP_Post && has_shortcode( $post->post_content, 'activity-listing' );
+	}
+
 	/**
 	 * Filter whether the link-preview assets load on the current page.
 	 *
-	 * Lets site owners load assets on custom pages that embed an activity
-	 * stream (e.g. via shortcode/widget) or unload them from group screens.
+	 * Assets load on BuddyPress activity screens, groups, and singular pages
+	 * whose content holds the [activity-listing] shortcode. Use this to load
+	 * them on other custom pages (widgets, page builders) or unload them.
 	 *
 	 * @since 1.7.4
 	 * @param bool $should_load Whether the current page is an activity context.
