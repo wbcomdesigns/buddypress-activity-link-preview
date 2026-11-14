@@ -198,6 +198,15 @@ It has been tested with BuddyX, BuddyX Pro and Reign, in light and dark mode, an
 
 == Changelog ==
 
+= 1.7.7 - November 2026 =
+
+Link previews now work in the Shortcodes for BuddyPress posting form, and half-typed links no longer flash an error.
+
+* Fix      - Pasting a link into the posting form of the [activity-listing] shortcode now shows a preview. The plugin's scripts only loaded on BuddyPress activity screens, so pages using the shortcode never got one.
+* Fix      - Typing a link no longer shows a "Preview is not available" notice next to the finished preview. Each keystroke used to fetch the half-typed address.
+* Fix      - Previews no longer depend on another plugin or theme defining the WordPress AJAX address on the page.
+* Dev      - Added a release build script and a local CI script, and moved the zip exclusions into .distignore.
+
 = 1.7.6 - November 2026 =
 
 Fixes Twitter/X and Facebook previews that never appeared outside the activity directory, plus a round of composer layout and accessibility corrections.
