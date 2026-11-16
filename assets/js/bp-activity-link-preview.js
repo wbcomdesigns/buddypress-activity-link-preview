@@ -689,106 +689,26 @@
 		});
 
 		// Original prev button handler
-		$(document).on('click', '#activity-url-prevPicButton', function () {
-			var bp_activity_link_preview = getLinkPreviewStorage('bp-activity-link-preview', 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex > 0) {
-				setLinkPreviewStorage('bp-activity-link-preview', 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex - 1,
-				});
-
-				setURLNextPreviousResponse(false, null);
+		// Previous / next image in a preview card: composer (no comment id) or a comment reply.
+		var stepImage = function (step, commentId) {
+			var storageKey = commentId ? 'bp-activity-comment-link-preview-' + commentId : 'bp-activity-link-preview';
+			var data = getLinkPreviewStorage(storageKey, 'link-preview');
+			if (!data || !data.link_images) {
+				return;
 			}
+			var next = data.link_image_index + step;
+			if (next >= 0 && next < data.link_images.length) {
+				setLinkPreviewStorage(storageKey, 'link-preview', $.extend({}, data, { link_success: true, link_image_index: next }));
+				setURLNextPreviousResponse(!!commentId, commentId || null);
+			}
+		};
+		$(document).on('click', '#activity-url-prevPicButton', function () { stepImage(-1); });
+		$(document).on('click', '#activity-url-nextPicButton', function () { stepImage(1); });
+		$(document).on('click', '[id^="activity-comment-url-prevPicButton-"]', function () {
+			stepImage(-1, this.id.replace('activity-comment-url-prevPicButton-', ''));
 		});
-
-		// Original next button handler
-		$(document).on('click', '#activity-url-nextPicButton', function () {
-			var bp_activity_link_preview = getLinkPreviewStorage('bp-activity-link-preview', 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex < images.length - 1) {
-				setLinkPreviewStorage('bp-activity-link-preview', 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex + 1,
-				});
-
-				setURLNextPreviousResponse(false, null);
-			}
-		});
-
-		// Enhanced navigation button handlers for comments
-		$(document).on('click', '[id^="activity-comment-url-prevPicButton"]', function () {
-			var buttonId = $(this).attr('id');
-			var commentId = buttonId.replace('activity-comment-url-prevPicButton-', '');
-			var storageKey = 'bp-activity-comment-link-preview-' + commentId;
-
-			var bp_activity_link_preview = getLinkPreviewStorage(storageKey, 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex > 0) {
-				setLinkPreviewStorage(storageKey, 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex - 1,
-				});
-
-				setURLNextPreviousResponse(true, commentId);
-			}
-		});
-
-		$(document).on('click', '[id^="activity-comment-url-nextPicButton"]', function () {
-			var buttonId = $(this).attr('id');
-			var commentId = buttonId.replace('activity-comment-url-nextPicButton-', '');
-			var storageKey = 'bp-activity-comment-link-preview-' + commentId;
-
-			var bp_activity_link_preview = getLinkPreviewStorage(storageKey, 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex < images.length - 1) {
-				setLinkPreviewStorage(storageKey, 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex + 1,
-				});
-
-				setURLNextPreviousResponse(true, commentId);
-			}
+		$(document).on('click', '[id^="activity-comment-url-nextPicButton-"]', function () {
+			stepImage(1, this.id.replace('activity-comment-url-nextPicButton-', ''));
 		});
 
 		// Clear the composer preview after posting. Not scoped to #buddypress:
