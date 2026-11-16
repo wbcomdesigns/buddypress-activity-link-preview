@@ -88,7 +88,7 @@ Our support team can help with setup, theme compatibility and troubleshooting. R
 
 * WordPress 6.5 and higher
 * PHP 8.1 and higher
-* BuddyPress 6.0+ or BuddyBoss Platform (required - the plugin deactivates itself if neither is active)
+* BuddyPress 12.0+ or BuddyBoss Platform (required - the plugin deactivates itself if neither is active)
 * Tested with popular themes including BuddyX, Reign and Youzify
 
 = What's New in 1.7.6 =
@@ -132,13 +132,13 @@ There is no settings page. The plugin works as soon as it is activated.
 
 * WordPress 6.5 or higher
 * PHP 8.1 or higher
-* BuddyPress 6.0 or higher, or BuddyBoss Platform
+* BuddyPress 12.0 or higher, or BuddyBoss Platform
 
 == Frequently Asked Questions ==
 
 = What are the plugin requirements? =
 
-WordPress 6.5 or higher, PHP 8.1 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
+WordPress 6.5 or higher, PHP 8.1 or higher, and either BuddyPress 12.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
 
 = Why doesn't the preview show for some URLs? =
 
