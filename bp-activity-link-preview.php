@@ -1001,7 +1001,6 @@ function bp_activity_link_preview_is_social_media_url( $url ) {
  * @return string Modified content.
  */
 function bp_activity_link_preview_content_body_with_comments( $content, $activity ) {
-	static $processed_activities = array();
 
 	$activity_id = $activity->id;
 
@@ -1037,18 +1036,11 @@ function bp_activity_link_preview_content_body_with_comments( $content, $activit
 		return $content;
 	}
 
-	// Prevent duplicate processing for the same activity.
-	if ( isset( $processed_activities[ $activity_id ] ) ) {
-		return $content;
-	}
-
-	// Check if content already contains a preview to avoid double processing.
+	// Skip content that already carries a preview. A per-request "seen this id" guard is wrong here:
+	// BuddyBoss filters the same activity twice on its single permalink and the second call lost the card.
 	if ( strpos( $content, 'activity-link-preview-container' ) !== false ) {
 		return $content;
 	}
-
-	// Mark this activity as processed.
-	$processed_activities[ $activity_id ] = true;
 
 	// Handle main activity link preview only.
 	$preview_data = bp_activity_get_meta( $activity_id, '_bp_activity_link_preview_data', true );

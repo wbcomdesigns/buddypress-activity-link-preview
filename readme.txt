@@ -207,6 +207,7 @@ Link previews now work in the Shortcodes for BuddyPress and Post From Anywhere p
 * Fix      - After posting from a form outside BuddyPress pages, such as Post From Anywhere, the link preview now clears instead of staying in the form.
 * Fix      - Typing a link no longer shows a "Preview is not available" notice next to the finished preview. Each keystroke used to fetch the half-typed address.
 * Fix      - Previews no longer depend on another plugin or theme defining the WordPress AJAX address on the page.
+* Fix      - The link preview card shows on the BuddyBoss single activity page again.
 * Security - Activity text written as escaped HTML is no longer turned back into live markup in the activity stream.
 * Security - Fetching a page for a preview now stops after 1 MB.
 * Dev      - Added a release build script and a local CI script, and moved the zip exclusions into .distignore.
