@@ -516,8 +516,10 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 		}
 
 		$args = array(
-			'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
-			'timeout'    => 15,
+			'user-agent'          => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+			'timeout'             => 15,
+			// Previews only need the <head>; cap what a remote page can make us download.
+			'limit_response_size' => MB_IN_BYTES,
 		);
 
 		if ( bp_is_same_site_url( $url ) ) {
@@ -1054,7 +1056,10 @@ function bp_activity_link_preview_content_body_with_comments( $content, $activit
 		$content = bp_activity_link_preview_render_preview( $content, $preview_data );
 	}
 
-	return htmlspecialchars_decode( $content );
+	// Return the content as filtered: it has already passed BuddyPress's kses at
+	// priority 1, and decoding entities here would turn a member's escaped
+	// markup (&lt;img onerror=...&gt;) back into live HTML.
+	return $content;
 }
 
 /**

@@ -43,7 +43,7 @@ so keying the dark scope off data-bx-mode is what actually produces a
 dark card - a body.buddyx-dark-theme scope would resolve back to the
 light --bx-color-* values and render light. Verified in-browser.
 
-There is intentionally NO @media (prefers-color-scheme: dark) block.
+The palette never follows the operating system setting.
 Dark is opt-in via the theme's explicit data-bx-mode attribute only; the
 plugin never maintains a duplicate OS-driven palette.
 --------------------------------------------------------------*/
