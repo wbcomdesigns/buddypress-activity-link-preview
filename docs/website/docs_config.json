@@ -4,59 +4,113 @@
   "shortId": "bplinkpreview",
   "sections": [
     {
-      "slug": "getting-started",
-      "title": "Getting Started",
-      "order": 1,
+      "name": "Getting Started",
+      "folder": "getting-started",
+      "description": "What the plugin does, what it needs, how to install it, and which links get a preview.",
       "pages": [
-        { "file": "getting-started/introduction.md", "title": "Introduction" },
-        { "file": "getting-started/requirements.md", "title": "Requirements" },
-        { "file": "getting-started/installation.md", "title": "Installation" }
+        {
+          "slug": "introduction",
+          "title": "Introduction"
+        },
+        {
+          "slug": "requirements",
+          "title": "Requirements"
+        },
+        {
+          "slug": "installation",
+          "title": "Installation"
+        },
+        {
+          "slug": "how-it-works",
+          "title": "How it works"
+        },
+        {
+          "slug": "supported-platforms",
+          "title": "Supported platforms and limits"
+        }
       ]
     },
     {
-      "slug": "features",
-      "title": "Features",
-      "order": 2,
+      "name": "Features",
+      "folder": "features",
+      "description": "Rich link cards, member and group cards, previews in comments and video embeds, and how the plugin stays fast and safe.",
       "pages": [
-        { "file": "features/rich-link-previews.md", "title": "Rich Link Previews" },
-        { "file": "features/internal-member-and-group-cards.md", "title": "Internal Member and Group Cards" },
-        { "file": "features/comments-and-embeds.md", "title": "Comments, Videos and Native Embeds" },
-        { "file": "features/performance-and-security.md", "title": "Performance and Security" }
+        {
+          "slug": "rich-link-previews",
+          "title": "Rich Link Previews"
+        },
+        {
+          "slug": "internal-member-and-group-cards",
+          "title": "Internal Member and Group Cards"
+        },
+        {
+          "slug": "comments-and-embeds",
+          "title": "Comments, Videos and Native Embeds"
+        },
+        {
+          "slug": "performance-and-security",
+          "title": "Performance and Security"
+        }
       ]
     },
     {
-      "slug": "usage",
-      "title": "Usage",
-      "order": 3,
+      "name": "Usage",
+      "folder": "usage",
+      "description": "Share a link in a post or comment, and how previews behave on BuddyPress, BuddyBoss and popular themes.",
       "pages": [
-        { "file": "usage/sharing-a-link.md", "title": "Sharing a Link" },
-        { "file": "usage/platform-and-theme-compatibility.md", "title": "Platform and Theme Compatibility" }
+        {
+          "slug": "sharing-a-link",
+          "title": "Sharing a Link"
+        },
+        {
+          "slug": "platform-and-theme-compatibility",
+          "title": "Platform and Theme Compatibility"
+        }
       ]
     },
     {
-      "slug": "developer-guide",
-      "title": "Developer Guide",
-      "order": 4,
+      "name": "Developer Guide",
+      "folder": "developer-guide",
+      "description": "Filters, the AJAX endpoint, the REST API fields, and how preview data is stored and cached.",
       "pages": [
-        { "file": "developer-guide/filters.md", "title": "Filters" },
-        { "file": "developer-guide/ajax-and-rest.md", "title": "AJAX Endpoint and REST API" },
-        { "file": "developer-guide/data-storage-and-caching.md", "title": "Data Storage and Caching" }
+        {
+          "slug": "filters",
+          "title": "Filters"
+        },
+        {
+          "slug": "ajax-and-rest",
+          "title": "AJAX Endpoint and REST API"
+        },
+        {
+          "slug": "rest-api",
+          "title": "REST API"
+        },
+        {
+          "slug": "data-storage-and-caching",
+          "title": "Data Storage and Caching"
+        }
       ]
     },
     {
-      "slug": "faq",
-      "title": "FAQ",
-      "order": 5,
+      "name": "FAQ",
+      "folder": "faq",
+      "description": "Short answers to the questions site owners ask most about link previews.",
       "pages": [
-        { "file": "faq/faq.md", "title": "Frequently Asked Questions" }
+        {
+          "slug": "faq",
+          "title": "Frequently Asked Questions"
+        }
       ]
     },
     {
-      "slug": "troubleshooting",
-      "title": "Troubleshooting",
-      "order": 6,
+      "name": "Troubleshooting",
+      "folder": "troubleshooting",
+      "description": "What to check when a preview does not appear, shows twice, or loads scripts you want to block.",
       "pages": [
-        { "file": "troubleshooting/troubleshooting.md", "title": "Troubleshooting" }
+        {
+          "slug": "troubleshooting",
+          "title": "Troubleshooting"
+        }
       ]
     }
   ]

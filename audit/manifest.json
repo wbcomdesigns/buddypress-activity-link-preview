@@ -168,66 +168,73 @@
       "purpose": "Enqueue CSS/JS + dashicons + Twitter + Facebook SDK + localized data (gated by bp_activity_link_preview_should_load_assets)."
     },
     {
+      "name": "bp_before_activity_post_form",
+      "priority": 10,
+      "callback": "bp_activity_link_preview_enqueue_for_post_form",
+      "where": "bp-activity-link-preview.php:120",
+      "purpose": "Enqueue the same assets wherever a BuddyPress activity post form renders (Post From Anywhere shortcode/block/widget); bp_activity_link_preview_load_assets is still honoured with a true default."
+    },
+    {
       "name": "bp_init",
       "priority": 999,
       "callback": "bp_activity_link_preview_disable_buddyboss_preview",
-      "where": "bp-activity-link-preview.php:122",
+      "where": "bp-activity-link-preview.php:123",
       "purpose": "Remove BuddyBoss's own link preview filter to avoid duplicates (remove_filter at :193)."
     },
     {
       "name": "bp_init",
       "priority": 10,
       "callback": "bp_activity_link_preview_init_comment_filter",
-      "where": "bp-activity-link-preview.php:134",
+      "where": "bp-activity-link-preview.php:135",
       "purpose": "Register comment-content filter when comment previews enabled."
     },
     {
       "name": "wp_ajax_bp_activity_parse_url_preview",
       "priority": 10,
       "callback": "bp_activity_parse_url_preview",
-      "where": "bp-activity-link-preview.php:125",
+      "where": "bp-activity-link-preview.php:126",
       "purpose": "AJAX URL-parse endpoint."
     },
     {
       "name": "bp_activity_after_save",
       "priority": 10,
       "callback": "bp_activity_link_preview_save_link_data",
-      "where": "bp-activity-link-preview.php:128",
+      "where": "bp-activity-link-preview.php:129",
       "purpose": "Persist preview data to activity meta on save (handler at :703)."
     },
     {
       "name": "bp_get_activity_content_body",
       "priority": 8,
       "callback": "bp_activity_link_preview_content_body_with_comments",
-      "where": "bp-activity-link-preview.php:131",
+      "where": "bp-activity-link-preview.php:132",
       "purpose": "Append rendered preview to activity content body (handler at :868)."
     },
     {
       "name": "bp_activity_comment_content",
       "priority": 10,
       "callback": "bp_activity_link_preview_comment_content",
-      "where": "bp-activity-link-preview.php:1094",
+      "where": "bp-activity-link-preview.php:1132",
       "purpose": "Append rendered preview to comment content (conditionally registered inside bp_activity_link_preview_init_comment_filter; handler at :933)."
     },
     {
       "name": "bp_activity_allowed_tags",
       "priority": 10,
       "callback": "bp_activity_link_preview_allowed_tags",
-      "where": "bp-activity-link-preview.php:137",
+      "where": "bp-activity-link-preview.php:138",
       "purpose": "Allow div/img/button/span/i/iframe markup in activity content for previews (handler at :1076)."
     },
     {
       "name": "bp_rest_activity_prepare_value",
       "priority": 10,
       "callback": "bp_activity_link_preview_data_embed_rest_api",
-      "where": "bp-activity-link-preview.php:140",
+      "where": "bp-activity-link-preview.php:141",
       "purpose": "Embed preview meta into BP REST activity response (handler at :1140)."
     },
     {
       "name": "wp_head",
       "priority": 10,
       "callback": "bp_activity_link_preview_add_facebook_root_div",
-      "where": "bp-activity-link-preview.php:143",
+      "where": "bp-activity-link-preview.php:144",
       "purpose": "Output #fb-root div on BP activity/group/user pages for Facebook SDK (handler at :1156)."
     }
   ],

@@ -3,7 +3,7 @@ Contributors: wbcomdesigns, vapvarun
 Tags: buddypress, activity, link preview, social, open graph
 Requires at least: 6.5
 Tested up to: 7.1
-Stable tag: 1.7.6
+Stable tag: 1.7.7
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -88,7 +88,7 @@ Our support team can help with setup, theme compatibility and troubleshooting. R
 
 * WordPress 6.5 and higher
 * PHP 8.1 and higher
-* BuddyPress 6.0+ or BuddyBoss Platform (required - the plugin deactivates itself if neither is active)
+* BuddyPress 12.0+ or BuddyBoss Platform (required - the plugin deactivates itself if neither is active)
 * Tested with popular themes including BuddyX, Reign and Youzify
 
 = What's New in 1.7.6 =
@@ -132,13 +132,13 @@ There is no settings page. The plugin works as soon as it is activated.
 
 * WordPress 6.5 or higher
 * PHP 8.1 or higher
-* BuddyPress 6.0 or higher, or BuddyBoss Platform
+* BuddyPress 12.0 or higher, or BuddyBoss Platform
 
 == Frequently Asked Questions ==
 
 = What are the plugin requirements? =
 
-WordPress 6.5 or higher, PHP 8.1 or higher, and either BuddyPress 6.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
+WordPress 6.5 or higher, PHP 8.1 or higher, and either BuddyPress 12.0+ or BuddyBoss Platform. If neither BuddyPress nor BuddyBoss is active, the plugin deactivates itself and shows a notice explaining why.
 
 = Why doesn't the preview show for some URLs? =
 
@@ -197,6 +197,20 @@ It has been tested with BuddyX, BuddyX Pro and Reign, in light and dark mode, an
 1. Link preview in an activity post - title, description and image pulled from the shared link.
 
 == Changelog ==
+
+= 1.7.7 - November 2026 =
+
+Link previews now work in the Shortcodes for BuddyPress and Post From Anywhere posting forms, and half-typed links no longer flash an error.
+
+* Fix      - Pasting a link into the posting form of the [activity-listing] shortcode now shows a preview. The plugin's scripts only loaded on BuddyPress activity screens, so pages using the shortcode never got one.
+* Fix      - Link previews now work in the BuddyPress Post From Anywhere form, wherever the form is placed (shortcode, block or widget).
+* Fix      - After posting from a form outside BuddyPress pages, such as Post From Anywhere, the link preview now clears instead of staying in the form.
+* Fix      - Typing a link no longer shows a "Preview is not available" notice next to the finished preview. Each keystroke used to fetch the half-typed address.
+* Fix      - Previews no longer depend on another plugin or theme defining the WordPress AJAX address on the page.
+* Fix      - The link preview card shows on the BuddyBoss single activity page again.
+* Security - Activity text written as escaped HTML is no longer turned back into live markup in the activity stream.
+* Security - Fetching a page for a preview now stops after 1 MB.
+* Dev      - Added a release build script and a local CI script, and moved the zip exclusions into .distignore.
 
 = 1.7.6 - November 2026 =
 

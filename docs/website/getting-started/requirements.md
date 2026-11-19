@@ -6,7 +6,7 @@ The plugin declares these minimums in its plugin header and readme.
 |---|---|
 | WordPress | 6.5 or higher |
 | PHP | 8.1 or higher |
-| Community platform | BuddyPress 6.0 or higher, or BuddyBoss Platform |
+| Community platform | BuddyPress 12.0 or higher, or BuddyBoss Platform |
 
 ## Community platform dependency
 

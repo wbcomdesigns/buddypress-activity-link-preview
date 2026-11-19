@@ -313,7 +313,7 @@
 					ajaxData.comment_id = commentId;
 				}
 
-				loadURLAjax = jQuery.post(ajaxurl, ajaxData, function (response) {
+				loadURLAjax = jQuery.post(bp_activity_link_preview.ajaxurl, ajaxData, function (response) {
 					currentlyLoadingUrl = null; // Reset when request completes
 					// Handle both old and new response formats
 					if (response && response.success) {
@@ -392,6 +392,9 @@
 			}
 		}
 
+		// A preview rendered: an earlier failure notice no longer applies.
+		$(attachmentContainer + ' .bpalp-preview-error').remove();
+
 		var title = response.title || '';
 		var description = response.description || '';
 		var image = (response.images && Array.isArray(response.images) && response.images.length > 0) ? response.images[0] : '';
@@ -449,9 +452,9 @@
 			// Emit all four hidden fields the save handler requires (url/title/
 			// description/image) plus the wp_embed flag; the server regenerates the
 			// embed from the URL, so the escaped title/description here are harmless.
-			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + ' activity-video-preview">' + description + '<a title="' + tCancelPreview + '" aria-label="' + tCancelPreview + '" role="button" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /><input type="hidden" name="' + fieldPrefix + 'wp_embed" value="1" /></div></div>';
 		} else {
-			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+			link_preview = '<div class="' + containerClass + '"><div class="' + previewClass + '"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder" style="' + image_nav + '"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" aria-label="' + tCancelPreviewImage + '" role="button" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" aria-label="' + tCancelPreview + '" role="button" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 		}
 
 		$(attachmentContainer + ' .' + containerClass).remove();
@@ -464,7 +467,7 @@
 			if (tweetIdMatch && tweetIdMatch[1]) {
 				tweetId = tweetIdMatch[1];
 			}
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" aria-label="' + tCancelPreview + '" role="button" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a>');
 			if (tweetId) {
 				twttr.widgets.createTweet(
 					tweetId,
@@ -475,7 +478,7 @@
 		}
 		
 		if (url.includes('facebook.com')) {
-			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a><div class="fb-post" data-href="' + eUrl + '" data-width="500" data-height="500"></div>');
+			$($(attachmentContainer).find("." + previewClass)[0]).html('<a title="' + tCancelPreview + '" aria-label="' + tCancelPreview + '" role="button" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a><div class="fb-post" data-href="' + eUrl + '" data-width="500" data-height="500"></div>');
 			if (typeof FB !== 'undefined') {
 				FB.XFBML.parse();
 			} else {
@@ -633,7 +636,7 @@
 		var tNextImage          = escapeHtml(bpalpText('nextImage', 'Next image'));
 		var tImageCount         = escapeHtml(bpalpSprintf(bpalpText('imageCount', 'Image %1$s of %2$s'), [link_image_index + 1, image_count]));
 
-		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
+		var link_preview = '<div class="' + containerClass + '"><div class="activity-link-preview-container"><p class="activity-link-preview-title">' + eTitle + '</p><div id="activity-url-scrapper-img-holder"><div class="activity-link-preview-image"><img src="' + eImage + '" alt=""><a title="' + tCancelPreviewImage + '" aria-label="' + tCancelPreviewImage + '" role="button" href="#" id="' + imageCloseId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a></div><div class="activity-url-thumb-nav"><button type="button" aria-label="' + tPreviousImage + '" id="' + prevButtonId + '"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span></button><button type="button" aria-label="' + tNextImage + '" id="' + nextButtonId + '"><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></button><div id="' + imageCountId + '">' + tImageCount + '</div></div></div><div class="activity-link-preview-excerpt"><p>' + eDescription + '</p></div><a title="' + tCancelPreview + '" aria-label="' + tCancelPreview + '" role="button" href="#" id="' + closeId + '"><i class="dashicons dashicons-no-alt" aria-hidden="true"></i></a></div><div class="bp-link-preview-hidden"><input type="hidden" name="' + fieldPrefix + 'url" value="' + eUrl + '" /><input type="hidden" name="' + fieldPrefix + 'title" value="' + eTitle + '" /><input type="hidden" name="' + fieldPrefix + 'description" value="' + eDescription + '" /><input type="hidden" name="' + fieldPrefix + 'image" value="' + eImage + '" /></div></div>';
 
 		$(attachmentContainer + ' .' + containerClass).remove();
 		$(attachmentContainer).append(link_preview);
@@ -655,11 +658,20 @@
 
 	$(document).ready(function () {
 		// Main activity form handler (works with both BuddyPress textarea and BuddyBoss contenteditable div)
+		// Debounced: parse only once typing pauses. A timer per keystroke
+		// previewed every half-typed URL ("https://wordpress.or") and its
+		// error notice then sat next to the real preview.
+		var scrapTimers = {};
+		var scheduleScrap = function (key, fn) {
+			clearTimeout(scrapTimers[key]);
+			scrapTimers[key] = setTimeout(fn, 500);
+		};
+
 		$(document).on('keyup input', '#whats-new', function () {
 			var $whatsNew = $(this);
-			setTimeout(function () {
+			scheduleScrap('post', function () {
 				scrap_URL(getInputValue($whatsNew), false, null);
-			}, 500);
+			});
 		});
 
 		// Comment form handlers (works with both textarea and contenteditable)
@@ -670,117 +682,38 @@
 				commentId = commentId.replace('ac-form-', '');
 				currentCommentId = commentId;
 
-				setTimeout(function () {
+				scheduleScrap('comment-' + commentId, function () {
 					scrap_URL(getInputValue($this), true, commentId);
-				}, 500);
+				});
 			}
 		});
 
 		// Original prev button handler
-		$(document).on('click', '#activity-url-prevPicButton', function () {
-			var bp_activity_link_preview = getLinkPreviewStorage('bp-activity-link-preview', 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex > 0) {
-				setLinkPreviewStorage('bp-activity-link-preview', 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex - 1,
-				});
-
-				setURLNextPreviousResponse(false, null);
+		// Previous / next image in a preview card: composer (no comment id) or a comment reply.
+		var stepImage = function (step, commentId) {
+			var storageKey = commentId ? 'bp-activity-comment-link-preview-' + commentId : 'bp-activity-link-preview';
+			var data = getLinkPreviewStorage(storageKey, 'link-preview');
+			if (!data || !data.link_images) {
+				return;
 			}
+			var next = data.link_image_index + step;
+			if (next >= 0 && next < data.link_images.length) {
+				setLinkPreviewStorage(storageKey, 'link-preview', $.extend({}, data, { link_success: true, link_image_index: next }));
+				setURLNextPreviousResponse(!!commentId, commentId || null);
+			}
+		};
+		$(document).on('click', '#activity-url-prevPicButton', function () { stepImage(-1); });
+		$(document).on('click', '#activity-url-nextPicButton', function () { stepImage(1); });
+		$(document).on('click', '[id^="activity-comment-url-prevPicButton-"]', function () {
+			stepImage(-1, this.id.replace('activity-comment-url-prevPicButton-', ''));
+		});
+		$(document).on('click', '[id^="activity-comment-url-nextPicButton-"]', function () {
+			stepImage(1, this.id.replace('activity-comment-url-nextPicButton-', ''));
 		});
 
-		// Original next button handler
-		$(document).on('click', '#activity-url-nextPicButton', function () {
-			var bp_activity_link_preview = getLinkPreviewStorage('bp-activity-link-preview', 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex < images.length - 1) {
-				setLinkPreviewStorage('bp-activity-link-preview', 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex + 1,
-				});
-
-				setURLNextPreviousResponse(false, null);
-			}
-		});
-
-		// Enhanced navigation button handlers for comments
-		$(document).on('click', '[id^="activity-comment-url-prevPicButton"]', function () {
-			var buttonId = $(this).attr('id');
-			var commentId = buttonId.replace('activity-comment-url-prevPicButton-', '');
-			var storageKey = 'bp-activity-comment-link-preview-' + commentId;
-
-			var bp_activity_link_preview = getLinkPreviewStorage(storageKey, 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex > 0) {
-				setLinkPreviewStorage(storageKey, 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex - 1,
-				});
-
-				setURLNextPreviousResponse(true, commentId);
-			}
-		});
-
-		$(document).on('click', '[id^="activity-comment-url-nextPicButton"]', function () {
-			var buttonId = $(this).attr('id');
-			var commentId = buttonId.replace('activity-comment-url-nextPicButton-', '');
-			var storageKey = 'bp-activity-comment-link-preview-' + commentId;
-
-			var bp_activity_link_preview = getLinkPreviewStorage(storageKey, 'link-preview');
-			var imageIndex = bp_activity_link_preview.link_image_index;
-			var images = bp_activity_link_preview.link_images;
-			var url = bp_activity_link_preview.link_url;
-			var link_success = bp_activity_link_preview.link_success;
-			var link_title = bp_activity_link_preview.link_title;
-			var link_description = bp_activity_link_preview.link_description;
-
-			if (imageIndex < images.length - 1) {
-				setLinkPreviewStorage(storageKey, 'link-preview', {
-					link_success: true,
-					link_url: url,
-					link_title: link_title,
-					link_description: link_description,
-					link_images: images,
-					link_image_index: imageIndex + 1,
-				});
-
-				setURLNextPreviousResponse(true, commentId);
-			}
-		});
-
-		// Original submit handler
-		$(document).on('click', '#buddypress #aw-whats-new-submit', function () {
+		// Clear the composer preview after posting. Not scoped to #buddypress:
+		// post forms embedded elsewhere (Post From Anywhere) use the same ids.
+		$(document).on('click', '#aw-whats-new-submit', function () {
 			setTimeout(function () {
 				$('.activity-url-scrapper-container').remove();
 			}, 500);

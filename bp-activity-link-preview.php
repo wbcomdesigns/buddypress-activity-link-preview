@@ -5,7 +5,7 @@
  * Plugin Name:       Activity Link Preview For BuddyPress
  * Plugin URI:        https://wbcomdesigns.com/downloads/buddypress-activity-link-preview/
  * Description:       BuddyPress activity link preview displays as image title and description from the site when links are used in activity posts.
- * Version:           1.7.6
+ * Version:           1.7.7
  * Author:            wbcomdesigns
  * Author URI:        https://wbcomdesigns.com/
  * License:           GPL-2.0+
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.6' );
+define( 'BP_ACTIVITY_LINK_PREVIEW_VERSION', '1.7.7' );
 define( 'BP_ACTIVITY_LINK_PREVIEW_URL', plugin_dir_url( __FILE__ ) );
 define( 'BP_ACTIVITY_LINK_PREVIEW_PATH', plugin_dir_path( __FILE__ ) );
 
@@ -117,6 +117,7 @@ add_action( 'admin_init', 'bp_activity_link_preview_requires_buddypress' );
 function bp_activity_link_preview_bootstrap() {
 	// Enqueue scripts and styles.
 	add_action( 'wp_enqueue_scripts', 'bp_activity_link_preview_enqueue_scripts' );
+	add_action( 'bp_before_activity_post_form', 'bp_activity_link_preview_enqueue_for_post_form' );
 
 	// Remove BuddyBoss duplicate preview.
 	add_action( 'bp_init', 'bp_activity_link_preview_disable_buddyboss_preview', 999 );
@@ -167,11 +168,19 @@ function bp_activity_link_preview_should_load_assets() {
 	$should_load = function_exists( 'bp_is_activity_component' )
 		&& ( bp_is_activity_component() || bp_is_activity_directory() || bp_is_user_activity() || bp_is_group() );
 
+	// A page that embeds the activity posting form through Shortcodes for
+	// BuddyPress ([activity-listing allow_posting=true]) is not a BP screen.
+	if ( ! $should_load && is_singular() ) {
+		$post        = get_post();
+		$should_load = $post instanceof WP_Post && has_shortcode( $post->post_content, 'activity-listing' );
+	}
+
 	/**
 	 * Filter whether the link-preview assets load on the current page.
 	 *
-	 * Lets site owners load assets on custom pages that embed an activity
-	 * stream (e.g. via shortcode/widget) or unload them from group screens.
+	 * Assets load on BuddyPress activity screens, groups, and singular pages
+	 * whose content holds the [activity-listing] shortcode. Use this to load
+	 * them on other custom pages (widgets, page builders) or unload them.
 	 *
 	 * @since 1.7.4
 	 * @param bool $should_load Whether the current page is an activity context.
@@ -186,6 +195,35 @@ function bp_activity_link_preview_enqueue_scripts() {
 		return;
 	}
 
+	bp_activity_link_preview_enqueue_assets();
+}
+
+/**
+ * Load the composer assets wherever a BuddyPress activity post form renders.
+ *
+ * Forms embedded outside BuddyPress screens (BuddyPress Post From Anywhere's
+ * shortcode, block or widget, page builders) fire BuddyPress's own
+ * bp_before_activity_post_form hook, so the preview follows the form instead
+ * of a list of page types. The scripts print in the footer, so enqueueing
+ * while the page body renders is in time.
+ *
+ * @since 1.7.7
+ */
+function bp_activity_link_preview_enqueue_for_post_form() {
+	/** This filter is documented in bp_activity_link_preview_should_load_assets(). */
+	if ( wp_script_is( 'bp-activity-link-preview-js' ) || ! apply_filters( 'bp_activity_link_preview_load_assets', true ) ) {
+		return;
+	}
+
+	bp_activity_link_preview_enqueue_assets();
+}
+
+/**
+ * Enqueue the composer styles and scripts and their localized data.
+ *
+ * @since 1.7.7
+ */
+function bp_activity_link_preview_enqueue_assets() {
 	// The composer JS renders dashicon markup (close/prev/next buttons); dashicons
 	// is not guaranteed on the frontend (only loads with the admin bar), so enqueue it.
 	wp_enqueue_style( 'dashicons' );
@@ -478,8 +516,10 @@ function bp_activity_link_parse_url( $url, $cached_only = false ) {
 		}
 
 		$args = array(
-			'user-agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
-			'timeout'    => 15,
+			'user-agent'          => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:71.0) Gecko/20100101 Firefox/71.0',
+			'timeout'             => 15,
+			// Previews only need the <head>; cap what a remote page can make us download.
+			'limit_response_size' => MB_IN_BYTES,
 		);
 
 		if ( bp_is_same_site_url( $url ) ) {
@@ -961,7 +1001,6 @@ function bp_activity_link_preview_is_social_media_url( $url ) {
  * @return string Modified content.
  */
 function bp_activity_link_preview_content_body_with_comments( $content, $activity ) {
-	static $processed_activities = array();
 
 	$activity_id = $activity->id;
 
@@ -997,18 +1036,11 @@ function bp_activity_link_preview_content_body_with_comments( $content, $activit
 		return $content;
 	}
 
-	// Prevent duplicate processing for the same activity.
-	if ( isset( $processed_activities[ $activity_id ] ) ) {
-		return $content;
-	}
-
-	// Check if content already contains a preview to avoid double processing.
+	// Skip content that already carries a preview. A per-request "seen this id" guard is wrong here:
+	// BuddyBoss filters the same activity twice on its single permalink and the second call lost the card.
 	if ( strpos( $content, 'activity-link-preview-container' ) !== false ) {
 		return $content;
 	}
-
-	// Mark this activity as processed.
-	$processed_activities[ $activity_id ] = true;
 
 	// Handle main activity link preview only.
 	$preview_data = bp_activity_get_meta( $activity_id, '_bp_activity_link_preview_data', true );
@@ -1016,7 +1048,10 @@ function bp_activity_link_preview_content_body_with_comments( $content, $activit
 		$content = bp_activity_link_preview_render_preview( $content, $preview_data );
 	}
 
-	return htmlspecialchars_decode( $content );
+	// Return the content as filtered: it has already passed BuddyPress's kses at
+	// priority 1, and decoding entities here would turn a member's escaped
+	// markup (&lt;img onerror=...&gt;) back into live HTML.
+	return $content;
 }
 
 /**

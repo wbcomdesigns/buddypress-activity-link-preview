@@ -4,7 +4,7 @@ The plugin has no settings screen. All behaviour changes are made through filter
 
 ## bp_activity_link_preview_load_assets
 
-Controls whether the plugin's CSS, JavaScript and the Twitter/Facebook SDK scripts are enqueued on the current request. By default they load on BuddyPress activity contexts (the activity directory, member activity and group screens).
+Controls whether the plugin's CSS, JavaScript and the Twitter/Facebook SDK scripts are enqueued on the current request. By default they load on BuddyPress activity contexts (the activity directory, member activity and group screens) and on singular pages whose content holds the `[activity-listing]` shortcode. They also load on any page where a BuddyPress activity post form renders, such as the BuddyPress Post From Anywhere shortcode, block or widget; in that case the filter is called with `true`, so returning `false` still keeps them off.
 
 ```php
 // Stop all assets (and the third-party scripts) from loading anywhere.

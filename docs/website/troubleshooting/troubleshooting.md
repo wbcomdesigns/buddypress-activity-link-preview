@@ -36,7 +36,7 @@ The composer controls (Cancel Preview, previous/next image, the image counter) a
 
 ## Previews do not appear on a custom page that embeds an activity stream
 
-Assets only load on standard BuddyPress activity contexts. If your activity stream is embedded on a custom page (for example via shortcode or widget), opt that page in:
+Assets load on BuddyPress activity screens, on any page whose content holds the `[activity-listing]` shortcode from Shortcodes for BuddyPress, and on any page that shows a BuddyPress posting form, such as the BuddyPress Post From Anywhere form. If your activity stream reaches a page another way (a widget, a page builder module, a theme template), opt that page in:
 
 ```php
 add_filter( 'bp_activity_link_preview_load_assets', function ( $should_load ) {

@@ -6,8 +6,9 @@
 
 ## Quick reference
 - **Main file**: `bp-activity-link-preview.php` (single-file, procedural; 1280 lines, 23 functions)
-- **Version**: `1.7.6` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + readme `Stable tag` + package.json)
-- **Dev branch**: `v1.7.6`
+- **Version**: `1.7.7` (header + `BP_ACTIVITY_LINK_PREVIEW_VERSION` + package.json; readme `Stable tag` moves at release)
+- **Dev branch**: `1.7.7`
+- **Build / CI**: `bash bin/build-release.sh` (zip in `dist/`, excludes from `.distignore`), `bash bin/local-ci.sh`
 - **Customer docs**: `docs/website/` (migrated 2026-08-14; the filters page is the config reference)
 - **Namespace**: none (no classes)
 - **Text domain**: `buddypress-activity-link-preview`
