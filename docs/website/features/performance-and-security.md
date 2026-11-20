@@ -31,4 +31,6 @@ add_filter( 'bp_activity_link_preview_load_assets', '__return_false' );
 - **Logged-in only.** Only logged-in users can call the parse endpoint.
 - **Input validation.** URLs are validated with `FILTER_VALIDATE_URL` on input and on resolved redirect targets.
 - **Safe output.** Scraped titles and descriptions are sanitized before being saved to activity meta, and escaped on output.
+- **Page size cap.** Fetching a page for a preview stops after 1 MB, which is enough for the page head the preview is built from.
+- **Escaped markup stays text.** Activity text a member wrote as escaped HTML is not turned back into live markup in the stream.
 - **Safe HTTP.** Remote requests use `wp_safe_remote_get()` and `wp_safe_remote_head()`, which honour WordPress's HTTP settings.
