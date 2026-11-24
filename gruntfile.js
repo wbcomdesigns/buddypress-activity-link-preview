@@ -8,76 +8,6 @@ module.exports = function ( grunt ) {
 	grunt.initConfig( {
 		pkg: grunt.file.readJSON( 'package.json' ),
 
-		// Clean build directory
-		clean: {
-			build: [ 'build/' ],
-			dist: [ 'dist/' ]
-		},
-
-		// Copy files to build directory
-		copy: {
-			build: {
-				files: [
-					{
-						expand: true,
-						src: [
-							'**',
-							'!node_modules/**',
-							'!build/**',
-							'!dist/**',
-							'!.git/**',
-							'!.github/**',
-							'!.gitignore',
-							'!gruntfile.js',
-							'!Gruntfile.js',
-							'!package.json',
-							'!package-lock.json',
-							'!composer.json',
-							'!composer.lock',
-							'!phpcs.xml',
-							'!phpunit.xml',
-							'!.eslintrc',
-							'!.stylelintrc',
-							'!.editorconfig',
-							'!*.zip',
-							'!screenshot-*.*',
-							'!.wordpress-org/**',
-							'!**/*.map',
-							'!tests/**',
-							'!docs/**',
-							'!bin/**',
-							'!audit/**',
-							'!.DS_Store',
-							'!**/.DS_Store',
-							'!Thumbs.db',
-							'!**/Thumbs.db',
-							'!*.md',
-							'!**/*.md'
-						],
-						dest: 'build/buddypress-activity-link-preview/'
-					}
-				]
-			}
-		},
-
-		// Create zip archive
-		compress: {
-			build: {
-				options: {
-					archive: 'dist/buddypress-activity-link-preview-<%= pkg.version %>.zip',
-					mode: 'zip'
-				},
-				files: [
-					{
-						expand: true,
-						cwd: 'build/',
-						src: [ '**' ],
-						dest: ''
-					}
-				]
-			}
-		},
-
 		// Check text domain
 		checktextdomain: {
 			options: {
@@ -138,21 +68,10 @@ module.exports = function ( grunt ) {
 		}
 	} );
 
-	// Build distribution zip
-	// NOTE: build does NOT run makepot. The shipped POT is produced by
-	// `wp i18n make-pot` (the whole free series does this). grunt-wp-i18n
-	// regenerates it with degraded headers (Report-Msgid-Bugs-To lost,
-	// X-Generator changed) and a fresh timestamp, so letting it run here bakes a
-	// worse POT into the zip than the one committed. Run `grunt makepot` by hand
-	// only if you deliberately want to regenerate the template.
-	grunt.registerTask( 'build', [
-		'clean:build',
-		'clean:dist',
-		'checktextdomain',
-		'copy:build',
-		'compress:build',
-		'clean:build'
-	] );
+	// The release zip is built by bin/build-release.sh only (folder = WordPress.org slug).
+	// NOTE: the shipped POT is produced by `wp i18n make-pot` (the whole free series does
+	// this); grunt-wp-i18n regenerates it with degraded headers, so the release build never
+	// runs makepot.
 
 	// Default task
 	grunt.registerTask( 'default', [ 'checktextdomain', 'makepot' ] );
