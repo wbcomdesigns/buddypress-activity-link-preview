@@ -21,7 +21,7 @@
     "url": "https://github.com/wbcomdesigns/buddypress-activity-link-preview"
   },
   "scripts": {
-    "build": "grunt build"
+    "build": "bash bin/build-release.sh"
   },
   "overrides": {
     "minimatch": "^3.1.5"

@@ -1,6 +1,5 @@
 # Files and folders that never ship in the customer zip.
-# Read by bin/build-release.sh (rsync --exclude-from). Mirrors gruntfile.js copy:build;
-# change both together.
+# Read by bin/build-release.sh (rsync --exclude-from), the only zip builder.
 
 # VCS / CI / editor
 /.git
