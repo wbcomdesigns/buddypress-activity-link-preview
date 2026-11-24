@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the customer zip: dist/buddypress-activity-link-preview-<version>.zip
+# Build the customer zip: dist/activity-link-preview-for-buddypress-<version>.zip (folder = WordPress.org slug)
 #
 # Usage: bash bin/build-release.sh [--allow-dirty]
 #
@@ -12,8 +12,10 @@
 # Exit codes: 1 generic, 2 dirty tree, 3 version mismatch, 4 zip leaks dev files, 5 docs lint.
 set -euo pipefail
 
-SLUG="buddypress-activity-link-preview"   # zip folder name (matches the released zips)
+slug=activity-link-preview-for-buddypress   # WordPress.org slug = zip folder. Locked by CI (wporg-folder-lock.yml).
+SLUG="$slug"
 MAIN="bp-activity-link-preview.php"
+main="$MAIN"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="${ROOT}/dist"
 STAGE_DIR="${DIST_DIR}/${SLUG}"
@@ -66,8 +68,21 @@ ZIP_PATH="${DIST_DIR}/${SLUG}-${VERSION}.zip"
 rm -rf "$STAGE_DIR" "$ZIP_PATH"
 mkdir -p "$STAGE_DIR"
 rsync -a --exclude-from="${ROOT}/.distignore" ./ "${STAGE_DIR}/"
-( cd "$DIST_DIR" && zip -rqX "$ZIP_PATH" "${SLUG}/" )
+# Deflate every entry: a PHP file stored uncompressed trips the store's upload firewall.
+( cd "$DIST_DIR" && python3 -I -c 'import os,sys,zipfile
+out,top=sys.argv[1],sys.argv[2]
+with zipfile.ZipFile(out,"w",zipfile.ZIP_DEFLATED,compresslevel=9) as z:
+    for r,d,f in os.walk(top):
+        d.sort()
+        for n in sorted(f): z.write(os.path.join(r,n))' "$ZIP_PATH" "$SLUG" )
 rm -rf "$STAGE_DIR"
+zip="$ZIP_PATH"
+# --- WordPress.org folder lock (Wbcom standard - do not edit) ----------------------
+top=$(unzip -Z1 "$zip" | head -1 | cut -d/ -f1)
+[ "$top" = "$slug" ] || { echo "Zip folder '$top' is not the WordPress.org slug '$slug'"; exit 1; }
+unzip -Z1 "$zip" | grep -qx "$slug/$main" || { echo "Main file $slug/$main missing from zip"; exit 1; }
+[ "$(LC_ALL=C grep -a -c '<?php' "$zip" || true)" = 0 ] || { echo "Zip has plain-text PHP (upload firewall)"; exit 1; }
+# -----------------------------------------------------------------------------------
 
 # --- 5. Verify the zip -----------------------------------------------------------
 # Listing captured once: piping unzip into `grep -q` under pipefail fails on SIGPIPE.
@@ -78,7 +93,7 @@ if [ -n "$LEAKS" ]; then
 	echo "$LEAKS" >&2
 	exit 4
 fi
-for required in "$MAIN" readme.txt "languages/${SLUG}.pot" assets/js/bp-activity-link-preview.js assets/css/bp-activity-link-preview.css; do
+for required in "$MAIN" readme.txt languages/buddypress-activity-link-preview.pot assets/js/bp-activity-link-preview.js assets/css/bp-activity-link-preview.css; do
 	printf '%s\n' "$LISTING" | grep -qx "${SLUG}/${required}" || { echo "FAIL: zip is missing ${required}" >&2; exit 4; }
 done
 
